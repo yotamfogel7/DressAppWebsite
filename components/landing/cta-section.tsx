@@ -28,9 +28,15 @@ export function CtaSection() {
           </p>
           
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="group">
-              Start free trial
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <Button size="lg" className="group" asChild>
+              <a
+                href="https://dressapp-preview.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Try it out
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </a>
             </Button>
             <Button size="lg" variant="outline">
               Schedule a demo

@@ -17,7 +17,8 @@ const plans = [
       "Standard analytics",
       "2 team members",
     ],
-    cta: "Start free trial",
+    cta: "Try it out",
+    ctaHref: "https://dressapp-preview.com",
     highlighted: false,
   },
   {
@@ -34,7 +35,8 @@ const plans = [
       "Custom branding",
       "Webhook integrations",
     ],
-    cta: "Start free trial",
+    cta: "Try it out",
+    ctaHref: "https://dressapp-preview.com",
     highlighted: true,
   },
   {
@@ -52,6 +54,7 @@ const plans = [
       "On-premise deployment option",
     ],
     cta: "Contact sales",
+    ctaHref: null,
     highlighted: false,
   },
 ]
@@ -126,16 +129,36 @@ export function Pricing() {
                 ))}
               </ul>
 
-              <Button
-                className={`w-full ${
-                  plan.highlighted
-                    ? "bg-foreground text-background hover:bg-foreground/90"
-                    : ""
-                }`}
-                variant={plan.highlighted ? "default" : "outline"}
-              >
-                {plan.cta}
-              </Button>
+              {plan.ctaHref ? (
+                <Button
+                  asChild
+                  className={`w-full ${
+                    plan.highlighted
+                      ? "bg-foreground text-background hover:bg-foreground/90"
+                      : ""
+                  }`}
+                  variant={plan.highlighted ? "default" : "outline"}
+                >
+                  <a
+                    href={plan.ctaHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {plan.cta}
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  className={`w-full ${
+                    plan.highlighted
+                      ? "bg-foreground text-background hover:bg-foreground/90"
+                      : ""
+                  }`}
+                  variant={plan.highlighted ? "default" : "outline"}
+                >
+                  {plan.cta}
+                </Button>
+              )}
             </motion.div>
           ))}
         </div>
