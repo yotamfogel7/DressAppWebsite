@@ -890,7 +890,7 @@ export function DressAppDemoLive() {
             <code className="rounded bg-muted px-1 text-xs">DressAppStudioDock</code>{" "}
             uses your publishable key, API base,{" "}
             <code className="rounded bg-muted px-1 text-xs">getAccessToken</code> →{" "}
-            <code className="rounded bg-muted px-1 text-xs">/api/dressapp/session</code>
+            <code className="rounded bg-muted px-1 text-xs">/site-api/dressapp/session</code>
             , and the optional product id from section 3.
           </CardDescription>
         </CardHeader>

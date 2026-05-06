@@ -21,7 +21,7 @@ export type DressAppShopperSession = {
 
 export async function fetchDressAppShopperSession(): Promise<DressAppShopperSession> {
   const ref = getOrCreateDressAppDemoUserRef()
-  const res = await fetch("/api/dressapp/session", {
+  const res = await fetch("/site-api/dressapp/session", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ external_user_ref: ref ?? undefined }),
@@ -55,7 +55,7 @@ export async function fetchDressAppShopperSession(): Promise<DressAppShopperSess
     throw new Error(hint ? `${err}\n\n${hint}` : err)
   }
   if (!data.access_token) {
-    throw new Error("No access_token from /api/dressapp/session")
+    throw new Error("No access_token from /site-api/dressapp/session")
   }
   return {
     access_token: data.access_token,

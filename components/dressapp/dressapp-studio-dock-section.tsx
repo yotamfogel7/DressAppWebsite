@@ -11,7 +11,7 @@ export type DressAppStudioDockSectionProps = {
   productId?: string
 }
 
-/** Published `@dressapp/react-widget` — studio + try-on dock; token from `/api/dressapp/session`. */
+/** Published `@dressapp/react-widget` — studio + try-on dock; token from `/site-api/dressapp/session`. */
 export function DressAppStudioDockSection({
   publishableKey,
   apiBase,
