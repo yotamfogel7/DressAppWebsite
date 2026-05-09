@@ -63,6 +63,14 @@ function getPublicConfig() {
   }
 }
 
+/** Unique slug for partner merchant creation (avoids collisions on re-register). */
+function generateUniqueMerchantSlug(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `site-demo-${crypto.randomUUID().slice(0, 8)}`
+  }
+  return `site-demo-${Date.now().toString(36)}`
+}
+
 type ServerClientBootstrap = {
   status: "loading" | "ready"
   config: { apiBase: string; publishableKey: string } | null
@@ -170,17 +178,16 @@ export function DressAppDemoLive() {
   }, [loadAdminStatus])
 
   const [merchantName, setMerchantName] = useState("DressApp marketing site")
-  const [merchantSlug, setMerchantSlug] = useState(() =>
-    typeof crypto !== "undefined"
-      ? `site-demo-${crypto.randomUUID().slice(0, 8)}`
-      : "site-demo",
-  )
+  const [merchantSlug, setMerchantSlug] = useState(() => generateUniqueMerchantSlug())
   const [allowedOriginsStr, setAllowedOriginsStr] = useState("")
   const [merchantProvision, setMerchantProvision] = useState<Record<
     string,
     unknown
   > | null>(null)
   const [registeredPublishableKey, setRegisteredPublishableKey] = useState<
+    string | null
+  >(null)
+  const [registeredMerchantSecret, setRegisteredMerchantSecret] = useState<
     string | null
   >(null)
   const [registerBusy, setRegisterBusy] = useState(false)
@@ -422,6 +429,7 @@ export function DressAppDemoLive() {
     setBootError(null)
     setRegisterBusy(true)
     setMerchantProvision(null)
+    setRegisteredMerchantSecret(null)
     try {
       const origins = allowedOriginsStr
         .split(/[\n,]+/)
@@ -452,11 +460,19 @@ export function DressAppDemoLive() {
         (typeof data.publishable_key === "string" && data.publishable_key) ||
         (typeof data.publishableKey === "string" && data.publishableKey) ||
         ""
+      const sk =
+        (typeof data.secret_key === "string" && data.secret_key) ||
+        (typeof data.secretKey === "string" && data.secretKey) ||
+        ""
       if (!pk) {
         console.error("[DressApp demo] merchant response missing publishable key", data)
       }
+      if (!sk) {
+        console.error("[DressApp demo] merchant response missing secret key", data)
+      }
       setMerchantProvision(data)
       setRegisteredPublishableKey(pk || null)
+      setRegisteredMerchantSecret(sk || null)
     } catch (e) {
       logErr(e, "registerMerchant")
     } finally {
@@ -487,11 +503,12 @@ export function DressAppDemoLive() {
           Partner integration demo
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Live flow from{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">
-            DRESSAPP_INTEGRATION_MANUAL.md
-          </code>
-          : shopper session from your server, SDK-style calls from the browser.
+          Live flow: shopper session from your server, SDK-style calls from the browser. For the
+          Shopify partner setup, see{" "}
+          <Link href="/integration" className="text-foreground underline underline-offset-4">
+            Integration
+          </Link>
+          .
         </p>
       </div>
 
@@ -605,12 +622,27 @@ export function DressAppDemoLive() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="merchant-slug">Slug (unique)</Label>
-              <Input
-                id="merchant-slug"
-                value={merchantSlug}
-                onChange={(e) => setMerchantSlug(e.target.value)}
-                autoComplete="off"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="merchant-slug"
+                  className="min-w-0 flex-1"
+                  value={merchantSlug}
+                  onChange={(e) => setMerchantSlug(e.target.value)}
+                  autoComplete="off"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setMerchantSlug(generateUniqueMerchantSlug())}
+                >
+                  New slug
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                DressApp issues <code className="rounded bg-muted px-1">dress_sk_…</code> and{" "}
+                <code className="rounded bg-muted px-1">dress_pk_…</code> when you register — use{" "}
+                <strong>New slug</strong> if the API says this slug is already taken.
+              </p>
             </div>
           </div>
           <div className="space-y-2">
@@ -662,6 +694,32 @@ export function DressAppDemoLive() {
                   }
                 >
                   Copy publishable key
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {registeredMerchantSecret && (
+            <Alert>
+              <AlertTitle>Merchant secret key (server only)</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p className="text-xs">
+                  This is your <code className="rounded bg-muted px-1">dress_sk_…</code> merchant
+                  key for <code className="rounded bg-muted px-1">DRESSAPP_MERCHANT_SECRET</code>.
+                  Never expose it in the browser or commit it to git.
+                </p>
+                <pre className="max-h-24 overflow-auto rounded-md border bg-muted p-3 text-xs break-all">
+                  {registeredMerchantSecret}
+                </pre>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    void copyToClipboard("secret_key", registeredMerchantSecret)
+                  }
+                >
+                  Copy merchant secret
                 </Button>
               </AlertDescription>
             </Alert>

@@ -205,7 +205,7 @@ export function DemoSection() {
                   </button>
                   <div className="flex-1" />
                   <Button asChild>
-                    <Link href="/demo">Try it yourself</Link>
+                    <Link href="/integration">Integration guide</Link>
                   </Button>
                 </div>
               </div>

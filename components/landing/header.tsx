@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
@@ -11,6 +12,7 @@ const navLinks = [
   { href: "#product", label: "Product" },
   { href: "#features", label: "Features" },
   { href: "#pricing", label: "Pricing" },
+  { href: "/integration", label: "Integration" },
 ]
 
 export function Header() {
@@ -35,15 +37,16 @@ export function Header() {
       }`}
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <nav className="flex items-center justify-between py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="relative h-8 w-8">
-              <div className="absolute inset-0 bg-accent rounded-lg" />
-              <span className="relative flex items-center justify-center h-full w-full font-mono font-bold text-accent-foreground">
-                D
-              </span>
-            </div>
-            <span className="font-mono text-xl font-bold tracking-tight">DressApp</span>
+        <nav className="flex items-center justify-between py-4 md:py-5">
+          <Link href="/" className="flex items-center shrink-0">
+            <Image
+              src="/DressApp%20Logo%20Transparent.png"
+              alt="DressApp"
+              width={400}
+              height={112}
+              className="h-14 w-auto md:h-[4.5rem]"
+              priority
+            />
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 
 const footerLinks = {
   product: [
@@ -34,14 +35,14 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="relative h-8 w-8">
-                <div className="absolute inset-0 bg-accent rounded-lg" />
-                <span className="relative flex items-center justify-center h-full w-full font-mono font-bold text-accent-foreground">
-                  D
-                </span>
-              </div>
-              <span className="font-mono text-xl font-bold tracking-tight">DressApp</span>
+            <Link href="/" className="flex items-center shrink-0">
+              <Image
+                src="/DressApp%20Logo%20Transparent.png"
+                alt="DressApp"
+                width={400}
+                height={112}
+                className="h-14 w-auto md:h-[4.5rem]"
+              />
             </Link>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs">
               AI-powered virtual try-on technology for the future of fashion retail.
