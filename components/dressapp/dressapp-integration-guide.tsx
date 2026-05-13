@@ -5,7 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { DressAppIntegrationMerchantKeyButton } from "@/components/dressapp/dressapp-integration-merchant-key-button"
 
 export function DressAppIntegrationGuide() {
   return (
@@ -14,26 +13,24 @@ export function DressAppIntegrationGuide() {
         <CardHeader>
           <CardTitle>What you are connecting</CardTitle>
           <CardDescription>
-            The Shopify app in{" "}
-            <code className="rounded bg-muted px-1 text-xs">integrations/shopify</code>{" "}
-            is a no-code path for merchants: OAuth, register the shop with DressApp, then
-            optionally inject the try-on loader on product pages.
+            The DressApp Shopify integration handles OAuth, registers your shop with DressApp after
+            install, and can add virtual try-on to product pages through your theme.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
             <li>
-              <span className="text-foreground font-medium">OAuth install</span> — Shopify
-              gives your app an Admin API access token for that shop.
+              <span className="text-foreground font-medium">OAuth install</span> — Shopify issues
+              an Admin API access token for your store.
             </li>
             <li>
               <span className="text-foreground font-medium">Register with DressApp</span> — Your
-              server calls DressApp with your partner secret so the catalog and try-on APIs know
-              that shop.
+              app backend tells DressApp which shop is connected so catalog and try-on work for
+              that storefront.
             </li>
             <li>
               <span className="text-foreground font-medium">Storefront (optional)</span> — A theme
-              app extension can load the DressApp script on product pages using the web SDK.
+              app extension can load DressApp on product pages using the web SDK.
             </li>
           </ol>
         </CardContent>
@@ -41,43 +38,27 @@ export function DressAppIntegrationGuide() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Save a publishable key to your database</CardTitle>
+          <CardTitle>Before you go live</CardTitle>
           <CardDescription>
-            One-click merchant creation for internal tooling: the publishable key is upserted into
-            Postgres (table is created automatically if missing).
+            Confirm these items so installs and try-on work end-to-end in production.
           </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DressAppIntegrationMerchantKeyButton />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Before you start</CardTitle>
-          <CardDescription>Checklist so installs do not fail halfway.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            <span className="text-foreground font-medium">DressApp API reachable</span> — In
-            development, expose your backend with a tunnel (for example Cloudflare Tunnel or
-            ngrok) so Shopify and DressApp can call it.
+            <span className="text-foreground font-medium">HTTPS backend</span> — Your Shopify app
+            must be served at a stable public <code className="rounded bg-muted px-1 text-xs">https://</code>{" "}
+            URL that Shopify and DressApp can reach.
           </p>
           <p>
-            <span className="text-foreground font-medium">Partner merchant</span> — Create one with{" "}
-            <code className="rounded bg-muted px-1 text-xs">
-              POST /partner/v1/admin/merchants
-            </code>{" "}
-            and header{" "}
-            <code className="rounded bg-muted px-1 text-xs">X-Partner-Admin-Secret</code>. Store
-            both <code className="rounded bg-muted px-1 text-xs">secret_key</code> and{" "}
-            <code className="rounded bg-muted px-1 text-xs">publishable_key</code> from the
-            response.
+            <span className="text-foreground font-medium">DressApp credentials</span> — Use the
+            publishable key and partner secret issued for your production integration. Keep the
+            secret on the server only; never expose it in the theme or browser bundles.
           </p>
           <p>
-            <span className="text-foreground font-medium">Env file</span> — Copy{" "}
-            <code className="rounded bg-muted px-1 text-xs">.env.example</code> from the Shopify
-            integration folder and fill in the values below.
+            <span className="text-foreground font-medium">Configuration</span> — Set the environment
+            variables your hosting provider expects for the running app (see below). Allowed
+            origins for the DressApp API must include your storefront origin if required by your
+            contract.
           </p>
         </CardContent>
       </Card>
@@ -86,9 +67,8 @@ export function DressAppIntegrationGuide() {
         <CardHeader>
           <CardTitle>Environment variables</CardTitle>
           <CardDescription>
-            Typical names from <code className="rounded bg-muted px-1 text-xs">README.md</code> —
-            your template may use slightly different names; align with{" "}
-            <code className="rounded bg-muted px-1 text-xs">.env.example</code>.
+            Typical values for a production Shopify app that talks to DressApp. Names may match your
+            host template; align with your deployment checklist.
           </CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
@@ -106,31 +86,32 @@ export function DressAppIntegrationGuide() {
               </tr>
               <tr className="border-b border-border/60">
                 <td className="py-2 pr-4 font-mono text-xs">SHOPIFY_API_SECRET</td>
-                <td className="py-2">Partners app secret</td>
+                <td className="py-2">Partners app client secret</td>
               </tr>
               <tr className="border-b border-border/60">
                 <td className="py-2 pr-4 font-mono text-xs">SCOPES</td>
                 <td className="py-2">
-                  Example: <code className="rounded bg-muted px-1">read_products</code> (add
-                  scopes as you need)
+                  Admin API scopes your integration needs (for example{" "}
+                  <code className="rounded bg-muted px-1">read_products</code>
+                  ), comma-separated as required by Shopify
                 </td>
               </tr>
               <tr className="border-b border-border/60">
                 <td className="py-2 pr-4 font-mono text-xs">HOST</td>
-                <td className="py-2">Public URL of this Node app (often your tunnel URL)</td>
+                <td className="py-2">Public base URL of your deployed app backend (HTTPS)</td>
               </tr>
               <tr className="border-b border-border/60">
                 <td className="py-2 pr-4 font-mono text-xs">DRESSAPP_API_BASE</td>
                 <td className="py-2">
-                  DressApp API origin, e.g.{" "}
-                  <code className="rounded bg-muted px-1">https://dressapp.me</code>
+                  Production DressApp API origin (for example{" "}
+                  <code className="rounded bg-muted px-1">https://dressapp.me</code>)
                 </td>
               </tr>
               <tr>
                 <td className="py-2 pr-4 font-mono text-xs">DRESSAPP_PARTNER_SECRET_KEY</td>
                 <td className="py-2">
-                  Partner <code className="rounded bg-muted px-1">dress_sk_live_…</code> from
-                  bootstrap
+                  Partner secret for server-side DressApp calls (starts with{" "}
+                  <code className="rounded bg-muted px-1">dress_sk_live_…</code>)
                 </td>
               </tr>
             </tbody>
@@ -140,27 +121,10 @@ export function DressAppIntegrationGuide() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Run the Shopify integration locally</CardTitle>
-          <CardDescription>
-            After dependencies install, use Shopify CLI for tunnel and install URL once{" "}
-            <code className="rounded bg-muted px-1 text-xs">shopify.app.toml</code> matches your
-            Partners app.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="overflow-x-auto rounded-md border bg-muted p-4 text-xs leading-relaxed">
-            {`cd integrations/shopify
-npm install
-npm run dev`}
-          </pre>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>DressApp endpoints your server uses</CardTitle>
           <CardDescription>
-            The minimal OAuth server registers the shop; the storefront reads public embed config.
+            After OAuth, your backend registers the shop; the storefront loads public embed
+            configuration for the SDK.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 text-sm">
@@ -173,10 +137,10 @@ npm run dev`}
               <code className="rounded bg-muted px-1 text-xs">
                 /partner/v1/platforms/shopify/install
               </code>
-              — authenticate with Bearer{" "}
+              — Bearer token: your{" "}
               <code className="rounded bg-muted px-1 text-xs">DRESSAPP_PARTNER_SECRET_KEY</code>.
             </p>
-            <p className="text-xs text-muted-foreground mb-2">Example JSON body:</p>
+            <p className="text-xs text-muted-foreground mb-2">Request body:</p>
             <pre className="overflow-x-auto rounded-md border bg-muted p-3 text-xs">
               {`{
   "shop_domain": "your-store.myshopify.com",
@@ -189,31 +153,9 @@ npm run dev`}
             <p className="text-muted-foreground">
               <code className="rounded bg-muted px-1 text-xs">GET</code>{" "}
               <code className="rounded bg-muted px-1 text-xs">/partner/v1/embed-config</code> —
-              use your <code className="rounded bg-muted px-1 text-xs">publishable_key</code> so
-              the SDK knows how to load on the theme.
+              called with your publishable key so the SDK can load correctly on the theme.
             </p>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Where the code lives</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>
-            <code className="rounded bg-muted px-1 text-xs">server.mjs</code> — OAuth plus
-            registration to DressApp (Node 18+).
-          </p>
-          <p>
-            <code className="rounded bg-muted px-1 text-xs">shopify.app.toml</code> — Shopify CLI
-            / Partners template.
-          </p>
-          <p>
-            <code className="rounded bg-muted px-1 text-xs">extensions/theme-app-extension/</code>{" "}
-            — Optional theme snippet that pulls in{" "}
-            <code className="rounded bg-muted px-1 text-xs">@dressapp/web-sdk</code>.
-          </p>
         </CardContent>
       </Card>
     </div>

@@ -43,7 +43,7 @@ function AnimatedNumber({ value, suffix, prefix }: { value: number; suffix: stri
 
 export function Stats() {
   return (
-    <section className="py-24 lg:py-32 relative overflow-hidden">
+    <section className="py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)] relative overflow-hidden">
       {/* Background accent */}
       <div className="absolute inset-0 bg-accent/5" />
       

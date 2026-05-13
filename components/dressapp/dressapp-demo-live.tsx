@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { DressAppStudioDockSection } from "@/components/dressapp/dressapp-studio-dock-section"
 import { fetchDressAppShopperSession } from "@/lib/dressapp-shopper-session-client"
+import { formatPartnerApiErrorPayload } from "@/lib/dressapp-partner-api-errors"
 
 async function parseJsonResponse(res: Response): Promise<Record<string, unknown>> {
   const text = await res.text()
@@ -38,9 +39,10 @@ function formatApiFailure(
   res: Response,
   fallback: string,
 ): string {
-  const err = typeof data.error === "string" ? data.error : fallback
-  const hint = typeof data.hint === "string" ? data.hint : ""
-  return hint ? `${err}\n\n${hint}` : err
+  const hint = typeof data.hint === "string" ? data.hint.trim() : ""
+  const core = formatPartnerApiErrorPayload(data, res.status)
+  const message = core && core.trim() ? core.trim() : fallback
+  return hint ? `${message}\n\n${hint}` : message
 }
 
 function parseDressAppTryOnJobId(raw: unknown): string | null {
@@ -177,8 +179,8 @@ export function DressAppDemoLive() {
     void loadAdminStatus()
   }, [loadAdminStatus])
 
-  const [merchantName, setMerchantName] = useState("DressApp marketing site")
-  const [merchantSlug, setMerchantSlug] = useState(() => generateUniqueMerchantSlug())
+  const [merchantName, setMerchantName] = useState("")
+  const [merchantEmail, setMerchantEmail] = useState("")
   const [allowedOriginsStr, setAllowedOriginsStr] = useState("")
   const [merchantProvision, setMerchantProvision] = useState<Record<
     string,
@@ -430,17 +432,20 @@ export function DressAppDemoLive() {
     setRegisterBusy(true)
     setMerchantProvision(null)
     setRegisteredMerchantSecret(null)
+    setRegisteredPublishableKey(null)
     try {
       const origins = allowedOriginsStr
         .split(/[\n,]+/)
         .map((s) => s.trim())
         .filter(Boolean)
+      const slug = generateUniqueMerchantSlug()
       const res = await fetch("/api/dressapp/admin/merchants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: merchantName,
-          slug: merchantSlug,
+          slug,
+          email: merchantEmail.trim(),
           ...(origins.length ? { allowed_origins: origins } : {}),
         }),
       })
@@ -538,11 +543,10 @@ export function DressAppDemoLive() {
             <code className="rounded bg-muted px-1 text-xs">
               DRESSAPP_PARTNER_ADMIN_SECRET
             </code>{" "}
-            on the server. Returns{" "}
-            <code className="rounded bg-muted px-1 text-xs">publishable_key</code>{" "}
-            and{" "}
-            <code className="rounded bg-muted px-1 text-xs">secret_key</code> for
-            your <code className="rounded bg-muted px-1 text-xs">.env.local</code>.
+            on the server. A unique <strong>slug</strong> is generated automatically each time.
+            Returns <code className="rounded bg-muted px-1 text-xs">publishable_key</code> and{" "}
+            <code className="rounded bg-muted px-1 text-xs">secret_key</code> for your{" "}
+            <code className="rounded bg-muted px-1 text-xs">.env.local</code>.
             Disabled in production unless{" "}
             <code className="rounded bg-muted px-1 text-xs">
               DRESSAPP_ENABLE_MERCHANT_REGISTRATION=true
@@ -610,39 +614,29 @@ export function DressAppDemoLive() {
                 </AlertDescription>
               </Alert>
             )}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="merchant-name">Merchant name</Label>
               <Input
                 id="merchant-name"
                 value={merchantName}
                 onChange={(e) => setMerchantName(e.target.value)}
-                autoComplete="off"
+                autoComplete="organization"
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="merchant-slug">Slug (unique)</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="merchant-slug"
-                  className="min-w-0 flex-1"
-                  value={merchantSlug}
-                  onChange={(e) => setMerchantSlug(e.target.value)}
-                  autoComplete="off"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setMerchantSlug(generateUniqueMerchantSlug())}
-                >
-                  New slug
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                DressApp issues <code className="rounded bg-muted px-1">dress_sk_…</code> and{" "}
-                <code className="rounded bg-muted px-1">dress_pk_…</code> when you register — use{" "}
-                <strong>New slug</strong> if the API says this slug is already taken.
-              </p>
+              <Label htmlFor="merchant-email">Merchant email</Label>
+              <Input
+                id="merchant-email"
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={merchantEmail}
+                onChange={(e) => setMerchantEmail(e.target.value)}
+                required
+              />
             </div>
           </div>
           <div className="space-y-2">
@@ -662,7 +656,7 @@ export function DressAppDemoLive() {
               registerBusy ||
               !adminStatus.ready ||
               !merchantName.trim() ||
-              !merchantSlug.trim()
+              !merchantEmail.trim()
             }
             onClick={() => void handleRegisterMerchant()}
           >
@@ -670,60 +664,64 @@ export function DressAppDemoLive() {
             Register as merchant
           </Button>
 
-          {registeredPublishableKey && (
-            <Alert>
-              <AlertTitle>Publishable key (merchant pk)</AlertTitle>
-              <AlertDescription className="space-y-2">
-                <p className="text-xs">
-                  This session uses it for embed-config immediately. Add{" "}
-                  <code className="rounded bg-muted px-1">DRESSAPP_PUBLISHABLE_KEY</code>{" "}
-                  and{" "}
-                  <code className="rounded bg-muted px-1">DRESSAPP_MERCHANT_SECRET</code>{" "}
-                  to <code className="rounded bg-muted px-1">.env.local</code> and restart
-                  so shopper session and products use the new merchant.
-                </p>
-                <pre className="max-h-24 overflow-auto rounded-md border bg-muted p-3 text-xs break-all">
-                  {registeredPublishableKey}
-                </pre>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    void copyToClipboard("publishable_key", registeredPublishableKey)
-                  }
-                >
-                  Copy publishable key
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {registeredMerchantSecret && (
-            <Alert>
-              <AlertTitle>Merchant secret key (server only)</AlertTitle>
-              <AlertDescription className="space-y-2">
-                <p className="text-xs">
-                  This is your <code className="rounded bg-muted px-1">dress_sk_…</code> merchant
-                  key for <code className="rounded bg-muted px-1">DRESSAPP_MERCHANT_SECRET</code>.
-                  Never expose it in the browser or commit it to git.
-                </p>
-                <pre className="max-h-24 overflow-auto rounded-md border bg-muted p-3 text-xs break-all">
-                  {registeredMerchantSecret}
-                </pre>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    void copyToClipboard("secret_key", registeredMerchantSecret)
-                  }
-                >
-                  Copy merchant secret
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
+          {registeredMerchantSecret || registeredPublishableKey ? (
+            <div className="rounded-xl border-2 border-primary bg-primary/5 p-6 shadow-md dark:bg-primary/10">
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                Save these credentials
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Merchant secret key (server-only) and publishable key (<code className="rounded bg-muted px-1 text-xs">dress_pk_…</code>) for
+                browser / SDK. Copy now — treat the secret like a password (never commit).
+              </p>
+              <div className="mt-5 space-y-5">
+                {registeredMerchantSecret ? (
+                  <div className="space-y-2">
+                    <Label className="text-base font-semibold text-foreground">
+                      Merchant secret key
+                    </Label>
+                    <p className="font-mono text-sm sm:text-base leading-relaxed break-all rounded-lg border bg-background px-4 py-3 text-foreground">
+                      {registeredMerchantSecret}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        void copyToClipboard("merchant_secret_key", registeredMerchantSecret)
+                      }
+                    >
+                      Copy secret key
+                    </Button>
+                  </div>
+                ) : null}
+                {registeredPublishableKey ? (
+                  <div className="space-y-2">
+                    <Label className="text-base font-semibold text-foreground">
+                      Publishable key
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Use in <code className="rounded bg-muted px-1">DRESSAPP_PUBLISHABLE_KEY</code> /{" "}
+                      <code className="rounded bg-muted px-1">NEXT_PUBLIC_DRESSAPP_PUBLISHABLE_KEY</code>{" "}
+                      for embeds and shopper session from this site.
+                    </p>
+                    <p className="font-mono text-sm sm:text-base leading-relaxed break-all rounded-lg border bg-background px-4 py-3 text-foreground">
+                      {registeredPublishableKey}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        void copyToClipboard("publishable_key", registeredPublishableKey)
+                      }
+                    >
+                      Copy publishable key
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           {provisionSnippet && (
             <div className="space-y-2">

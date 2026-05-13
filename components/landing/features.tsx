@@ -1,59 +1,65 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { 
-  Zap, 
-  Shield, 
-  BarChart3, 
-  Layers, 
-  Globe, 
-  Code2,
-  ArrowUpRight
+import {
+  Shirt,
+  Ruler,
+  FileText,
+  Puzzle,
+  Settings2,
+  LayoutDashboard,
+  ArrowUpRight,
 } from "lucide-react"
 
 const features = [
   {
-    icon: Zap,
-    title: "Lightning Fast",
-    description: "Sub-500ms rendering powered by our proprietary AI engine. No waiting, just seamless visualization.",
-    stat: "< 500ms",
-    statLabel: "avg response time"
+    icon: Shirt,
+    title: "Accurate and realistic try-ons",
+    description:
+      "Photoreal draping and silhouette so shoppers see how garments actually read on a body, not a generic mannequin.",
+    stat: "Fit-first",
+    statLabel: "visual fidelity",
   },
   {
-    icon: Shield,
-    title: "Privacy First",
-    description: "All processing happens on-device. Customer photos never leave their browser.",
-    stat: "100%",
-    statLabel: "client-side processing"
+    icon: Ruler,
+    title: "Recommended size suggestion",
+    description:
+      "Clear size guidance per item so customers add the right SKU to cart the first time.",
+    stat: "Guided",
+    statLabel: "sizing per garment",
   },
   {
-    icon: BarChart3,
-    title: "Conversion Boost",
-    description: "Customers who use virtual try-on are 3x more likely to complete their purchase.",
-    stat: "3x",
-    statLabel: "higher conversion"
+    icon: FileText,
+    title: "Garment size and fit description",
+    description:
+      "Structured fit notes and measurements surfaced next to try-on so copy and visuals stay aligned.",
+    stat: "Clear",
+    statLabel: "fit language",
   },
   {
-    icon: Layers,
-    title: "Easy Integration",
-    description: "Drop-in SDK for any e-commerce platform. Works with Shopify, Magento, WooCommerce, and custom builds.",
-    stat: "2 hrs",
-    statLabel: "average setup time"
+    icon: Puzzle,
+    title: "Easy integration",
+    description:
+      "SDKs and patterns that slot into your PDP, cart, and analytics without replatforming your stack.",
+    stat: "Low lift",
+    statLabel: "implementation",
   },
   {
-    icon: Globe,
-    title: "Global CDN",
-    description: "Edge deployment in 200+ locations ensures fast loading for customers worldwide.",
-    stat: "200+",
-    statLabel: "edge locations"
+    icon: Settings2,
+    title: "Customizability",
+    description:
+      "Tune UI, flows, and guardrails to your brand so the experience feels native to your store.",
+    stat: "Your brand",
+    statLabel: "your rules",
   },
   {
-    icon: Code2,
-    title: "Developer Friendly",
-    description: "Comprehensive API, webhooks, and detailed documentation. Build custom experiences with ease.",
-    stat: "99.9%",
-    statLabel: "uptime SLA"
-  }
+    icon: LayoutDashboard,
+    title: "Usage dashboard",
+    description:
+      "See try-on volume, model creation, and engagement in one place for finance and product teams.",
+    stat: "Live",
+    statLabel: "usage visibility",
+  },
 ]
 
 const containerVariants = {
@@ -61,9 +67,9 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 }
 
 const itemVariants = {
@@ -72,14 +78,14 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5
-    }
-  }
+      duration: 0.5,
+    },
+  },
 }
 
 export function Features() {
   return (
-    <section id="features" className="py-24 lg:py-32 bg-card">
+    <section id="features" className="py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)] bg-card">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -92,13 +98,13 @@ export function Features() {
             Features
           </span>
           <h2 className="mt-4 text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-balance">
-            Enterprise-grade infrastructure
+            Built for merchandising and growth
             <br />
-            <span className="text-muted-foreground">for fashion innovation</span>
+            <span className="text-muted-foreground">without the fluff</span>
           </h2>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Everything you need to deliver exceptional virtual try-on experiences 
-            at scale, backed by robust technology and dedicated support.
+            Everything you need to ship trustworthy try-on, keep teams aligned, and read usage like
+            any other metered product surface.
           </p>
         </motion.div>
 
@@ -121,12 +127,10 @@ export function Features() {
                 </div>
                 <ArrowUpRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              
+
               <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                {feature.description}
-              </p>
-              
+              <p className="text-muted-foreground text-sm leading-relaxed mb-6">{feature.description}</p>
+
               <div className="pt-4 border-t border-border">
                 <span className="text-2xl font-bold text-accent">{feature.stat}</span>
                 <p className="text-xs text-muted-foreground mt-1">{feature.statLabel}</p>

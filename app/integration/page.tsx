@@ -7,7 +7,7 @@ import { DressAppIntegrationGuide } from "@/components/dressapp/dressapp-integra
 export const metadata: Metadata = {
   title: "Integration | DressApp",
   description:
-    "Shopify partner integration: OAuth, environment variables, DressApp install API, and theme extension overview.",
+    "Connect DressApp to Shopify: prerequisites, production environment variables, and DressApp API endpoints your backend uses.",
 }
 
 export default function IntegrationPage() {
@@ -24,9 +24,8 @@ export default function IntegrationPage() {
           </Link>
           <h1 className="mt-4 text-3xl font-bold tracking-tight">Integration</h1>
           <p className="mt-2 text-muted-foreground">
-            Shopify app path from the project{" "}
-            <code className="rounded bg-muted px-1 py-0.5 text-xs">README.md</code>: prerequisites,
-            env vars, local dev, and the DressApp endpoints your server calls.
+            Production-oriented checklist for the Shopify app: what gets connected, required
+            configuration, and the DressApp endpoints your server calls after install.
           </p>
         </div>
         <DressAppIntegrationGuide />

@@ -1,18 +1,13 @@
 "use client"
 
 import { useCallback, useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
-
-function generateSlug(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return `integration-${crypto.randomUUID().slice(0, 8)}`
-  }
-  return `integration-${Date.now().toString(36)}`
-}
+import { formatPartnerApiErrorPayload } from "@/lib/dressapp-partner-api-errors"
 
 async function parseJsonResponse(res: Response): Promise<Record<string, unknown>> {
   const text = await res.text()
@@ -27,14 +22,23 @@ async function parseJsonResponse(res: Response): Promise<Record<string, unknown>
 }
 
 export function DressAppIntegrationMerchantKeyButton() {
-  const [name, setName] = useState("DressApp integration merchant")
-  const [slug, setSlug] = useState(() => generateSlug())
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<{
     publishableKey: string
+    secretKey?: string
     saved: boolean
   } | null>(null)
+
+  const copyText = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (e) {
+      console.error("[integration merchant key] clipboard", e)
+    }
+  }, [])
 
   const handleClick = useCallback(async () => {
     setBusy(true)
@@ -46,17 +50,14 @@ export function DressAppIntegrationMerchantKeyButton() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          slug: slug.trim() || generateSlug(),
+          email: email.trim(),
         }),
       })
       const data = await parseJsonResponse(res)
       if (!res.ok) {
-        const err =
-          typeof data.error === "string"
-            ? data.error
-            : `Request failed (${res.status})`
+        const friendly = formatPartnerApiErrorPayload(data as Record<string, unknown>, res.status)
         const hint = typeof data.hint === "string" ? `\n\n${data.hint}` : ""
-        setError(err + hint)
+        setError(friendly + hint)
         console.error("[integration merchant key]", data)
         return
       }
@@ -69,8 +70,13 @@ export function DressAppIntegrationMerchantKeyButton() {
         console.error("[integration merchant key] missing pk", data)
         return
       }
+      const sk =
+        (typeof data.secret_key === "string" && data.secret_key) ||
+        (typeof data.secretKey === "string" && data.secretKey) ||
+        ""
       setSuccess({
         publishableKey: pk,
+        secretKey: sk || undefined,
         saved: data.saved_to_database === true,
       })
     } catch (e) {
@@ -80,12 +86,13 @@ export function DressAppIntegrationMerchantKeyButton() {
     } finally {
       setBusy(false)
     }
-  }, [name, slug])
+  }, [name, email])
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Calls partner admin to create a merchant, then writes the{" "}
+        Calls partner admin to create a merchant (a unique <strong>slug</strong> is assigned
+        automatically), then writes the{" "}
         <code className="rounded bg-muted px-1 text-xs">publishable_key</code> to Postgres.
         Requires <code className="rounded bg-muted px-1 text-xs">DRESSAPP_MERCHANT_KEYS_DATABASE_URL</code>{" "}
         plus the same DressApp env vars as merchant registration.
@@ -98,31 +105,28 @@ export function DressAppIntegrationMerchantKeyButton() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={busy}
+            autoComplete="organization"
+            required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="int-merchant-slug">Slug (unique)</Label>
-          <div className="flex gap-2">
-            <Input
-              id="int-merchant-slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              disabled={busy}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busy}
-              onClick={() => setSlug(generateSlug())}
-            >
-              New slug
-            </Button>
-          </div>
+          <Label htmlFor="int-merchant-email">Merchant email</Label>
+          <Input
+            id="int-merchant-email"
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={busy}
+            required
+          />
         </div>
       </div>
       <Button
         type="button"
-        disabled={busy || !name.trim()}
+        disabled={busy || !name.trim() || !email.trim()}
         onClick={() => void handleClick()}
       >
         {busy ? (
@@ -136,22 +140,71 @@ export function DressAppIntegrationMerchantKeyButton() {
       </Button>
       {error && (
         <Alert variant="destructive">
-          <AlertTitle>Something went wrong</AlertTitle>
+          <AlertTitle>Couldn’t create merchant</AlertTitle>
           <AlertDescription className="whitespace-pre-wrap text-sm">{error}</AlertDescription>
         </Alert>
       )}
       {success && (
-        <Alert>
-          <AlertTitle>Publishable key saved</AlertTitle>
-          <AlertDescription className="space-y-2 text-sm">
-            {success.saved ? (
-              <p>
-                Row upserted in <code className="rounded bg-muted px-1 text-xs">dressapp_integration_merchant_keys</code>.
-              </p>
+        <div className="rounded-xl border-2 border-primary bg-primary/5 p-6 shadow-md dark:bg-primary/10">
+          <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+            Save these credentials
+          </p>
+          {success.saved ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Row upserted in{" "}
+              <code className="rounded bg-muted px-1 text-xs">dressapp_integration_merchant_keys</code>.
+            </p>
+          ) : null}
+          <p className="mt-1 text-sm text-muted-foreground">
+            Merchant secret key for server-side calls; publishable key for browser / SDK. Store the
+            secret server-side only.
+          </p>
+          <div className="mt-5 space-y-5">
+            {success.secretKey ? (
+              <div className="space-y-2">
+                <Label className="text-base font-semibold text-foreground">
+                  Merchant secret key
+                </Label>
+                <p className="font-mono text-sm sm:text-base leading-relaxed break-all rounded-lg border bg-background px-4 py-3 text-foreground">
+                  {success.secretKey}
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => void copyText(success.secretKey!)}
+                >
+                  Copy secret key
+                </Button>
+              </div>
             ) : null}
-            <p className="font-mono text-xs break-all">{success.publishableKey}</p>
-          </AlertDescription>
-        </Alert>
+            <div className="space-y-2">
+              <Label className="text-base font-semibold text-foreground">Publishable key</Label>
+              <p className="text-xs text-muted-foreground">
+                <code className="rounded bg-muted px-1">dress_pk_…</code> — for{" "}
+                <code className="rounded bg-muted px-1">DRESSAPP_PUBLISHABLE_KEY</code> and embeds.
+              </p>
+              <p className="font-mono text-sm sm:text-base leading-relaxed break-all rounded-lg border bg-background px-4 py-3 text-foreground">
+                {success.publishableKey}
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void copyText(success.publishableKey)}
+              >
+                Copy publishable key
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Usage page:{" "}
+              <Link href="/usage" className="underline underline-offset-2">
+                Bearer secret key
+              </Link>{" "}
+              only. Keys may not be shown again.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   )

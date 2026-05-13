@@ -29,7 +29,7 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section id="customers" className="py-24 lg:py-32 bg-card">
+    <section id="customers" className="py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)] bg-card">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

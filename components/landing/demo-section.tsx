@@ -43,7 +43,7 @@ export function DemoSection() {
   }
 
   return (
-    <section id="product" className="relative py-24 lg:py-32 overflow-hidden">
+    <section id="product" className="relative py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)] overflow-hidden">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

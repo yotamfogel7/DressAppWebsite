@@ -150,3 +150,23 @@
 ::selection {
   background: oklch(0.7 0.15 280 / 0.3);
 }
+
+@keyframes usage-gallery-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.usage-gallery-marquee {
+  animation: usage-gallery-marquee 55s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .usage-gallery-marquee {
+    animation: none;
+  }
+}

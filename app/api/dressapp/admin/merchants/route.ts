@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server"
 import { dressappLocalDevUrlHint } from "@/lib/dressapp-local-url-hint"
+import { randomMerchantDashboardPassword } from "@/lib/dressapp-http-basic"
+import { normalizeMerchantEmail } from "@/lib/dressapp-merchant-email"
+import { formatPartnerMerchantCreationErrorBody } from "@/lib/dressapp-partner-api-errors"
 
 /** Trim and strip optional surrounding quotes from .env values. */
 function readEnvSecret(raw: string | undefined): string {
@@ -57,6 +60,7 @@ export async function GET() {
 type CreateMerchantBody = {
   name?: string
   slug?: string
+  email?: string
   allowed_origins?: string[]
 }
 
@@ -100,14 +104,22 @@ export async function POST(req: Request) {
 
     const name = typeof body.name === "string" ? body.name.trim() : ""
     const slug = typeof body.slug === "string" ? body.slug.trim() : ""
+    const email = normalizeMerchantEmail(typeof body.email === "string" ? body.email : "")
     if (!name || !slug) {
       return NextResponse.json(
         { error: "Fields name and slug are required." },
         { status: 400 },
       )
     }
+    if (!email) {
+      return NextResponse.json(
+        { error: "Field email is required and must be a valid email address." },
+        { status: 400 },
+      )
+    }
 
-    const payload: Record<string, unknown> = { name, slug }
+    const password = randomMerchantDashboardPassword()
+    const payload: Record<string, unknown> = { name, slug, password, email }
     if (Array.isArray(body.allowed_origins) && body.allowed_origins.length > 0) {
       const origins = body.allowed_origins
         .map((o) => (typeof o === "string" ? o.trim() : ""))
@@ -148,7 +160,7 @@ export async function POST(req: Request) {
       )
       return NextResponse.json(
         {
-          error: text?.trim() || `DressApp API error ${upstream.status}`,
+          error: formatPartnerMerchantCreationErrorBody(text, upstream.status),
           upstreamStatus: upstream.status,
         },
         { status: upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502 },

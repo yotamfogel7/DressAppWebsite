@@ -14,7 +14,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: 'DressApp | Virtual Try-On Engine for Fashion Retail',
-  description: 'Transform your e-commerce with AI-powered virtual try-on technology. Reduce returns by 40%, increase conversions, and deliver exceptional customer experiences.',
+  description: 'Transform your e-commerce with AI-powered virtual try-on technology. Reduce returns by X%, increase conversions, and deliver exceptional customer experiences.',
   keywords: ['virtual try-on', 'fashion tech', 'e-commerce', 'AI', 'augmented reality', 'retail technology'],
   generator: 'v0.app',
   icons: {

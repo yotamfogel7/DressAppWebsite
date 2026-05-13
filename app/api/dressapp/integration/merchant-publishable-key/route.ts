@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import { dressappLocalDevUrlHint } from "@/lib/dressapp-local-url-hint"
 import { saveMerchantPublishableKey } from "@/lib/dressapp-integration-merchant-db"
+import { randomMerchantDashboardPassword } from "@/lib/dressapp-http-basic"
+import { normalizeMerchantEmail } from "@/lib/dressapp-merchant-email"
+import { formatPartnerMerchantCreationErrorBody } from "@/lib/dressapp-partner-api-errors"
 
 function readEnvSecret(raw: string | undefined): string {
   if (raw == null) return ""
@@ -24,6 +27,7 @@ function registrationGateOpen() {
 type Body = {
   name?: string
   slug?: string
+  email?: string
   allowed_origins?: string[]
 }
 
@@ -78,16 +82,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
     }
 
-    const name =
-      typeof body.name === "string" && body.name.trim()
-        ? body.name.trim()
-        : "DressApp integration merchant"
+    const name = typeof body.name === "string" ? body.name.trim() : ""
+    if (!name) {
+      return NextResponse.json({ error: "Field name is required." }, { status: 400 })
+    }
+
+    const email = normalizeMerchantEmail(typeof body.email === "string" ? body.email : "")
+    if (!email) {
+      return NextResponse.json(
+        { error: "Field email is required and must be a valid email address." },
+        { status: 400 },
+      )
+    }
+
     const slug =
       typeof body.slug === "string" && body.slug.trim()
         ? body.slug.trim()
         : `integration-${crypto.randomUUID().slice(0, 8)}`
 
-    const payload: Record<string, unknown> = { name, slug }
+    const password = randomMerchantDashboardPassword()
+
+    const payload: Record<string, unknown> = { name, slug, password, email }
     if (Array.isArray(body.allowed_origins) && body.allowed_origins.length > 0) {
       const origins = body.allowed_origins
         .map((o) => (typeof o === "string" ? o.trim() : ""))
@@ -125,7 +140,7 @@ export async function POST(req: Request) {
       )
       return NextResponse.json(
         {
-          error: text?.trim() || `DressApp API error ${upstream.status}`,
+          error: formatPartnerMerchantCreationErrorBody(text, upstream.status),
           upstreamStatus: upstream.status,
         },
         {
@@ -176,7 +191,8 @@ export async function POST(req: Request) {
       console.error("[dressapp/integration/merchant-publishable-key] Database error", dbErr)
       return NextResponse.json(
         {
-          error: `Merchant was created but saving to the database failed: ${msg}`,
+          error:
+            "Your merchant was created on DressApp, but saving the publishable key to our database didn’t work. You can still copy your keys below. If this keeps happening, check the database connection or contact support.",
           publishable_key: publishableKey,
           secret_key: secretKey || undefined,
         },

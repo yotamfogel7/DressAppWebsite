@@ -8,14 +8,21 @@ import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 
 const navLinks = [
-  { href: "#problem", label: "Why DressApp" },
-  { href: "#product", label: "Product" },
-  { href: "#features", label: "Features" },
-  { href: "#pricing", label: "Pricing" },
+  { href: "/#solution", label: "Solution" },
+  { href: "/#product", label: "Product" },
+  { href: "/#features", label: "Features" },
+  { href: "/#pricing", label: "Pricing" },
   { href: "/integration", label: "Integration" },
+  { href: "/usage", label: "Usage" },
+  { href: "mailto:dressappsupport@gmail.com", label: "Contact us" },
 ]
 
-export function Header() {
+type HeaderProps = {
+  /** Use with full-viewport app shells so content is not hidden under a fixed bar. */
+  sticky?: boolean
+}
+
+export function Header({ sticky = false }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -27,12 +34,16 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  const positionClass = sticky
+    ? "sticky top-0 z-50 w-full shrink-0"
+    : "fixed top-0 left-0 right-0 z-50"
+
   return (
     <motion.header
-      initial={{ y: -100 }}
+      initial={sticky ? false : { y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`${positionClass} transition-all duration-300 ${
         scrolled ? "bg-background/80 backdrop-blur-xl border-b border-border" : ""
       }`}
     >
@@ -50,22 +61,37 @@ export function Header() {
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) =>
+              link.href.startsWith("mailto:") ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" size="sm">
-              Log in
+            <Button size="sm" asChild>
+              <a
+                href="https://dressapp-preview.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Try it out
+              </a>
             </Button>
-            <Button size="sm">Get Started</Button>
           </div>
 
           <button
@@ -87,19 +113,37 @@ export function Header() {
             className="md:hidden bg-background border-b border-border"
           >
             <div className="px-6 py-4 flex flex-col gap-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {navLinks.map((link) =>
+                link.href.startsWith("mailto:") ? (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ),
+              )}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="ghost">Log in</Button>
-                <Button>Get Started</Button>
+                <Button asChild>
+                  <a
+                    href="https://dressapp-preview.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Try it out
+                  </a>
+                </Button>
               </div>
             </div>
           </motion.div>
