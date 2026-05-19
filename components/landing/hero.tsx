@@ -3,6 +3,9 @@
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
+import { SeeItInActionDemo } from "@/components/landing/demo-section"
+
+const easeOutStrong = [0.22, 1, 0.36, 1] as const
 
 export function Hero() {
   return (
@@ -10,7 +13,7 @@ export function Hero() {
       <div className="absolute top-1/4 left-1/4 w-[480px] h-[480px] bg-accent/15 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)] w-full">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
           <div className="text-left max-w-xl lg:max-w-none">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -68,15 +71,10 @@ export function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.25 }}
-            className="relative min-h-[280px] sm:min-h-[360px] lg:min-h-[420px] rounded-2xl border border-dashed border-border bg-muted/25 flex flex-col items-center justify-center gap-3 p-8 text-center"
-            aria-label="Animation placeholder"
+            transition={{ duration: 0.7, delay: 0.2, ease: easeOutStrong }}
+            className="relative w-full max-w-lg lg:max-w-none lg:justify-self-end min-w-0"
           >
-            <p className="text-sm font-medium text-foreground">Hero animation</p>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              Add your Lottie, video, or product loop here. This area is reserved so layout stays
-              stable before assets ship.
-            </p>
+            <SeeItInActionDemo />
           </motion.div>
         </div>
       </div>

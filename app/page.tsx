@@ -1,6 +1,5 @@
 import { Header } from "@/components/landing/header"
 import { Hero } from "@/components/landing/hero"
-import { DemoSection } from "@/components/landing/demo-section"
 import { SolutionSection } from "@/components/landing/solution-section"
 import { ShowcaseSection } from "@/components/landing/showcase-section"
 import { HowItWorks } from "@/components/landing/how-it-works"
@@ -15,7 +14,6 @@ export default function Home() {
     <main className="min-h-screen bg-background text-foreground">
       <Header />
       <Hero />
-      <DemoSection />
       <SolutionSection />
       <ShowcaseSection />
       <HowItWorks />
