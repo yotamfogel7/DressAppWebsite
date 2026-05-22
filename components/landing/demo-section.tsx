@@ -8,7 +8,6 @@ type SizeOption = {
   id: string
   label: string
   tryOnSrc: string
-  fitDescription: string
   fitStatus: string
   fitTone: "good" | "warn" | "bad"
 }
@@ -32,8 +31,6 @@ const demoGarments: DemoGarment[] = [
         id: "xs",
         label: "XS",
         tryOnSrc: "/component/demo1_xs.png",
-        fitDescription:
-          "Runs noticeably small through the chest and shoulders. Length sits above the hip line.",
         fitStatus: "SMALL BY 9CM",
         fitTone: "bad",
       },
@@ -41,8 +38,6 @@ const demoGarments: DemoGarment[] = [
         id: "s",
         label: "S",
         tryOnSrc: "/component/demo1_s.png",
-        fitDescription:
-          "Snug across the chest with shorter sleeve length. Waist and hips feel slightly constrained.",
         fitStatus: "SMALL BY 4.7CM",
         fitTone: "warn",
       },
@@ -50,8 +45,6 @@ const demoGarments: DemoGarment[] = [
         id: "m",
         label: "M",
         tryOnSrc: "/component/demo1_m.png",
-        fitDescription:
-          "Feels like it was made for you. Sits well on chest, waist, and hips without feeling tight or baggy. Shoulders, sleeves, and length should look and feel right.",
         fitStatus: "GOOD FIT - SMALL BY 1.1CM",
         fitTone: "good",
       },
@@ -59,8 +52,6 @@ const demoGarments: DemoGarment[] = [
         id: "l",
         label: "L",
         tryOnSrc: "/component/demo1_l.png",
-        fitDescription:
-          "Balanced through chest and waist with comfortable room to move. Sleeve and hem length align with your proportions.",
         fitStatus: "GOOD FIT - BIG BY 3.6CM",
         fitTone: "good",
       },
@@ -68,8 +59,6 @@ const demoGarments: DemoGarment[] = [
         id: "xl",
         label: "XL",
         tryOnSrc: "/component/demo1_xl.png",
-        fitDescription:
-          "Extra room in the torso and sleeves. Shoulders sit slightly wide with a relaxed drape through the body.",
         fitStatus: "BIG BY 4.2CM",
         fitTone: "warn",
       },
@@ -95,9 +84,9 @@ const slideVariants = {
 }
 
 const FIT_TONE_STYLES = {
-  good: "border-[oklch(0.62_0.17_145)] text-[oklch(0.72_0.17_145)]",
-  warn: "border-[oklch(0.72_0.14_85)] text-[oklch(0.78_0.14_85)]",
-  bad: "border-[oklch(0.62_0.2_25)] text-[oklch(0.72_0.2_25)]",
+  good: "border-emerald-500/35 bg-emerald-50 text-emerald-700",
+  warn: "border-amber-500/35 bg-amber-50 text-amber-800",
+  bad: "border-red-500/35 bg-red-50 text-red-700",
 } as const
 
 /** Try-on demo for the hero. Anchor id `product` for in-page nav. */
@@ -160,27 +149,27 @@ export function SeeItInActionDemo() {
   }, [garment.sizes, garment.userPhotoSrc])
 
   return (
-    <div id="product" className="w-full min-w-0 max-w-2xl lg:max-w-none">
+    <div id="product" className="relative -mt-9 w-full min-w-0 sm:-mt-10 lg:-mt-11">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.05, ease: easeOutStrong }}
-        className="relative"
+        className="relative w-full overflow-visible"
       >
-        <div className="rounded-[1.25rem] border border-[oklch(0.24_0.01_280)] bg-[oklch(0.11_0.008_280)] p-3 sm:p-4 shadow-[0_24px_64px_-32px_oklch(0.05_0.03_280/0.55)]">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="w-full rounded-[1.35rem] border border-border bg-card p-4 sm:p-5 lg:p-6 shadow-[0_24px_64px_-28px_color-mix(in_oklch,#2c3457_18%,transparent)]">
+          <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
             {/* Product column */}
-            <div className="flex min-w-0 flex-col gap-2 sm:gap-3">
-              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[oklch(0.58_0.01_280)] sm:text-[11px]">
+            <div className="flex min-w-0 flex-col gap-3">
+              <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">
                 Product
               </span>
 
-              <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-[oklch(0.1_0.01_280)]">
+              <div className="relative aspect-[3/4] min-h-[80px] w-full overflow-hidden rounded-xl border border-border bg-muted sm:min-h-[140px] lg:min-h-[220px] xl:min-h-[280px]">
                 <Image
                   src={garment.originalSrc}
                   alt=""
                   fill
-                  sizes="(min-width: 1024px) 240px, 42vw"
+                  sizes="(min-width: 1280px) 340px, 42vw"
                   className="object-cover object-center"
                   priority
                   onError={(e) => {
@@ -193,49 +182,25 @@ export function SeeItInActionDemo() {
                 />
               </div>
 
-              <div className="rounded-full border border-[oklch(0.62_0.18_295)] bg-[oklch(0.13_0.02_280)] px-3 py-2 text-center sm:px-4 sm:py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[oklch(0.96_0.005_280)] sm:text-[11px]">
+              <div className="rounded-full border border-accent/30 bg-secondary px-3 py-2.5 text-center sm:px-4 sm:py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground sm:text-[11px]">
                   Recommended size: {garment.recommendedSize}
                 </p>
-                <p className="mt-0.5 text-[9px] text-[oklch(0.58_0.01_280)] sm:text-[10px]">
+                <p className="mt-0.5 text-[9px] text-muted-foreground sm:text-[10px]">
                   Based on your measurements
                 </p>
               </div>
             </div>
 
             {/* Try-on column */}
-            <div className="flex min-w-0 flex-col gap-2 sm:gap-3">
-              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[oklch(0.58_0.01_280)] sm:text-[11px]">
+            <div className="flex min-w-0 flex-col gap-3">
+              <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">
                 Try-on · {activeSize.label}
               </span>
 
-              <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-[oklch(0.1_0.01_280)]">
-                <AnimatePresence initial={false} custom={slideDirection} mode="wait">
-                  {showUserPhoto ? (
-                    <motion.div
-                      key="user-photo"
-                      initial={{ opacity: 0, scale: 0.98 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.98 }}
-                      transition={{ duration: 0.32, ease: easeOutStrong }}
-                      className="absolute inset-0"
-                    >
-                      <Image
-                        src={garment.userPhotoSrc}
-                        alt=""
-                        fill
-                        sizes="(min-width: 1024px) 240px, 42vw"
-                        className="object-cover object-center"
-                        onError={(e) => {
-                          console.error(
-                            "[SeeItInActionDemo] failed to load user photo",
-                            garment.userPhotoSrc,
-                            e,
-                          )
-                        }}
-                      />
-                    </motion.div>
-                  ) : (
+              <div className="relative aspect-[3/4] min-h-[80px] w-full overflow-hidden rounded-xl border border-border bg-muted sm:min-h-[140px] lg:min-h-[220px] xl:min-h-[280px]">
+                <AnimatePresence initial={false} custom={slideDirection}>
+                  {!showUserPhoto && (
                     <motion.div
                       key={activeSize.id}
                       custom={slideDirection}
@@ -250,8 +215,8 @@ export function SeeItInActionDemo() {
                         src={activeSize.tryOnSrc}
                         alt=""
                         fill
-                        sizes="(min-width: 1024px) 240px, 42vw"
-                        className="object-cover object-center"
+                        sizes="(min-width: 1280px) 340px, 42vw"
+                        className="h-full w-full object-contain object-center"
                         onError={(e) => {
                           console.error(
                             "[SeeItInActionDemo] failed to load try-on image",
@@ -264,29 +229,61 @@ export function SeeItInActionDemo() {
                   )}
                 </AnimatePresence>
 
-                <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between p-2 sm:p-2.5">
-                  <span className="pointer-events-none flex h-7 w-7 items-center justify-center rounded-md bg-[oklch(0.08_0.01_280/0.82)] text-[11px] font-semibold text-[oklch(0.96_0.005_280)] backdrop-blur-[2px] sm:h-8 sm:w-8 sm:text-xs">
+                <AnimatePresence initial={false}>
+                  {showUserPhoto && (
+                    <motion.div
+                      key="user-photo"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      transition={{ duration: 0.32, ease: easeOutStrong }}
+                      className="absolute inset-0 z-[1]"
+                    >
+                      <Image
+                        src={garment.userPhotoSrc}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1280px) 340px, 42vw"
+                        className="h-full w-full object-contain object-center"
+                        onError={(e) => {
+                          console.error(
+                            "[SeeItInActionDemo] failed to load user photo",
+                            garment.userPhotoSrc,
+                            e,
+                          )
+                        }}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between p-2.5 sm:p-3">
+                  <span className="pointer-events-none flex h-14 w-14 items-center justify-center rounded-md border border-primary/20 bg-primary text-lg font-semibold text-primary-foreground shadow-sm sm:h-[60px] sm:w-[60px] sm:text-xl">
                     {activeSize.label}
                   </span>
 
-                  <div className="flex items-end gap-1.5 sm:gap-2">
-                    <div className="pointer-events-none mb-1 flex flex-col items-end gap-0.5 text-[oklch(0.96_0.005_280/0.9)]">
-                      <span className="text-[7px] font-medium tracking-[0.04em] sm:text-[8px]">
+                  <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                    <div
+                      className="pointer-events-none flex min-w-0 items-center gap-1 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9),0_0_6px_rgba(0,0,0,0.65)] sm:gap-1.5"
+                      aria-hidden
+                    >
+                      <span className="max-w-[4.5rem] text-[9px] font-medium leading-tight tracking-[0.04em] [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_8px_rgba(0,0,0,0.55)] sm:max-w-none sm:text-[10px]">
                         original user photo
                       </span>
-                      <SketchArrowToPhoto className="h-3 w-10 sm:h-3.5 sm:w-11" />
+                      <SketchArrowToPhoto className="h-2.5 w-7 shrink-0 sm:h-3 sm:w-8" />
                     </div>
+
                     <button
                       type="button"
                       aria-label="Show original user photo"
                       aria-pressed={showUserPhoto}
                       onClick={handleUserPhotoClick}
                       className={[
-                        "relative h-9 w-9 shrink-0 overflow-hidden rounded-md border transition-colors duration-200 outline-none sm:h-10 sm:w-10",
-                        "focus-visible:ring-2 focus-visible:ring-[oklch(0.7_0.15_280)] focus-visible:ring-offset-2 focus-visible:ring-offset-[oklch(0.1_0.01_280)]",
+                        "relative h-10 w-10 shrink-0 cursor-pointer overflow-hidden rounded-md border transition-colors duration-200 outline-none sm:h-11 sm:w-11",
+                        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         showUserPhoto
-                          ? "border-[oklch(0.78_0.08_280)] ring-1 ring-[oklch(0.78_0.08_280/0.45)]"
-                          : "border-[oklch(0.32_0.01_280)] hover:border-[oklch(0.48_0.01_280)]",
+                          ? "border-accent ring-1 ring-accent/40"
+                          : "border-border hover:border-accent/50",
                       ].join(" ")}
                     >
                       <Image
@@ -294,7 +291,7 @@ export function SeeItInActionDemo() {
                         alt=""
                         fill
                         sizes="40px"
-                        className="object-cover object-center"
+                        className="h-full w-full object-cover object-top"
                         onError={(e) => {
                           console.error(
                             "[SeeItInActionDemo] failed to load user photo",
@@ -306,51 +303,45 @@ export function SeeItInActionDemo() {
                     </button>
                   </div>
                 </div>
-              </div>
 
-              <div className="rounded-xl border border-[oklch(0.28_0.01_280)] bg-[oklch(0.13_0.008_280)] px-3 py-2.5 sm:px-3.5 sm:py-3">
-                <p className="text-[10px] leading-relaxed text-[oklch(0.82_0.005_280)] sm:text-[11px]">
-                  {activeSize.fitDescription}
-                </p>
+                <div
+                  className="pointer-events-auto absolute right-2 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-1 sm:right-2.5 sm:gap-1.5"
+                  role="radiogroup"
+                  aria-label="Sizes"
+                >
+                  {garment.sizes.map((s) => {
+                    const selected = s.id === sizeId
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        aria-label={`Size ${s.label}`}
+                        onClick={() => handleSizeChange(s.id)}
+                        className={[
+                          "flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[10px] font-semibold tabular-nums shadow-sm transition-colors duration-200 outline-none sm:h-8 sm:w-8 sm:text-[11px]",
+                          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                          selected
+                            ? "bg-primary text-primary-foreground"
+                            : "border border-border bg-background/95 text-muted-foreground backdrop-blur-[2px] hover:border-accent/40 hover:text-foreground",
+                        ].join(" ")}
+                      >
+                        {s.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               <div
-                className={`rounded-full border bg-[oklch(0.13_0.008_280)] px-3 py-2 text-center sm:px-4 sm:py-2.5 ${FIT_TONE_STYLES[activeSize.fitTone]}`}
+                className={`rounded-full border px-3 py-2.5 text-center sm:px-4 sm:py-3 ${FIT_TONE_STYLES[activeSize.fitTone]}`}
               >
                 <p className="text-[9px] font-semibold uppercase tracking-[0.06em] sm:text-[10px]">
                   {activeSize.fitStatus}
                 </p>
               </div>
             </div>
-          </div>
-
-          <div
-            className="mt-4 flex items-center justify-center gap-2 sm:mt-5 sm:gap-2.5"
-            role="radiogroup"
-            aria-label="Sizes"
-          >
-            {garment.sizes.map((s) => {
-              const selected = s.id === sizeId
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  aria-label={`Size ${s.label}`}
-                  onClick={() => handleSizeChange(s.id)}
-                  className={[
-                    "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-[11px] font-semibold tabular-nums transition-colors duration-200 outline-none sm:h-10 sm:w-10 sm:text-xs",
-                    "focus-visible:ring-2 focus-visible:ring-[oklch(0.7_0.15_280)] focus-visible:ring-offset-2 focus-visible:ring-offset-[oklch(0.11_0.008_280)]",
-                    selected
-                      ? "bg-[oklch(0.78_0.08_280)] text-[oklch(0.14_0.02_280)]"
-                      : "bg-[oklch(0.18_0.01_280)] text-[oklch(0.62_0.01_280)] hover:bg-[oklch(0.22_0.01_280)] hover:text-[oklch(0.78_0.005_280)]",
-                  ].join(" ")}
-                >
-                  {s.label}
-                </button>
-              )
-            })}
           </div>
         </div>
       </motion.div>

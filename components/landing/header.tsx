@@ -17,6 +17,9 @@ const navLinks = [
   { href: "mailto:dressappsupport@gmail.com", label: "Contact us" },
 ]
 
+const navLinkClass =
+  "inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-base text-primary-foreground/75 transition-all duration-200 hover:border-primary-foreground/50 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+
 type HeaderProps = {
   /** Use with full-viewport app shells so content is not hidden under a fixed bar. */
   sticky?: boolean
@@ -43,8 +46,8 @@ export function Header({ sticky = false }: HeaderProps) {
       initial={sticky ? false : { y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className={`${positionClass} transition-all duration-300 ${
-        scrolled ? "bg-background/80 backdrop-blur-xl border-b border-border" : ""
+      className={`${positionClass} bg-primary text-primary-foreground border-b border-primary-foreground/10 transition-all duration-300 ${
+        scrolled ? "shadow-md" : ""
       }`}
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -60,13 +63,13 @@ export function Header({ sticky = false }: HeaderProps) {
             />
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-2">
             {navLinks.map((link) =>
               link.href.startsWith("mailto:") ? (
                 <a
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className={navLinkClass}
                 >
                   {link.label}
                 </a>
@@ -74,7 +77,7 @@ export function Header({ sticky = false }: HeaderProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className={navLinkClass}
                 >
                   {link.label}
                 </Link>
@@ -83,7 +86,7 @@ export function Header({ sticky = false }: HeaderProps) {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <Button size="sm" asChild>
+            <Button variant="secondary" className="text-base" asChild>
               <a
                 href="https://dressapp-preview.com"
                 target="_blank"
@@ -95,7 +98,7 @@ export function Header({ sticky = false }: HeaderProps) {
           </div>
 
           <button
-            className="md:hidden p-2 text-foreground"
+            className="md:hidden p-2 text-primary-foreground"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -110,7 +113,7 @@ export function Header({ sticky = false }: HeaderProps) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background border-b border-border"
+            className="md:hidden bg-primary border-b border-primary-foreground/10"
           >
             <div className="px-6 py-4 flex flex-col gap-4">
               {navLinks.map((link) =>
@@ -118,7 +121,7 @@ export function Header({ sticky = false }: HeaderProps) {
                   <a
                     key={link.href}
                     href={link.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                    className={`${navLinkClass} w-fit py-2`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.label}
@@ -127,15 +130,15 @@ export function Header({ sticky = false }: HeaderProps) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                    className={`${navLinkClass} w-fit py-2`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.label}
                   </Link>
                 ),
               )}
-              <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button asChild>
+              <div className="flex flex-col gap-2 pt-4 border-t border-primary-foreground/15">
+                <Button variant="secondary" className="text-base" asChild>
                   <a
                     href="https://dressapp-preview.com"
                     target="_blank"
