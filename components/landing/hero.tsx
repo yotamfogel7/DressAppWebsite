@@ -72,7 +72,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease: easeOutStrong }}
-            className="relative w-full max-w-lg lg:max-w-none lg:justify-self-end min-w-0"
+            className="relative w-full max-w-2xl lg:max-w-none lg:justify-self-end min-w-0"
           >
             <SeeItInActionDemo />
           </motion.div>
