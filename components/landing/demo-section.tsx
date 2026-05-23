@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { AnimatePresence, motion } from "framer-motion"
+import {
+  DEMO_CARD,
+  DEMO_COLUMN,
+  DEMO_GRID,
+  DEMO_IMAGE_FRAME,
+} from "@/components/landing/demo-layout"
 
 type SizeOption = {
   id: string
@@ -149,22 +155,22 @@ export function SeeItInActionDemo() {
   }, [garment.sizes, garment.userPhotoSrc])
 
   return (
-    <div id="product" className="relative -mt-9 w-full min-w-0 sm:-mt-10 lg:-mt-11">
+    <div id="product" className="relative -mt-[46px] w-full min-w-0 sm:-mt-[50px] lg:-mt-[54px]">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.05, ease: easeOutStrong }}
         className="relative w-full overflow-visible"
       >
-        <div className="w-full rounded-[1.35rem] border border-border bg-card p-4 sm:p-5 lg:p-6 shadow-[0_24px_64px_-28px_color-mix(in_oklch,#2c3457_18%,transparent)]">
-          <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+        <div className={DEMO_CARD}>
+          <div className={DEMO_GRID}>
             {/* Product column */}
-            <div className="flex min-w-0 flex-col gap-3">
+            <div className={DEMO_COLUMN}>
               <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">
                 Product
               </span>
 
-              <div className="relative aspect-[3/4] min-h-[80px] w-full overflow-hidden rounded-xl border border-border bg-muted sm:min-h-[140px] lg:min-h-[220px] xl:min-h-[280px]">
+              <div className={DEMO_IMAGE_FRAME}>
                 <Image
                   src={garment.originalSrc}
                   alt=""
@@ -182,23 +188,23 @@ export function SeeItInActionDemo() {
                 />
               </div>
 
-              <div className="rounded-full border border-accent/30 bg-secondary px-3 py-2.5 text-center sm:px-4 sm:py-3">
+              <div className="rounded-full border border-accent/30 bg-secondary px-3 py-1.5 text-center sm:px-4 sm:py-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground sm:text-[11px]">
                   Recommended size: {garment.recommendedSize}
                 </p>
-                <p className="mt-0.5 text-[9px] text-muted-foreground sm:text-[10px]">
+                <p className="text-[9px] text-muted-foreground sm:text-[10px]">
                   Based on your measurements
                 </p>
               </div>
             </div>
 
             {/* Try-on column */}
-            <div className="flex min-w-0 flex-col gap-3">
+            <div className={DEMO_COLUMN}>
               <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">
                 Try-on · {activeSize.label}
               </span>
 
-              <div className="relative aspect-[3/4] min-h-[80px] w-full overflow-hidden rounded-xl border border-border bg-muted sm:min-h-[140px] lg:min-h-[220px] xl:min-h-[280px]">
+              <div className={DEMO_IMAGE_FRAME}>
                 <AnimatePresence initial={false} custom={slideDirection}>
                   {!showUserPhoto && (
                     <motion.div

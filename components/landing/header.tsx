@@ -8,13 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 
 const navLinks = [
-  { href: "/#solution", label: "Solution" },
-  { href: "/#product", label: "Product" },
+  { href: "/#solution", label: "What is DressApp" },
+  { href: "/#how-it-works", label: "How it works" },
   { href: "/#features", label: "Features" },
   { href: "/#pricing", label: "Pricing" },
-  { href: "/integration", label: "Integration" },
+  { href: "/#contact-us", label: "Contact us" },
   { href: "/usage", label: "Usage" },
-  { href: "mailto:dressappsupport@gmail.com", label: "Contact us" },
 ]
 
 const navLinkClass =
@@ -51,38 +50,24 @@ export function Header({ sticky = false }: HeaderProps) {
       }`}
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <nav className="flex items-center justify-between py-4 md:py-5">
+        <nav className="flex items-center justify-between py-2 md:py-2.5">
           <Link href="/" className="flex items-center shrink-0">
             <Image
-              src="/DressApp%20Logo%20Transparent.png"
+              src="/DressApp%20logo%20without%20sub.png"
               alt="DressApp"
-              width={400}
-              height={112}
-              className="h-14 w-auto md:h-[4.5rem]"
+              width={1540}
+              height={1453}
+              className="h-9 w-auto md:h-10"
               priority
             />
           </Link>
 
           <div className="hidden md:flex items-center gap-2">
-            {navLinks.map((link) =>
-              link.href.startsWith("mailto:") ? (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className={navLinkClass}
-                >
-                  {link.label}
-                </a>
-              ) : (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={navLinkClass}
-                >
-                  {link.label}
-                </Link>
-              ),
-            )}
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} className={navLinkClass}>
+                {link.label}
+              </Link>
+            ))}
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -116,27 +101,16 @@ export function Header({ sticky = false }: HeaderProps) {
             className="md:hidden bg-primary border-b border-primary-foreground/10"
           >
             <div className="px-6 py-4 flex flex-col gap-4">
-              {navLinks.map((link) =>
-                link.href.startsWith("mailto:") ? (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    className={`${navLinkClass} w-fit py-2`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </a>
-                ) : (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`${navLinkClass} w-fit py-2`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ),
-              )}
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`${navLinkClass} w-fit py-2`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-primary-foreground/15">
                 <Button variant="secondary" className="text-base" asChild>
                   <a

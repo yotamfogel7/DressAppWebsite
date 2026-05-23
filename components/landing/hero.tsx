@@ -9,10 +9,10 @@ const easeOutStrong = [0.22, 1, 0.36, 1] as const
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center overflow-x-clip pt-20">
+    <section className="relative flex items-start overflow-x-clip pt-20 pb-6 lg:pb-8">
       <div className="absolute top-1/4 left-1/4 w-[480px] h-[480px] bg-accent/15 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)]">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-[calc(6rem-10px)] pb-4 lg:pt-[calc(8rem-10px)] lg:pb-6">
         <div className="grid w-full lg:grid-cols-[minmax(0,1fr)_minmax(0,1.55fr)] gap-10 lg:gap-12 xl:gap-16 items-start">
           <div className="w-full min-w-0 pl-[40px] text-left">
            
@@ -23,7 +23,7 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance"
             >
-              Premium Virtual Try-Ons
+              Premium Virtual Try-ons
               <br />
               <span className="text-muted-foreground">for your store</span>
             </motion.h1>

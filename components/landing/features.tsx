@@ -2,90 +2,85 @@
 
 import { motion } from "framer-motion"
 import {
-  Shirt,
+  Sparkles,
+  Rotate3D,
   Ruler,
-  FileText,
-  Puzzle,
-  Settings2,
+  MessageCircle,
   LayoutDashboard,
-  ArrowUpRight,
+  type LucideIcon,
 } from "lucide-react"
+import type { SVGProps } from "react"
 
-const features = [
+function GenderSupportIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="9" cy="14" r="4" />
+      <path d="M9 10V4M9 4H6M9 4h3" />
+      <circle cx="17" cy="6" r="3" />
+      <path d="M17 9v5M17 14h3M17 14h-3" />
+    </svg>
+  )
+}
+
+type Feature = {
+  icon: LucideIcon | typeof GenderSupportIcon
+  iconClassName: string
+  iconBgClassName: string
+  title: string
+}
+
+const features: Feature[] = [
   {
-    icon: Shirt,
-    title: "Accurate and realistic try-ons",
-    description:
-      "Photoreal draping and silhouette so shoppers see how garments actually read on a body, not a generic mannequin.",
-    stat: "Fit-first",
-    statLabel: "visual fidelity",
+    icon: Sparkles,
+    iconClassName: "text-blue-500",
+    iconBgClassName: "bg-blue-500/10 group-hover:bg-blue-500/20",
+    title: "Size and fit-accurate visualizations based on user measurements",
+  },
+  {
+    icon: Rotate3D,
+    iconClassName: "text-orange-500",
+    iconBgClassName: "bg-orange-500/10 group-hover:bg-orange-500/20",
+    title: "Front and back realistic virtual try-ons",
   },
   {
     icon: Ruler,
-    title: "Recommended size suggestion",
-    description:
-      "Clear size guidance per item so customers add the right SKU to cart the first time.",
-    stat: "Guided",
-    statLabel: "sizing per garment",
+    iconClassName: "text-amber-500",
+    iconBgClassName: "bg-amber-500/10 group-hover:bg-amber-500/20",
+    title: "Size recommendation based on measurements and user preferences",
   },
   {
-    icon: FileText,
-    title: "Garment size and fit description",
-    description:
-      "Structured fit notes and measurements surfaced next to try-on so copy and visuals stay aligned.",
-    stat: "Clear",
-    statLabel: "fit language",
-  },
-  {
-    icon: Puzzle,
-    title: "Easy integration",
-    description:
-      "SDKs and patterns that slot into your PDP, cart, and analytics without replatforming your stack.",
-    stat: "Low lift",
-    statLabel: "implementation",
-  },
-  {
-    icon: Settings2,
-    title: "Customizability",
-    description:
-      "Tune UI, flows, and guardrails to your brand so the experience feels native to your store.",
-    stat: "Your brand",
-    statLabel: "your rules",
+    icon: MessageCircle,
+    iconClassName: "text-green-500",
+    iconBgClassName: "bg-green-500/10 group-hover:bg-green-500/20",
+    title: "Fit description – how will each size feel on the user",
   },
   {
     icon: LayoutDashboard,
-    title: "Usage dashboard",
-    description:
-      "See try-on volume, model creation, and engagement in one place for finance and product teams.",
-    stat: "Live",
-    statLabel: "usage visibility",
+    iconClassName: "text-purple-500",
+    iconBgClassName: "bg-purple-500/10 group-hover:bg-purple-500/20",
+    title: "Usage dashboard for monitoring metrics",
+  },
+  {
+    icon: GenderSupportIcon,
+    iconClassName: "text-sky-400",
+    iconBgClassName: "bg-sky-400/10 group-hover:bg-sky-400/20",
+    title: "Both gender support",
   },
 ]
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-    },
-  },
-}
-
 export function Features() {
   return (
-    <section id="features" className="py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)] bg-card">
+    <section id="features" className="pt-10 pb-10 lg:pt-12 lg:pb-12 bg-card">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -98,46 +93,39 @@ export function Features() {
             Features
           </span>
           <h2 className="mt-4 text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-balance">
-            Built for merchandising and growth
+            Built for accuracy and quality
             <br />
-            <span className="text-muted-foreground">without the fluff</span>
+            <span className="text-muted-foreground">to keep your store's standard high</span>
           </h2>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Everything you need to ship trustworthy try-on, keep teams aligned, and read usage like
-            any other metered product surface.
+            Increase conversions and customer satisfaction while reducing returns.
+            Have a unique selling point that will keep people coming back.
           </p>
         </motion.div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {features.map((feature) => (
-            <motion.div
-              key={feature.title}
-              variants={itemVariants}
-              className="group relative p-8 rounded-2xl border border-border bg-background hover:border-accent/50 transition-colors"
-            >
-              <div className="flex items-start justify-between mb-6">
-                <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                  <feature.icon className="w-6 h-6 text-accent" />
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature, index) => {
+            const Icon = feature.icon
+            return (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group relative p-8 rounded-2xl border border-border bg-background hover:border-accent/50 transition-colors"
+              >
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors mb-6 ${feature.iconBgClassName}`}
+                >
+                  <Icon className={`w-6 h-6 ${feature.iconClassName}`} />
                 </div>
-                <ArrowUpRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
 
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed mb-6">{feature.description}</p>
-
-              <div className="pt-4 border-t border-border">
-                <span className="text-2xl font-bold text-accent">{feature.stat}</span>
-                <p className="text-xs text-muted-foreground mt-1">{feature.statLabel}</p>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+                <h3 className="text-lg font-semibold leading-snug">{feature.title}</h3>
+              </motion.div>
+            )
+          })}
+        </div>
       </div>
     </section>
   )

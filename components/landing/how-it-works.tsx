@@ -9,14 +9,14 @@ const steps = [
     step: "01",
     title: "Integrate DressApp into your website",
     description:
-      "Use our dashboard, SDK, or API to embed try-on on your storefront. Works alongside your existing catalog and checkout.",
+      "Use our SDK, API or our Shopify app to embed DressApp in your store.",
   },
   {
     icon: ShoppingBag,
     step: "02",
     title: "Customers try on items",
     description:
-      "Shoppers use their camera or upload a photo to see how items look on them, with sizing guidance they can trust.",
+      "Shoppers create their own user model, then scroll your store and visualize how your items look on them, with sizing guidance they can trust.",
   },
   {
     icon: BarChart3,
@@ -29,7 +29,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section className="py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)]">
+    <section id="how-it-works" className="py-10 lg:py-12">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
