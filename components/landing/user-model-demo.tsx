@@ -427,15 +427,19 @@ export function UserModelDemo() {
               disabled={phase === "generating"}
               onClick={handleGenerate}
               className={[
-                "w-full cursor-pointer rounded-full border px-3 py-2 text-center transition-colors duration-200 outline-none sm:px-4 sm:py-2.5",
+                "group w-full cursor-pointer rounded-full border px-3 py-2 text-center transition-all duration-200 outline-none sm:px-4 sm:py-2.5",
                 "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 phase === "generating"
                   ? "border-accent/30 bg-accent/10 text-foreground"
-                  : "border-accent/30 bg-secondary hover:bg-secondary/80",
+                  : [
+                      "border-accent/30 bg-secondary",
+                      "hover:border-accent hover:bg-accent/15 hover:shadow-[0_4px_20px_-4px_color-mix(in_oklch,var(--accent)_30%,transparent)] hover:-translate-y-0.5",
+                      "active:translate-y-0 active:scale-[0.99]",
+                    ].join(" "),
                 phase === "generating" ? "pointer-events-none opacity-80" : "",
               ].join(" ")}
             >
-              <p className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground sm:text-[11px]">
+              <p className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground transition-colors duration-200 group-hover:text-accent sm:text-[11px]">
                 {phase === "generating" && (
                   <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
                 )}
