@@ -510,7 +510,7 @@ export function DressAppDemoLive() {
         <p className="mt-2 text-muted-foreground">
           Live flow: shopper session from your server, SDK-style calls from the browser. For the
           Shopify partner setup, see{" "}
-          <Link href="/integration" className="text-foreground underline underline-offset-4">
+          <Link href="/integrations/shopify" className="text-foreground underline underline-offset-4">
             Integration
           </Link>
           .

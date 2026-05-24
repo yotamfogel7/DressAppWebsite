@@ -1,16 +1,17 @@
 "use client"
 
-import { useEffect, useRef, useState, type MouseEvent, type SyntheticEvent } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { AnimatePresence, motion } from "framer-motion"
 import { Loader2, Scan } from "lucide-react"
 import {
   DEMO_CARD,
   DEMO_COLUMN,
-  DEMO_GRID,
-  DEMO_IMAGE_FRAME,
   DEMO_PANEL_WIDTH,
+  MOBILE_STACK_DEMO_GRID,
+  MOBILE_TALL_DEMO_IMAGE_FRAME,
 } from "@/components/landing/demo-layout"
+import { ClickZoomImage } from "@/components/landing/click-zoom-image"
 
 type DemoUserPhoto = {
   id: string
@@ -68,86 +69,7 @@ const demoUserPhotos: DemoUserPhoto[] = [
 const easeOutStrong = [0.22, 1, 0.36, 1] as const
 const GENERATION_MS = 2000
 
-const ZOOM_SCALE = 2.25
-
 type GenerationPhase = "idle" | "generating" | "complete"
-
-type ClickZoomState = {
-  active: boolean
-  originX: number
-  originY: number
-}
-
-function ClickZoomImage({
-  src,
-  alt,
-  sizes,
-  priority,
-  imageClassName,
-  resetKey,
-  onError,
-}: {
-  src: string
-  alt: string
-  sizes: string
-  priority?: boolean
-  imageClassName?: string
-  resetKey?: string
-  onError?: (event: SyntheticEvent<HTMLImageElement, Event>) => void
-}) {
-  const [zoom, setZoom] = useState<ClickZoomState>({
-    active: false,
-    originX: 50,
-    originY: 50,
-  })
-
-  useEffect(() => {
-    setZoom({ active: false, originX: 50, originY: 50 })
-  }, [resetKey, src])
-
-  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect()
-    const originX = ((event.clientX - rect.left) / rect.width) * 100
-    const originY = ((event.clientY - rect.top) / rect.height) * 100
-
-    setZoom((prev) =>
-      prev.active
-        ? { active: false, originX: prev.originX, originY: prev.originY }
-        : { active: true, originX, originY },
-    )
-  }
-
-  return (
-    <button
-      type="button"
-      aria-label={zoom.active ? `Zoom out ${alt}` : `Zoom in on ${alt}`}
-      aria-pressed={zoom.active}
-      onClick={handleClick}
-      className={[
-        "absolute inset-0 z-[1] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        zoom.active ? "cursor-zoom-out" : "cursor-zoom-in",
-      ].join(" ")}
-    >
-      <div
-        className="absolute inset-0 transition-transform duration-300 ease-out"
-        style={{
-          transform: zoom.active ? `scale(${ZOOM_SCALE})` : "scale(1)",
-          transformOrigin: `${zoom.originX}% ${zoom.originY}%`,
-        }}
-      >
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes={sizes}
-          priority={priority}
-          className={imageClassName ?? "object-contain object-center"}
-          onError={onError}
-        />
-      </div>
-    </button>
-  )
-}
 
 export function UserModelDemo() {
   const [selectedId, setSelectedId] = useState(demoUserPhotos[0]?.id ?? "")
@@ -225,17 +147,17 @@ export function UserModelDemo() {
 
       <div className={`mx-auto ${DEMO_PANEL_WIDTH}`}>
         <div className={DEMO_CARD}>
-        <div className={DEMO_GRID}>
+        <div className={MOBILE_STACK_DEMO_GRID}>
           <div className={DEMO_COLUMN}>
             <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">
               User photo
             </span>
 
-            <div className={DEMO_IMAGE_FRAME}>
+            <div className={MOBILE_TALL_DEMO_IMAGE_FRAME}>
               <ClickZoomImage
                 src={selectedPhoto.photoSrc}
                 alt={selectedPhoto.label}
-                sizes="(min-width: 1280px) 340px, 42vw"
+                sizes="(min-width: 768px) 340px, 92vw"
                 priority
                 resetKey={selectedPhoto.id}
                 onError={(e) => {
@@ -302,7 +224,7 @@ export function UserModelDemo() {
               Digital model
             </span>
 
-            <div className={DEMO_IMAGE_FRAME}>
+            <div className={MOBILE_TALL_DEMO_IMAGE_FRAME}>
               <AnimatePresence mode="wait">
                 {phase === "idle" && (
                   <motion.div
@@ -333,7 +255,7 @@ export function UserModelDemo() {
                       src={selectedPhoto.photoSrc}
                       alt=""
                       fill
-                      sizes="(min-width: 1280px) 340px, 42vw"
+                      sizes="(min-width: 768px) 340px, 92vw"
                       className="object-contain object-center opacity-35 blur-[1px]"
                       aria-hidden
                     />
@@ -375,7 +297,7 @@ export function UserModelDemo() {
                     <ClickZoomImage
                       src={modelSrc}
                       alt={`Generated ${modelView} view for ${selectedPhoto.label}`}
-                      sizes="(min-width: 1280px) 340px, 42vw"
+                      sizes="(min-width: 768px) 340px, 92vw"
                       resetKey={`${selectedPhoto.id}-${modelView}-${phase}`}
                       imageClassName="h-full w-full object-contain object-center"
                       onError={(e) => {

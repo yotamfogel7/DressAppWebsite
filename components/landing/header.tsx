@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
@@ -12,6 +13,7 @@ const navLinks = [
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#features", label: "Features" },
   { href: "/#pricing", label: "Pricing" },
+  { href: "/integrations", label: "Integrations" },
   { href: "/#contact-us", label: "Contact us" },
   { href: "/usage", label: "Usage" },
 ]
@@ -19,12 +21,24 @@ const navLinks = [
 const navLinkClass =
   "inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-base text-primary-foreground/75 transition-all duration-200 hover:border-primary-foreground/50 hover:bg-primary-foreground/10 hover:text-primary-foreground"
 
+function getPathFromHref(href: string) {
+  const hashIndex = href.indexOf("#")
+  return hashIndex === -1 ? href : href.slice(0, hashIndex) || "/"
+}
+
+function getHashFromHref(href: string) {
+  const hashIndex = href.indexOf("#")
+  return hashIndex === -1 ? null : href.slice(hashIndex + 1)
+}
+
 type HeaderProps = {
   /** Use with full-viewport app shells so content is not hidden under a fixed bar. */
   sticky?: boolean
 }
 
 export function Header({ sticky = false }: HeaderProps) {
+  const pathname = usePathname()
+  const router = useRouter()
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -35,6 +49,39 @@ export function Header({ sticky = false }: HeaderProps) {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      document.documentElement.style.scrollBehavior = ""
+    })
+  }, [pathname])
+
+  const handleNavClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+      const path = getPathFromHref(href)
+      const hash = getHashFromHref(href)
+      const isSamePage = path === pathname
+
+      if (hash && isSamePage) {
+        e.preventDefault()
+        const target = document.getElementById(hash)
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth" })
+          window.history.pushState(null, "", href)
+        } else {
+          router.push(href)
+        }
+        return
+      }
+
+      if (!isSamePage) {
+        e.preventDefault()
+        document.documentElement.style.scrollBehavior = "auto"
+        router.push(href)
+      }
+    },
+    [pathname, router]
+  )
 
   const positionClass = sticky
     ? "sticky top-0 z-50 w-full shrink-0"
@@ -64,7 +111,12 @@ export function Header({ sticky = false }: HeaderProps) {
 
           <div className="hidden md:flex items-center gap-2">
             {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className={navLinkClass}>
+              <Link
+                key={link.href}
+                href={link.href}
+                className={navLinkClass}
+                onClick={(e) => handleNavClick(e, link.href)}
+              >
                 {link.label}
               </Link>
             ))}
@@ -106,7 +158,10 @@ export function Header({ sticky = false }: HeaderProps) {
                   key={link.href}
                   href={link.href}
                   className={`${navLinkClass} w-fit py-2`}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    handleNavClick(e, link.href)
+                    setMobileMenuOpen(false)
+                  }}
                 >
                   {link.label}
                 </Link>

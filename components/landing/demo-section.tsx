@@ -6,9 +6,10 @@ import { AnimatePresence, motion } from "framer-motion"
 import {
   DEMO_CARD,
   DEMO_COLUMN,
-  DEMO_GRID,
-  DEMO_IMAGE_FRAME,
+  TRYON_DEMO_GRID,
+  TRYON_IMAGE_FRAME,
 } from "@/components/landing/demo-layout"
+import { ClickZoomImage } from "@/components/landing/click-zoom-image"
 
 type SizeOption = {
   id: string
@@ -155,7 +156,7 @@ export function SeeItInActionDemo() {
   }, [garment.sizes, garment.userPhotoSrc])
 
   return (
-    <div id="product" className="relative -mt-[46px] w-full min-w-0 sm:-mt-[50px] lg:-mt-[54px]">
+    <div id="product" className="relative mt-0 w-full min-w-0 lg:-mt-[54px]">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -163,21 +164,20 @@ export function SeeItInActionDemo() {
         className="relative w-full overflow-visible"
       >
         <div className={DEMO_CARD}>
-          <div className={DEMO_GRID}>
+          <div className={TRYON_DEMO_GRID}>
             {/* Product column */}
             <div className={DEMO_COLUMN}>
               <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">
                 Product
               </span>
 
-              <div className={DEMO_IMAGE_FRAME}>
-                <Image
+              <div className={TRYON_IMAGE_FRAME}>
+                <ClickZoomImage
                   src={garment.originalSrc}
-                  alt=""
-                  fill
-                  sizes="(min-width: 1280px) 340px, 42vw"
-                  className="object-cover object-center"
+                  alt="Product photo"
+                  sizes="(min-width: 768px) 340px, 92vw"
                   priority
+                  imageClassName="object-cover object-center"
                   onError={(e) => {
                     console.error(
                       "[SeeItInActionDemo] failed to load original image",
@@ -204,7 +204,7 @@ export function SeeItInActionDemo() {
                 Try-on · {activeSize.label}
               </span>
 
-              <div className={DEMO_IMAGE_FRAME}>
+              <div className={TRYON_IMAGE_FRAME}>
                 <AnimatePresence initial={false} custom={slideDirection}>
                   {!showUserPhoto && (
                     <motion.div
@@ -217,12 +217,12 @@ export function SeeItInActionDemo() {
                       transition={{ duration: 0.38, ease: easeOutStrong }}
                       className="absolute inset-0"
                     >
-                      <Image
+                      <ClickZoomImage
                         src={activeSize.tryOnSrc}
-                        alt=""
-                        fill
-                        sizes="(min-width: 1280px) 340px, 42vw"
-                        className="h-full w-full object-contain object-center"
+                        alt={`Try-on size ${activeSize.label}`}
+                        sizes="(min-width: 768px) 340px, 92vw"
+                        resetKey={activeSize.id}
+                        imageClassName="h-full w-full object-contain object-center"
                         onError={(e) => {
                           console.error(
                             "[SeeItInActionDemo] failed to load try-on image",
@@ -245,12 +245,12 @@ export function SeeItInActionDemo() {
                       transition={{ duration: 0.32, ease: easeOutStrong }}
                       className="absolute inset-0 z-[1]"
                     >
-                      <Image
+                      <ClickZoomImage
                         src={garment.userPhotoSrc}
-                        alt=""
-                        fill
-                        sizes="(min-width: 1280px) 340px, 42vw"
-                        className="h-full w-full object-contain object-center"
+                        alt="Original user photo"
+                        sizes="(min-width: 768px) 340px, 92vw"
+                        resetKey={`user-photo-${sizeId}`}
+                        imageClassName="h-full w-full object-contain object-center"
                         onError={(e) => {
                           console.error(
                             "[SeeItInActionDemo] failed to load user photo",
