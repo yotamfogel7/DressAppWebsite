@@ -43,7 +43,7 @@ const supportedCategories = [
 ] as const
 
 // Drop try-on images in /public/try-ons/ (1.png, 2.png, …).
-const tryOnRouletteImages = Array.from({ length: 16 }, (_, i) => ({
+const tryOnRouletteImages = Array.from({ length: 19 }, (_, i) => ({
   src: `/try-ons/${i + 1}.png`,
   alt: `Virtual try-on example ${i + 1}`,
 }))
