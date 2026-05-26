@@ -4,6 +4,7 @@ import { saveMerchantPublishableKey } from "@/lib/dressapp-integration-merchant-
 import { randomMerchantDashboardPassword } from "@/lib/dressapp-http-basic"
 import { normalizeMerchantEmail } from "@/lib/dressapp-merchant-email"
 import { formatPartnerMerchantCreationErrorBody } from "@/lib/dressapp-partner-api-errors"
+import { persistMerchantKeysForSession } from "@/lib/persist-merchant-keys-for-session"
 
 function readEnvSecret(raw: string | undefined): string {
   if (raw == null) return ""
@@ -189,6 +190,14 @@ export async function POST(req: Request) {
     } catch (dbErr) {
       const msg = dbErr instanceof Error ? dbErr.message : String(dbErr)
       console.error("[dressapp/integration/merchant-publishable-key] Database error", dbErr)
+      if (secretKey) {
+        await persistMerchantKeysForSession({
+          secretKey,
+          publishableKey,
+          merchantSlug: slug,
+          merchantDashboardPassword: password,
+        })
+      }
       return NextResponse.json(
         {
           error:
@@ -199,6 +208,13 @@ export async function POST(req: Request) {
         { status: 500 },
       )
     }
+
+    await persistMerchantKeysForSession({
+      secretKey,
+      publishableKey,
+      merchantSlug: slug,
+      merchantDashboardPassword: password,
+    })
 
     const out = {
       ...json,

@@ -40,16 +40,31 @@ const supportedCategories = [
   { label: "Sunglasses", icon: "/icons/sunglasses.png" },
   { label: "Bags", icon: "/icons/bag.png" },
   { label: "Jewelry", icon: "/icons/jewlery.png" },
+  { label: "Watches", icon: "/icons/wristwatch.png" },
 ] as const
 
 // Drop try-on images in /public/try-ons/ (1.png, 2.png, …).
-const tryOnRouletteImages = Array.from({ length: 19 }, (_, i) => ({
+const tryOnRouletteImages = Array.from({ length: 31 }, (_, i) => ({
   src: `/try-ons/${i + 1}.png`,
   alt: `Virtual try-on example ${i + 1}`,
 }))
 
+function shuffleImages<T>(items: T[]): T[] {
+  const shuffled = [...items]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 function TryOnRoulette() {
   const [reducedMotion, setReducedMotion] = useState(false)
+  const [rouletteImages, setRouletteImages] = useState(tryOnRouletteImages)
+
+  useEffect(() => {
+    setRouletteImages(shuffleImages(tryOnRouletteImages))
+  }, [])
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
@@ -61,13 +76,13 @@ function TryOnRoulette() {
 
   const loop = useMemo(
     () =>
-      tryOnRouletteImages.length && !reducedMotion
-        ? [...tryOnRouletteImages, ...tryOnRouletteImages]
-        : [...tryOnRouletteImages],
-    [reducedMotion],
+      rouletteImages.length && !reducedMotion
+        ? [...rouletteImages, ...rouletteImages]
+        : [...rouletteImages],
+    [reducedMotion, rouletteImages],
   )
 
-  if (!tryOnRouletteImages.length) return null
+  if (!rouletteImages.length) return null
 
   return (
     <div

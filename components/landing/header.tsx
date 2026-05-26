@@ -4,12 +4,12 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
+import { signOut, useSession } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 
 const navLinks = [
-  { href: "/#solution", label: "What is DressApp" },
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#features", label: "Features" },
   { href: "/#pricing", label: "Pricing" },
@@ -39,6 +39,8 @@ type HeaderProps = {
 export function Header({ sticky = false }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const { status } = useSession()
+  const authed = status === "authenticated"
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -96,9 +98,9 @@ export function Header({ sticky = false }: HeaderProps) {
         scrolled ? "shadow-md" : ""
       }`}
     >
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <nav className="flex items-center justify-between py-2 md:py-2.5">
-          <Link href="/" className="flex items-center shrink-0">
+      <div className="w-full px-6 lg:px-8">
+        <nav className="flex w-full items-center gap-4 py-2 md:py-2.5">
+          <Link href="/" className="flex shrink-0 items-center">
             <Image
               src="/DressApp%20logo%20without%20sub.png"
               alt="DressApp"
@@ -109,7 +111,7 @@ export function Header({ sticky = false }: HeaderProps) {
             />
           </Link>
 
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -122,7 +124,37 @@ export function Header({ sticky = false }: HeaderProps) {
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
+            {authed ? (
+              <>
+                <Button variant="secondary" className="text-base" asChild>
+                  <Link href="/account">Account</Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="cursor-pointer text-base border-primary-foreground/35 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
+                  type="button"
+                  onClick={() => {
+                    void signOut({ callbackUrl: "/" })
+                  }}
+                >
+                  Sign out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  className="text-base text-primary-foreground hover:bg-primary-foreground/10"
+                  asChild
+                >
+                  <Link href="/login">Log in</Link>
+                </Button>
+                <Button variant="secondary" className="text-base" asChild>
+                  <Link href="/signup">Sign up</Link>
+                </Button>
+              </>
+            )}
             <Button variant="secondary" className="text-base" asChild>
               <a
                 href="https://dressapp-preview.com"
@@ -135,7 +167,7 @@ export function Header({ sticky = false }: HeaderProps) {
           </div>
 
           <button
-            className="md:hidden p-2 text-primary-foreground"
+            className="ml-auto p-2 text-primary-foreground md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -167,6 +199,46 @@ export function Header({ sticky = false }: HeaderProps) {
                 </Link>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-primary-foreground/15">
+                {authed ? (
+                  <>
+                    <Button variant="secondary" className="text-base" asChild>
+                      <Link
+                        href="/account"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Account
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="cursor-pointer text-base border-primary-foreground/35 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        void signOut({ callbackUrl: "/" })
+                      }}
+                    >
+                      Sign out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="ghost"
+                      className="text-base text-primary-foreground justify-start"
+                      asChild
+                    >
+                      <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                        Log in
+                      </Link>
+                    </Button>
+                    <Button variant="secondary" className="text-base" asChild>
+                      <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                        Sign up
+                      </Link>
+                    </Button>
+                  </>
+                )}
                 <Button variant="secondary" className="text-base" asChild>
                   <a
                     href="https://dressapp-preview.com"

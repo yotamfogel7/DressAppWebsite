@@ -17,6 +17,7 @@ import {
   PieChart as PieChartIcon,
   ImageIcon,
 } from "lucide-react"
+import { UsageMyKeysSection } from "@/components/dressapp/usage-my-keys-section"
 import {
   subDays,
   subHours,
@@ -524,6 +525,11 @@ export function DressAppUsageDashboard() {
         <aside className="w-full shrink-0 border-b border-border bg-card/30 lg:w-[min(100%,22rem)] lg:border-b-0 lg:border-r">
           <div className="max-h-[42vh] overflow-y-auto p-4 md:max-h-none lg:max-h-full lg:p-5">
             <div className="space-y-4">
+              <UsageMyKeysSection
+                onSecretKeyLoaded={(sk) => {
+                  setSecretKey((prev) => (prev.trim() ? prev : sk))
+                }}
+              />
               <div className="space-y-2">
                 <Label htmlFor="usage-merchant-secret">Merchant secret API key</Label>
                 <Input
