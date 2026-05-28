@@ -27,7 +27,7 @@ export function OnboardingShell({
   const containerClass = wide ? "max-w-7xl" : "max-w-3xl"
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+    <div className="relative min-h-screen overflow-x-hidden overflow-y-auto bg-background text-foreground scroll-smooth">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,oklch(0.92_0.03_264),transparent)]"

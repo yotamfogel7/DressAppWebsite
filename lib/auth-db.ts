@@ -109,6 +109,66 @@ export async function getUserSelectedPlan(
   })
 }
 
+export async function getUserAccountDetails(
+  userId: string | number,
+): Promise<{
+  email: string
+  name: string | null
+  selectedPlan: string | null
+  businessName: string | null
+  primaryCategories: PrimaryCategory[]
+  hasPasswordAuth: boolean
+} | null> {
+  const id = typeof userId === "string" ? Number.parseInt(userId, 10) : userId
+  if (!Number.isFinite(id)) return null
+  return withAuthDb(async (pool) => {
+    const res = await pool.query<{
+      email: string
+      name: string | null
+      selected_plan: string | null
+      business_name: string | null
+      primary_category: string | null
+      password_hash: string | null
+    }>(
+      `SELECT email,
+              COALESCE(name, display_name) AS name,
+              selected_plan,
+              business_name,
+              primary_category,
+              password_hash
+       FROM users WHERE id = $1`,
+      [id],
+    )
+    const row = res.rows[0]
+    if (!row) return null
+    return {
+      email: row.email,
+      name: row.name,
+      selectedPlan: row.selected_plan,
+      businessName: row.business_name,
+      primaryCategories: normalizePrimaryCategories(row.primary_category),
+      hasPasswordAuth: Boolean(row.password_hash),
+    }
+  })
+}
+
+export async function updateUserPassword(
+  userId: string | number,
+  passwordHash: string,
+): Promise<void> {
+  const id = typeof userId === "string" ? Number.parseInt(userId, 10) : userId
+  if (!Number.isFinite(id)) {
+    console.error("[auth-db] updateUserPassword: invalid user id", userId)
+    throw new Error("Invalid user id")
+  }
+  await withAuthDb(async (pool) => {
+    await pool.query(`UPDATE users SET password_hash = $2 WHERE id = $1`, [
+      id,
+      passwordHash,
+    ])
+  })
+}
+
 export async function getUserOnboardingProfile(
   userId: string | number,
 ): Promise<UserOnboardingProfile | null> {
@@ -157,5 +217,43 @@ export async function updateUserOnboardingProfile(
         serializePrimaryCategories(params.primaryCategories),
       ],
     )
+  })
+}
+
+export async function getUserPreferences(
+  userId: string | number,
+): Promise<Record<string, unknown>> {
+  const id = typeof userId === "string" ? Number.parseInt(userId, 10) : userId
+  if (!Number.isFinite(id)) return {}
+  return withAuthDb(async (pool) => {
+    const res = await pool.query<{ preferences_json: Record<string, unknown> | null }>(
+      `SELECT preferences_json FROM users WHERE id = $1`,
+      [id],
+    )
+    const raw = res.rows[0]?.preferences_json
+    return raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}
+  })
+}
+
+export async function updateUserPreferences(
+  userId: string | number,
+  patch: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const id = typeof userId === "string" ? Number.parseInt(userId, 10) : userId
+  if (!Number.isFinite(id)) {
+    console.error("[auth-db] updateUserPreferences: invalid user id", userId)
+    throw new Error("Invalid user id")
+  }
+  return withAuthDb(async (pool) => {
+    const res = await pool.query<{ preferences_json: Record<string, unknown> }>(
+      `UPDATE users
+       SET preferences_json = COALESCE(preferences_json, '{}'::json) || $2::json
+       WHERE id = $1
+       RETURNING preferences_json`,
+      [id, JSON.stringify(patch)],
+    )
+    const row = res.rows[0]
+    if (!row) throw new Error("User not found")
+    return row.preferences_json ?? {}
   })
 }

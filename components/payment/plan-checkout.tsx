@@ -13,6 +13,7 @@ import { Header } from "@/components/landing/header"
 import { SubscriptionCardForm } from "@/components/payment/subscription-card-form"
 import { Button } from "@/components/ui/button"
 import type { PlanCheckoutConfig } from "@/lib/paypal-public"
+import { markFreshPlanPurchase } from "@/lib/payment-success"
 import { PRICING_PLANS } from "@/lib/pricing-plans"
 import { cn } from "@/lib/utils"
 
@@ -53,7 +54,6 @@ type WalletButtonProps = {
   onApprove: NonNullable<PayPalButtonsComponentProps["onApprove"]>
   onCancel: NonNullable<PayPalButtonsComponentProps["onCancel"]>
   onError: NonNullable<PayPalButtonsComponentProps["onError"]>
-  onMissing?: () => void
   busy: boolean
 }
 
@@ -64,7 +64,6 @@ function WalletButton({
   onApprove,
   onCancel,
   onError,
-  onMissing,
   busy,
 }: WalletButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -76,14 +75,11 @@ function WalletButton({
 
     const timer = window.setTimeout(() => {
       const hasButton = node.querySelector("iframe, paypal-button")
-      if (!hasButton) {
-        setVisible(false)
-        onMissing?.()
-      }
+      if (!hasButton) setVisible(false)
     }, 4000)
 
     return () => window.clearTimeout(timer)
-  }, [onMissing])
+  }, [])
 
   if (!visible) return null
 
@@ -115,10 +111,9 @@ export function PlanCheckout({ config }: PlanCheckoutProps) {
     PRICING_PLANS.find((p) => p.slug === config.slug) ?? PRICING_PLANS[0]
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [applePayUnavailable, setApplePayUnavailable] = useState(false)
-
   const redirectToSuccess = useCallback(
     (subscriptionId: string) => {
+      markFreshPlanPurchase()
       const params = new URLSearchParams({ plan: config.slug })
       if (subscriptionId) params.set("subscription_id", subscriptionId)
       window.location.assign(`/payment/success?${params.toString()}`)
@@ -300,26 +295,7 @@ export function PlanCheckout({ config }: PlanCheckoutProps) {
                   fundingSource={FUNDING.APPLEPAY}
                   label="Apple Pay"
                   {...walletButtonProps}
-                  onMissing={() => setApplePayUnavailable(true)}
                 />
-                {applePayUnavailable ? (
-                  <div className="rounded-lg border border-border bg-muted/30 px-3 py-3 text-xs leading-relaxed text-muted-foreground">
-                    <p className="font-medium text-foreground">
-                      Apple Pay not available here
-                    </p>
-                    <p className="mt-1">
-                      Your app already has JavaScript SDK v6 enabled (that covers
-                      Apple Pay when PayPal allows it). There is usually no separate
-                      Apple Pay checkbox on the Features page anymore.
-                    </p>
-                    <p className="mt-2">
-                      Apple Pay still only appears in Safari on a Mac or iPhone with
-                      a card in Wallet, and PayPal often limits Apple Pay to
-                      one-time checkout rather than subscription buttons. For local
-                      testing on Windows, it will normally stay hidden.
-                    </p>
-                  </div>
-                ) : null}
               </div>
 
               <Button variant="ghost" className="mt-6 w-full" asChild>

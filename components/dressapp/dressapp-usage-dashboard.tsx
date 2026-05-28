@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -143,7 +143,7 @@ function normalizeMerchantSecretKeyInput(raw: string): string {
 /** Reject publishable keys before calling the API (403 from require_partner_scopes). */
 function validateMerchantSecretKey(secret: string): string | null {
   const s = secret.trim()
-  if (!s) return "Paste your merchant secret API key (dress_sk_live_…)."
+  if (!s) return "Your merchant secret key is not available yet."
   if (s.startsWith("dress_pk_")) {
     return (
       "Publishable keys (dress_pk_…) cannot call this endpoint. " +
@@ -389,6 +389,8 @@ export function DressAppUsageDashboard() {
   )
 
   const [secretKey, setSecretKey] = useState("")
+  const [keysLoaded, setKeysLoaded] = useState(false)
+  const autoLoadedRef = useRef(false)
   const [rangeMode, setRangeMode] = useState<UsageRangeMode>("all")
   const [lookbackAmount, setLookbackAmount] = useState("")
   const [lookbackUnit, setLookbackUnit] = useState<LookbackUnit>("days")
@@ -508,6 +510,12 @@ export function DressAppUsageDashboard() {
     }
   }, [apiBase, secretKey, rangeMode, lookbackAmount, lookbackUnit])
 
+  useEffect(() => {
+    if (!secretKey.trim() || autoLoadedRef.current) return
+    autoLoadedRef.current = true
+    void handleLoad("initial")
+  }, [secretKey, handleLoad])
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 md:px-6">
@@ -527,21 +535,10 @@ export function DressAppUsageDashboard() {
             <div className="space-y-4">
               <UsageMyKeysSection
                 onSecretKeyLoaded={(sk) => {
-                  setSecretKey((prev) => (prev.trim() ? prev : sk))
+                  setSecretKey(sk)
                 }}
+                onKeysFetchComplete={() => setKeysLoaded(true)}
               />
-              <div className="space-y-2">
-                <Label htmlFor="usage-merchant-secret">Merchant secret API key</Label>
-                <Input
-                  id="usage-merchant-secret"
-                  name="merchantSecret"
-                  type="password"
-                  autoComplete="off"
-                  placeholder="dress_sk_live_…"
-                  value={secretKey}
-                  onChange={(e) => setSecretKey(e.target.value)}
-                />
-              </div>
               <div className="space-y-2">
                 <Label>Time range</Label>
                 <ToggleGroup
@@ -601,7 +598,11 @@ export function DressAppUsageDashboard() {
                 ) : null}
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={() => void handleLoad("initial")} disabled={loading}>
+                <Button
+                  type="button"
+                  onClick={() => void handleLoad("initial")}
+                  disabled={loading || !secretKey.trim()}
+                >
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
@@ -809,9 +810,21 @@ export function DressAppUsageDashboard() {
                     )}
                   </div>
                 </>
+              ) : keysLoaded && !secretKey.trim() ? (
+                <div className="rounded-xl border border-dashed border-border bg-muted/10 px-4 py-10 text-center text-sm text-muted-foreground">
+                  Merchant keys are not ready yet. Check DressApp Settings → Credentials, then refresh
+                  this page.
+                </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-border bg-muted/10 px-4 py-10 text-center text-sm text-muted-foreground">
-                  Enter your secret key and load usage to see charts and totals.
+                  {loading || !keysLoaded ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      Loading your usage…
+                    </span>
+                  ) : (
+                    "Adjust the time range and load usage to see charts and totals."
+                  )}
                 </div>
               )}
             </div>

@@ -44,6 +44,7 @@ type MyKeysPayload = {
 
 type UsageMyKeysSectionProps = {
   onSecretKeyLoaded?: (secretKey: string) => void
+  onKeysFetchComplete?: () => void
 }
 
 function KeyRow({
@@ -107,7 +108,10 @@ function KeyRow({
   )
 }
 
-export function UsageMyKeysSection({ onSecretKeyLoaded }: UsageMyKeysSectionProps) {
+export function UsageMyKeysSection({
+  onSecretKeyLoaded,
+  onKeysFetchComplete,
+}: UsageMyKeysSectionProps) {
   const { status } = useSession()
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<MyKeysPayload | null>(null)
@@ -138,8 +142,9 @@ export function UsageMyKeysSection({ onSecretKeyLoaded }: UsageMyKeysSectionProp
       setData(null)
     } finally {
       setLoading(false)
+      onKeysFetchComplete?.()
     }
-  }, [status, onSecretKeyLoaded])
+  }, [status, onSecretKeyLoaded, onKeysFetchComplete])
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -229,7 +234,17 @@ export function UsageMyKeysSection({ onSecretKeyLoaded }: UsageMyKeysSectionProp
                 </span>
               </div>
               {usagePct != null ? <Progress value={usagePct} className="h-2" /> : null}
-              {remaining != null ? (
+              {remaining != null && remaining === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Plan cap reached.{" "}
+                  <Link
+                    href="/settings/billing"
+                    className="font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    Set up on-demand billing
+                  </Link>
+                </p>
+              ) : remaining != null ? (
                 <p className="text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">{remaining.toLocaleString()}</span> try-ons
                   remaining this month

@@ -30,13 +30,14 @@ function slugify(input: string): string {
 /**
  * Creates a DressApp merchant for a signed-up user if they do not have keys yet.
  * Failures are logged; callers should not block the user flow on errors.
+ * Returns true when keys exist or were saved; false when provisioning could not complete.
  */
-export async function ensureMerchantForUser(userId: string | number): Promise<void> {
+export async function ensureMerchantForUser(userId: string | number): Promise<boolean> {
   const id = typeof userId === "string" ? Number.parseInt(userId, 10) : userId
-  if (!Number.isFinite(id)) return
+  if (!Number.isFinite(id)) return false
 
   const existing = await getUserMerchantCredentials(id)
-  if (existing?.secretKey && existing.publishableKey) return
+  if (existing?.secretKey && existing.publishableKey) return true
 
   const apiBase = process.env.DRESSAPP_API_BASE_URL?.replace(/\/$/, "")
   const partnerSecret = readEnvSecret(process.env.DRESSAPP_PARTNER_ADMIN_SECRET)
@@ -44,7 +45,7 @@ export async function ensureMerchantForUser(userId: string | number): Promise<vo
     console.error(
       "[ensureMerchantForUser] Missing DRESSAPP_API_BASE_URL or DRESSAPP_PARTNER_ADMIN_SECRET",
     )
-    return
+    return false
   }
 
   const userRow = await withAuthDb(async (pool) => {
@@ -56,7 +57,7 @@ export async function ensureMerchantForUser(userId: string | number): Promise<vo
   })
   if (!userRow?.email) {
     console.error("[ensureMerchantForUser] Could not resolve user for id", id)
-    return
+    return false
   }
 
   const profile = await getUserOnboardingProfile(id)
@@ -64,7 +65,7 @@ export async function ensureMerchantForUser(userId: string | number): Promise<vo
   const email = normalizeMerchantEmail(userRow.email)
   if (!email) {
     console.error("[ensureMerchantForUser] Invalid email for user", id)
-    return
+    return false
   }
 
   const slug = `${slugify(name)}-${id}`
@@ -84,12 +85,12 @@ export async function ensureMerchantForUser(userId: string | number): Promise<vo
     text = await upstream.text()
   } catch (e) {
     console.error("[ensureMerchantForUser] DressApp fetch failed", e)
-    return
+    return false
   }
 
   if (!upstream.ok) {
     console.error("[ensureMerchantForUser] DressApp API", upstream.status, text)
-    return
+    return false
   }
 
   let json: Record<string, unknown> = {}
@@ -97,7 +98,7 @@ export async function ensureMerchantForUser(userId: string | number): Promise<vo
     json = text ? (JSON.parse(text) as Record<string, unknown>) : {}
   } catch {
     console.error("[ensureMerchantForUser] Invalid JSON from API:", text)
-    return
+    return false
   }
 
   const publishableKey =
@@ -105,7 +106,7 @@ export async function ensureMerchantForUser(userId: string | number): Promise<vo
   const secretKey = (json.secret_key as string) || (json.secretKey as string) || ""
   if (!publishableKey || !secretKey) {
     console.error("[ensureMerchantForUser] Missing keys in API response", json)
-    return
+    return false
   }
 
   try {
@@ -116,7 +117,9 @@ export async function ensureMerchantForUser(userId: string | number): Promise<vo
       merchantSlug: slug,
       merchantDashboardPassword: password,
     })
+    return true
   } catch (e) {
     console.error("[ensureMerchantForUser] save credentials failed", e)
+    return false
   }
 }

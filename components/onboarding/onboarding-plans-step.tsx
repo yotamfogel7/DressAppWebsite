@@ -1,7 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import Link from "next/link"
 import { useState } from "react"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -57,18 +56,12 @@ export function OnboardingPlansStep({ onBack }: OnboardingPlansStepProps) {
         ))}
       </div>
 
-      <div className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-10 flex items-center justify-between gap-3">
         <Button type="button" variant="ghost" onClick={onBack}>
           Back
         </Button>
-        <p className="text-center text-sm text-muted-foreground sm:text-right">
-          Not ready to commit?{" "}
-          <Link
-            href="/account"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Skip for now
-          </Link>
+        <p className="text-right text-sm text-muted-foreground">
+          A plan is required to use DressApp on your storefront.
         </p>
       </div>
     </motion.div>

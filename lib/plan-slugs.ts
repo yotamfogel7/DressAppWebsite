@@ -12,7 +12,7 @@ export const PLAN_LABELS: Record<PlanSlug, string> = {
   starter: "Starter",
   growth: "Growth",
   pro: "Pro",
-  enterprise: "Enterprise",
+  enterprise: "Scale",
   "enterprise-plus": "Enterprise+",
 }
 

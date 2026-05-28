@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion"
 import { useSession } from "next-auth/react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -17,8 +17,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { AuthFormError } from "@/components/auth/auth-form-error"
 import { OnboardingPlansStep } from "@/components/onboarding/onboarding-plans-step"
 import { OnboardingShell } from "@/components/onboarding/onboarding-shell"
+import { parseApiErrorResponse } from "@/lib/auth-user-messages"
 import {
   PRIMARY_CATEGORIES,
   PRIMARY_CATEGORY_ICONS,
@@ -53,6 +55,31 @@ function toggleCategory(
   return [...current, category]
 }
 
+const FOCUSABLE_SELECTOR =
+  "input, textarea, select, button, a[href], [tabindex]:not([tabindex='-1'])"
+
+function useScrollFocusedFieldIntoView(activeStep: OnboardingStep) {
+  const stepRegionRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const root = stepRegionRef.current
+    if (!root) return
+
+    function onFocusIn(event: FocusEvent) {
+      const target = event.target
+      if (!(target instanceof HTMLElement)) return
+      if (!root.contains(target)) return
+      if (!target.matches(FOCUSABLE_SELECTOR)) return
+      target.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    }
+
+    root.addEventListener("focusin", onFocusIn)
+    return () => root.removeEventListener("focusin", onFocusIn)
+  }, [activeStep])
+
+  return stepRegionRef
+}
+
 type OnboardingFlowProps = {
   initialStep?: OnboardingStep
   /** After profile save, go straight to PayPal plan checkout (from landing plan click). */
@@ -76,6 +103,7 @@ export function OnboardingFlow({
 
   const selectedCategories = form.watch("primaryCategories")
   const businessName = form.watch("businessName")
+  const stepRegionRef = useScrollFocusedFieldIntoView(step)
 
   async function goToCategoryStep() {
     setFormError(null)
@@ -98,13 +126,10 @@ export function OnboardingFlow({
       })
       const data: unknown = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const errMsg =
-          typeof data === "object" &&
-          data !== null &&
-          "error" in data &&
-          typeof (data as { error?: unknown }).error === "string"
-            ? (data as { error: string }).error
-            : `Could not save your details (${res.status})`
+        const errMsg = parseApiErrorResponse(
+          data,
+          "Could not save your details. Please try again.",
+        )
         console.error("[onboarding] API:", errMsg, data)
         setFormError(errMsg)
         return
@@ -156,6 +181,7 @@ export function OnboardingFlow({
       <AnimatePresence mode="wait">
         {step === 1 ? (
           <motion.div
+            ref={stepRegionRef}
             key="step-business"
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
@@ -163,7 +189,13 @@ export function OnboardingFlow({
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           >
             <Form {...form}>
-              <form className="space-y-8">
+              <form
+                className="space-y-8"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void goToCategoryStep()
+                }}
+              >
                 <FormField
                   control={form.control}
                   name="businessName"
@@ -186,11 +218,10 @@ export function OnboardingFlow({
 
                 <div className="mt-8 flex justify-end">
                   <Button
-                    type="button"
+                    type="submit"
                     size="lg"
                     className="gap-2"
                     disabled={!businessName.trim()}
-                    onClick={() => void goToCategoryStep()}
                   >
                     Continue
                     <ArrowRight className="size-4" aria-hidden />
@@ -201,6 +232,7 @@ export function OnboardingFlow({
           </motion.div>
         ) : step === 2 ? (
           <motion.div
+            ref={stepRegionRef}
             key="step-category"
             initial={{ opacity: 0, x: 12 }}
             animate={{ opacity: 1, x: 0 }}
@@ -224,7 +256,12 @@ export function OnboardingFlow({
                           : `${selectedCategories.length} selected`}
                       </p>
                       <FormControl>
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        <div
+                          role="group"
+                          aria-label="Product categories"
+                          className="max-h-[min(28rem,50vh)] overflow-y-auto overscroll-y-contain scroll-smooth rounded-xl px-0.5 py-0.5"
+                        >
+                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                           {PRIMARY_CATEGORIES.map((category, index) => {
                             const Icon = PRIMARY_CATEGORY_ICONS[category]
                             const isSelected = field.value.includes(category)
@@ -276,6 +313,7 @@ export function OnboardingFlow({
                               </motion.button>
                             )
                           })}
+                          </div>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -283,11 +321,7 @@ export function OnboardingFlow({
                   )}
                 />
 
-                {formError ? (
-                  <p className="text-sm text-destructive" role="alert">
-                    {formError}
-                  </p>
-                ) : null}
+                {formError ? <AuthFormError message={formError} /> : null}
 
                 <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <Button
@@ -315,7 +349,9 @@ export function OnboardingFlow({
             </Form>
           </motion.div>
         ) : (
-          <OnboardingPlansStep onBack={() => setStep(2)} />
+          <div ref={stepRegionRef}>
+            <OnboardingPlansStep onBack={() => setStep(2)} />
+          </div>
         )}
       </AnimatePresence>
     </OnboardingShell>

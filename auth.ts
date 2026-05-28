@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs"
 import { getUserOnboardingProfile, getUserWithPasswordByEmail } from "@/lib/auth-db"
 import { ensureAuthSchema } from "@/lib/auth-schema"
 import { getAuthPool } from "@/lib/auth-pool"
+import { ensureMerchantForUser } from "@/lib/ensure-merchant-for-user"
 import { isOnboardingComplete } from "@/lib/onboarding"
 
 function buildProviders(): NextAuthConfig["providers"] {
@@ -95,7 +96,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
       signIn: "/login",
     },
     providers: buildProviders(),
+    events: {
+      async createUser({ user }) {
+        if (!user.id) return
+        await ensureMerchantForUser(user.id)
+      },
+    },
     callbacks: {
+      async signIn({ user }) {
+        if (user?.id) {
+          await ensureMerchantForUser(user.id)
+        }
+        return true
+      },
       async jwt({ token, user, trigger }) {
         if (user?.id) {
           token.sub = String(user.id)

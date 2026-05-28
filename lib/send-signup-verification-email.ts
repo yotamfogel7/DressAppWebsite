@@ -7,10 +7,11 @@ export async function sendSignupVerificationEmail(params: {
   code: string
 }): Promise<SendSignupCodeResult> {
   const apiKey = process.env.RESEND_API_KEY?.trim()
-  const from = process.env.AUTH_EMAIL_FROM?.trim()
+  const from =
+    process.env.AUTH_EMAIL_FROM?.trim() || process.env.SMTP_FROM?.trim()
 
   if (!apiKey || !from) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === "development" && !apiKey && !from) {
       console.info(
         `[send-signup-verification-email] Dev signup code for ${params.to}: ${params.code}`,
       )
@@ -51,9 +52,18 @@ export async function sendSignupVerificationEmail(params: {
         res.status,
         body,
       )
+      let detail = ""
+      try {
+        const parsed = JSON.parse(body) as { message?: string }
+        if (parsed.message?.trim()) detail = parsed.message.trim()
+      } catch {
+        /* ignore non-JSON body */
+      }
       return {
         ok: false,
-        error: `Could not send verification email (${res.status})`,
+        error: detail
+          ? `Could not send verification email: ${detail}`
+          : `Could not send verification email (${res.status})`,
         status: 502,
       }
     }

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -22,8 +22,10 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
+import { AuthFormError } from "@/components/auth/auth-form-error"
 import { Header } from "@/components/landing/header"
 import { OAuthProviderButtons } from "@/components/auth/oauth-provider-buttons"
+import { parseApiErrorResponse } from "@/lib/auth-user-messages"
 
 const detailsSchema = z.object({
   name: z.string().trim().max(120).optional(),
@@ -49,6 +51,8 @@ type SignupClientProps = {
 
 type Step = "details" | "verify"
 
+const RESEND_COOLDOWN_SECONDS = 60
+
 export function SignupClient({
   googleClientId,
   googleEnabled,
@@ -61,12 +65,21 @@ export function SignupClient({
     searchParams.get("callbackUrl") ??
     (plan
       ? `/plans/select?plan=${encodeURIComponent(plan)}`
-      : "/onboarding")
+      : "/continue")
 
   const [step, setStep] = useState<Step>("details")
   const [formError, setFormError] = useState<string | null>(null)
   const [isSendingCode, setIsSendingCode] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const id = window.setTimeout(() => {
+      setResendCooldown((seconds) => seconds - 1)
+    }, 1000)
+    return () => clearTimeout(id)
+  }, [resendCooldown])
 
   const detailsForm = useForm<DetailsValues>({
     resolver: zodResolver(detailsSchema),
@@ -93,13 +106,10 @@ export function SignupClient({
       })
       const data: unknown = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const errMsg =
-          typeof data === "object" &&
-          data !== null &&
-          "error" in data &&
-          typeof (data as { error?: unknown }).error === "string"
-            ? (data as { error: string }).error
-            : `Could not send verification code (${res.status})`
+        const errMsg = parseApiErrorResponse(
+          data,
+          "Could not send the verification code. Please try again.",
+        )
         console.error("[signup] send-code API:", errMsg, data)
         setFormError(errMsg)
         return
@@ -111,6 +121,7 @@ export function SignupClient({
         password: values.password,
         code: "",
       })
+      setResendCooldown(RESEND_COOLDOWN_SECONDS)
       setStep("verify")
     } finally {
       setIsSendingCode(false)
@@ -133,13 +144,10 @@ export function SignupClient({
       })
       const data: unknown = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const errMsg =
-          typeof data === "object" &&
-          data !== null &&
-          "error" in data &&
-          typeof (data as { error?: unknown }).error === "string"
-            ? (data as { error: string }).error
-            : `Registration failed (${res.status})`
+        const errMsg = parseApiErrorResponse(
+          data,
+          "Could not create your account. Please try again.",
+        )
         console.error("[signup] register API:", errMsg, data)
         setFormError(errMsg)
         return
@@ -152,9 +160,10 @@ export function SignupClient({
         callbackUrl,
       })
       if (sign?.error) {
-        const msg = `Account created but sign-in failed: ${sign.error}`
-        console.error("[signup]", msg)
-        setFormError(msg)
+        console.error("[signup] post-register sign-in failed:", sign.error)
+        setFormError(
+          "Your account was created. Please log in with your email and password.",
+        )
         return
       }
       if (sign?.ok && sign.url) {
@@ -278,11 +287,7 @@ export function SignupClient({
                     </FormItem>
                   )}
                 />
-                {formError && (
-                  <p className="text-sm text-destructive" role="alert">
-                    {formError}
-                  </p>
-                )}
+                {formError ? <AuthFormError message={formError} /> : null}
                 <Button
                   type="submit"
                   className="w-full cursor-pointer"
@@ -328,11 +333,7 @@ export function SignupClient({
                 )}
               />
 
-              {formError && (
-                <p className="text-sm text-destructive" role="alert">
-                  {formError}
-                </p>
-              )}
+              {formError ? <AuthFormError message={formError} /> : null}
 
               <Button
                 type="submit"
@@ -348,12 +349,16 @@ export function SignupClient({
                   type="button"
                   variant="ghost"
                   className="w-full"
-                  disabled={isSendingCode}
+                  disabled={isSendingCode || resendCooldown > 0}
                   onClick={() => {
                     void detailsForm.handleSubmit(sendVerificationCode)()
                   }}
                 >
-                  {isSendingCode ? "Sending..." : "Resend code"}
+                  {isSendingCode
+                    ? "Sending..."
+                    : resendCooldown > 0
+                      ? `Resend code in ${resendCooldown}s`
+                      : "Resend code"}
                 </Button>
                 <Button
                   type="button"

@@ -57,9 +57,20 @@ function IntegrationIcon({ option }: { option: IntegrationOption }) {
   return <Icon className="h-7 w-7" aria-hidden />
 }
 
-export function IntegrationsHub() {
+type IntegrationsHubProps = {
+  /** When nested inside DressApp Settings, skip landing-page header offset. */
+  embedded?: boolean
+}
+
+export function IntegrationsHub({ embedded = false }: IntegrationsHubProps) {
   return (
-    <div className="px-6 pb-24 pt-28 lg:px-8 lg:pt-32">
+    <div
+      className={
+        embedded
+          ? "pb-8"
+          : "px-6 pb-24 pt-28 lg:px-8 lg:pt-32"
+      }
+    >
       <div className="mx-auto max-w-5xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -4,6 +4,7 @@ import { DatabaseError } from "pg"
 import { z } from "zod"
 import { createCredentialUser, getUserWithPasswordByEmail } from "@/lib/auth-db"
 import { verifySignupCode } from "@/lib/auth-signup-verification"
+import { ensureMerchantForUser } from "@/lib/ensure-merchant-for-user"
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -66,12 +67,14 @@ export async function POST(req: Request) {
       )
     }
 
-    await createCredentialUser({
+    const { id } = await createCredentialUser({
       email,
       name: name?.trim() ? name.trim() : verified.name,
       passwordHash: verified.passwordHash,
       emailVerified: new Date(),
     })
+
+    await ensureMerchantForUser(id)
 
     return NextResponse.json({ ok: true }, { status: 201 })
   } catch (e) {

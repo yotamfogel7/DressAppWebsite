@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow"
 import { parsePendingPlanCheckoutPath } from "@/lib/onboarding-pending-checkout"
+import { userHasActivePlan } from "@/lib/user-active-plan"
 
 export const metadata: Metadata = {
   title: "Set up your store | DressApp",
@@ -21,6 +22,13 @@ export default async function OnboardingPage({
 
   const sp = await searchParams
   const pendingCheckoutPath = parsePendingPlanCheckoutPath(sp.next)
+
+  if (session.user.onboardingComplete && (await userHasActivePlan(session.user.id))) {
+    if (pendingCheckoutPath) {
+      redirect(pendingCheckoutPath)
+    }
+    redirect(sp.next?.startsWith("/settings") ? sp.next : "/settings")
+  }
 
   return (
     <OnboardingFlow

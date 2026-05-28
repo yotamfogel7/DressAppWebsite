@@ -17,8 +17,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { AuthFormError } from "@/components/auth/auth-form-error"
 import { Header } from "@/components/landing/header"
 import { OAuthProviderButtons } from "@/components/auth/oauth-provider-buttons"
+import { toSignInErrorMessage } from "@/lib/auth-user-messages"
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -45,9 +47,12 @@ export function LoginClient({
     searchParams.get("callbackUrl") ??
     (plan
       ? `/plans/select?plan=${encodeURIComponent(plan)}`
-      : "/onboarding")
+      : "/continue")
 
-  const [formError, setFormError] = useState<string | null>(null)
+  const urlAuthError = searchParams.get("error")
+  const [formError, setFormError] = useState<string | null>(() =>
+    urlAuthError ? toSignInErrorMessage(urlAuthError) : null,
+  )
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -63,9 +68,8 @@ export function LoginClient({
       callbackUrl,
     })
     if (res?.error) {
-      const msg = `Sign-in failed: ${res.error}`
-      console.error("[login]", msg)
-      setFormError(msg)
+      console.error("[login] sign-in failed:", res.error)
+      setFormError(toSignInErrorMessage(res.error))
       return
     }
     if (res?.ok && res.url) {
@@ -163,11 +167,7 @@ export function LoginClient({
                 </FormItem>
               )}
             />
-            {formError && (
-              <p className="text-sm text-destructive" role="alert">
-                {formError}
-              </p>
-            )}
+            {formError ? <AuthFormError message={formError} /> : null}
             <Button type="submit" className="w-full cursor-pointer" size="lg">
               Log in with email
             </Button>

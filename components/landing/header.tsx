@@ -6,16 +6,23 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Menu, X } from "lucide-react"
 
 const navLinks = [
-  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#how-it-works", label: "Get Started" },
   { href: "/#features", label: "Features" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/integrations", label: "Integrations" },
   { href: "/#contact-us", label: "Contact us" },
-  { href: "/usage", label: "Usage" },
 ]
 
 const navLinkClass =
@@ -34,6 +41,74 @@ function getHashFromHref(href: string) {
 type HeaderProps = {
   /** Use with full-viewport app shells so content is not hidden under a fixed bar. */
   sticky?: boolean
+}
+
+function getUserInitials(name?: string | null, email?: string | null) {
+  if (name?.trim()) {
+    const parts = name.trim().split(/\s+/)
+    if (parts.length >= 2) {
+      return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase()
+    }
+    return name.trim().slice(0, 2).toUpperCase()
+  }
+  if (email?.trim()) {
+    return email.trim().slice(0, 2).toUpperCase()
+  }
+  return "?"
+}
+
+function UserAccountMenu({
+  onNavigate,
+}: {
+  onNavigate?: () => void
+}) {
+  const { data: session } = useSession()
+  const user = session?.user
+  const initials = getUserInitials(user?.name, user?.email)
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="rounded-full ring-offset-primary transition-shadow hover:ring-2 hover:ring-primary-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/50 focus-visible:ring-offset-2"
+          aria-label="Account menu"
+        >
+          <Avatar className="size-9 border border-primary-foreground/25">
+            <AvatarImage
+              src={user?.image ?? undefined}
+              alt={user?.name ?? user?.email ?? "Your profile"}
+            />
+            <AvatarFallback className="bg-primary-foreground/15 text-sm font-medium text-primary-foreground">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem asChild>
+          <Link href="/settings" onClick={onNavigate}>
+            DressApp Settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/account" onClick={onNavigate}>
+            Account
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => {
+            onNavigate?.()
+            void signOut({ callbackUrl: "/" })
+          }}
+        >
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 export function Header({ sticky = false }: HeaderProps) {
@@ -126,21 +201,7 @@ export function Header({ sticky = false }: HeaderProps) {
 
           <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
             {authed ? (
-              <>
-                <Button variant="secondary" className="text-base" asChild>
-                  <Link href="/account">Account</Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="cursor-pointer text-base border-primary-foreground/35 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
-                  type="button"
-                  onClick={() => {
-                    void signOut({ callbackUrl: "/" })
-                  }}
-                >
-                  Sign out
-                </Button>
-              </>
+              <UserAccountMenu />
             ) : (
               <>
                 <Button
@@ -150,7 +211,11 @@ export function Header({ sticky = false }: HeaderProps) {
                 >
                   <Link href="/login">Log in</Link>
                 </Button>
-                <Button variant="secondary" className="text-base" asChild>
+                <Button
+                  variant="ghost"
+                  className="text-base text-primary-foreground hover:bg-primary-foreground/10"
+                  asChild
+                >
                   <Link href="/signup">Sign up</Link>
                 </Button>
               </>
@@ -166,13 +231,16 @@ export function Header({ sticky = false }: HeaderProps) {
             </Button>
           </div>
 
-          <button
-            className="ml-auto p-2 text-primary-foreground md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="ml-auto flex items-center gap-1 md:hidden">
+            {authed ? <UserAccountMenu onNavigate={() => setMobileMenuOpen(false)} /> : null}
+            <button
+              className="p-2 text-primary-foreground"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </nav>
       </div>
 
@@ -199,29 +267,7 @@ export function Header({ sticky = false }: HeaderProps) {
                 </Link>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-primary-foreground/15">
-                {authed ? (
-                  <>
-                    <Button variant="secondary" className="text-base" asChild>
-                      <Link
-                        href="/account"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Account
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer text-base border-primary-foreground/35 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
-                      type="button"
-                      onClick={() => {
-                        setMobileMenuOpen(false)
-                        void signOut({ callbackUrl: "/" })
-                      }}
-                    >
-                      Sign out
-                    </Button>
-                  </>
-                ) : (
+                {!authed ? (
                   <>
                     <Button
                       variant="ghost"
@@ -232,13 +278,17 @@ export function Header({ sticky = false }: HeaderProps) {
                         Log in
                       </Link>
                     </Button>
-                    <Button variant="secondary" className="text-base" asChild>
+                    <Button
+                      variant="ghost"
+                      className="text-base text-primary-foreground justify-start"
+                      asChild
+                    >
                       <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
                         Sign up
                       </Link>
                     </Button>
                   </>
-                )}
+                ) : null}
                 <Button variant="secondary" className="text-base" asChild>
                   <a
                     href="https://dressapp-preview.com"

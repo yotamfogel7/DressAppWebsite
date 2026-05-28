@@ -166,3 +166,146 @@ export function buildPayPalSubscriptionUrls(planSlug: PlanSlug): {
     cancelUrl: `${origin}/payment/cancel?plan=${encodeURIComponent(planSlug)}`,
   }
 }
+
+export type CreatePayPalOrderResult = {
+  orderId: string
+}
+
+/**
+ * Creates a one-time PayPal order (CAPTURE) for prepaid on-demand wallet top-ups.
+ */
+export async function createPayPalOrderForAmount(params: {
+  amountCents: number
+  /** DressApp user id for correlation. */
+  customId: string
+  description?: string
+}): Promise<CreatePayPalOrderResult> {
+  if (!Number.isInteger(params.amountCents) || params.amountCents < 1) {
+    throw new Error("Invalid order amount")
+  }
+  const token = await getAccessToken()
+  const value = (params.amountCents / 100).toFixed(2)
+  const body = {
+    intent: "CAPTURE",
+    purchase_units: [
+      {
+        amount: {
+          currency_code: "USD",
+          value,
+        },
+        description:
+          params.description?.trim() ||
+          "DressApp on-demand try-on prepaid wallet top-up",
+        custom_id: params.customId,
+      },
+    ],
+    application_context: {
+      brand_name: process.env.PAYPAL_BRAND_NAME?.trim() || "DressApp",
+      locale: "en-US",
+      user_action: "PAY_NOW",
+    },
+  }
+
+  const res = await fetch(`${getPayPalApiBase()}/v2/checkout/orders`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "PayPal-Request-Id": crypto.randomUUID(),
+    },
+    body: JSON.stringify(body),
+  })
+
+  const text = await res.text()
+  if (!res.ok) {
+    console.error("[paypal] Create order failed", res.status, text)
+    throw new Error(`PayPal could not create order (${res.status})`)
+  }
+
+  let json: { id?: string }
+  try {
+    json = JSON.parse(text) as { id?: string }
+  } catch {
+    console.error("[paypal] Create order invalid JSON", text)
+    throw new Error("PayPal returned invalid JSON for order")
+  }
+  if (!json.id) {
+    console.error("[paypal] Create order missing id", text)
+    throw new Error("PayPal response missing order id")
+  }
+  return { orderId: json.id }
+}
+
+export type CapturePayPalOrderResult = {
+  orderId: string
+  captureId: string
+  amountCents: number
+}
+
+/**
+ * Captures a PayPal order and returns the capture id for wallet crediting.
+ */
+export async function capturePayPalOrder(orderId: string): Promise<CapturePayPalOrderResult> {
+  const id = orderId.trim()
+  if (!id) throw new Error("Missing PayPal order id")
+
+  const token = await getAccessToken()
+  const res = await fetch(`${getPayPalApiBase()}/v2/checkout/orders/${encodeURIComponent(id)}/capture`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "PayPal-Request-Id": crypto.randomUUID(),
+    },
+  })
+
+  const text = await res.text()
+  if (!res.ok) {
+    console.error("[paypal] Capture order failed", res.status, text)
+    throw new Error(`PayPal could not capture order (${res.status})`)
+  }
+
+  let json: {
+    id?: string
+    purchase_units?: {
+      payments?: {
+        captures?: { id?: string; amount?: { value?: string; currency_code?: string } }[]
+      }
+    }[]
+  }
+  try {
+    json = JSON.parse(text) as typeof json
+  } catch {
+    console.error("[paypal] Capture order invalid JSON", text)
+    throw new Error("PayPal returned invalid JSON for capture")
+  }
+
+  const capture = json.purchase_units?.[0]?.payments?.captures?.[0]
+  const captureId = capture?.id?.trim()
+  if (!captureId) {
+    console.error("[paypal] Capture missing capture id", text)
+    throw new Error("PayPal capture response missing capture id")
+  }
+
+  const valueRaw = capture?.amount?.value
+  const amountCents =
+    valueRaw != null && Number.isFinite(Number.parseFloat(valueRaw))
+      ? Math.round(Number.parseFloat(valueRaw) * 100)
+      : 0
+  if (amountCents < 1) {
+    console.error("[paypal] Capture invalid amount", capture?.amount)
+    throw new Error("PayPal capture response missing valid amount")
+  }
+
+  return {
+    orderId: json.id?.trim() || id,
+    captureId,
+    amountCents,
+  }
+}
+
+export function buildOnDemandTopUpReturnUrl(): string {
+  return `${getPublicAppOrigin()}/settings/billing`
+}

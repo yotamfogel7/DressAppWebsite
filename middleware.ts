@@ -9,6 +9,7 @@ const PROTECTED_PREFIXES = [
   "/plans",
   "/plans/select",
   "/account",
+  "/settings",
 ] as const
 
 const PAYMENT_PROTECTED_PREFIXES = ["/payment/success", "/payment/cancel"] as const
@@ -79,6 +80,8 @@ export const config = {
     "/plans/select",
     "/account",
     "/account/:path*",
+    "/settings",
+    "/settings/:path*",
     "/payment/success",
     "/payment/cancel",
   ],

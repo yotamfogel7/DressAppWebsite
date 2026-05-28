@@ -39,7 +39,7 @@ export function HowItWorks() {
           className="text-center mb-16"
         >
           <span className="text-accent text-sm font-semibold tracking-wide uppercase">
-            How it works
+            Get Started
           </span>
           <h2 className="mt-4 text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-balance">
             Get started in three
