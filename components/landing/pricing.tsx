@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PlanFeaturesList } from "@/components/plans/plan-features-list"
 import { cn } from "@/lib/utils"
 import { PRICING_PLANS } from "@/lib/pricing-plans"
 
@@ -48,17 +48,11 @@ function PricingCard({
         </p>
       </div>
 
-      <ul className="mb-8 flex-1 space-y-3">
-        {plan.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2.5 text-sm">
-            <Check
-              className="mt-0.5 size-4 shrink-0 text-emerald-600"
-              aria-hidden="true"
-            />
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
+      <PlanFeaturesList
+        plan={plan}
+        className="mb-8 flex-1 space-y-3"
+        itemClassName="flex items-start gap-2.5 text-sm"
+      />
 
       <Button size="lg" className={cn("w-full", plan.buttonClassName)} asChild>
         <Link href={ctaHref}>{plan.cta}</Link>

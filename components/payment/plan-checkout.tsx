@@ -8,9 +8,10 @@ import {
 } from "@paypal/react-paypal-js"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Check, Lock, ShieldCheck } from "lucide-react"
+import { Lock, ShieldCheck } from "lucide-react"
 import { Header } from "@/components/landing/header"
 import { SubscriptionCardForm } from "@/components/payment/subscription-card-form"
+import { PlanFeaturesList } from "@/components/plans/plan-features-list"
 import { Button } from "@/components/ui/button"
 import type { PlanCheckoutConfig } from "@/lib/paypal-public"
 import { markFreshPlanPurchase } from "@/lib/payment-success"
@@ -261,17 +262,11 @@ export function PlanCheckout({ config }: PlanCheckoutProps) {
                 {plan.description}
               </p>
 
-              <ul className="mt-6 space-y-2.5 border-t border-border pt-6">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2.5 text-sm">
-                    <Check
-                      className="mt-0.5 size-4 shrink-0 text-emerald-600"
-                      aria-hidden
-                    />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
+              <PlanFeaturesList
+                plan={plan}
+                className="mt-6 space-y-2.5 border-t border-border pt-6"
+                itemClassName="flex items-start gap-2.5 text-sm"
+              />
 
               <div className="mt-6 flex items-start gap-2 rounded-lg bg-muted/50 px-3 py-3 text-xs text-muted-foreground">
                 <ShieldCheck

@@ -27,19 +27,32 @@ function slugify(input: string): string {
   return base || "merchant"
 }
 
+export type EnsureMerchantForUserOptions = {
+  /** Override DressApp API base (e.g. production URL for Settings credentials). */
+  apiBase?: string
+  /** Fallback when the users table row is missing (stale JWT id). */
+  email?: string
+  name?: string | null
+}
+
 /**
  * Creates a DressApp merchant for a signed-up user if they do not have keys yet.
  * Failures are logged; callers should not block the user flow on errors.
  * Returns true when keys exist or were saved; false when provisioning could not complete.
  */
-export async function ensureMerchantForUser(userId: string | number): Promise<boolean> {
+export async function ensureMerchantForUser(
+  userId: string | number,
+  options?: EnsureMerchantForUserOptions,
+): Promise<boolean> {
   const id = typeof userId === "string" ? Number.parseInt(userId, 10) : userId
   if (!Number.isFinite(id)) return false
 
   const existing = await getUserMerchantCredentials(id)
   if (existing?.secretKey && existing.publishableKey) return true
 
-  const apiBase = process.env.DRESSAPP_API_BASE_URL?.replace(/\/$/, "")
+  const apiBase =
+    options?.apiBase?.replace(/\/$/, "") ||
+    process.env.DRESSAPP_API_BASE_URL?.replace(/\/$/, "")
   const partnerSecret = readEnvSecret(process.env.DRESSAPP_PARTNER_ADMIN_SECRET)
   if (!apiBase || !partnerSecret) {
     console.error(
@@ -55,14 +68,17 @@ export async function ensureMerchantForUser(userId: string | number): Promise<bo
     )
     return res.rows[0] ?? null
   })
-  if (!userRow?.email) {
-    console.error("[ensureMerchantForUser] Could not resolve user for id", id)
+
+  const resolvedEmail = userRow?.email?.trim() || options?.email?.trim() || ""
+  const resolvedName = userRow?.name?.trim() || options?.name?.trim() || null
+
+  if (!resolvedEmail) {
+    console.error("[ensureMerchantForUser] Could not resolve user email for id", id)
     return false
   }
-
   const profile = await getUserOnboardingProfile(id)
-  const name = profile?.business_name?.trim() || userRow.name?.trim() || "DressApp merchant"
-  const email = normalizeMerchantEmail(userRow.email)
+  const name = profile?.business_name?.trim() || resolvedName || "DressApp merchant"
+  const email = normalizeMerchantEmail(resolvedEmail)
   if (!email) {
     console.error("[ensureMerchantForUser] Invalid email for user", id)
     return false
@@ -71,10 +87,13 @@ export async function ensureMerchantForUser(userId: string | number): Promise<bo
   const slug = `${slugify(name)}-${id}`
   const password = randomMerchantDashboardPassword()
 
+  const merchantUrl = `${apiBase}/partner/v1/admin/merchants`
+  console.info(`[ensureMerchantForUser] POST ${merchantUrl} for ${email}`)
+
   let upstream: Response
   let text: string
   try {
-    upstream = await fetch(`${apiBase}/partner/v1/admin/merchants`, {
+    upstream = await fetch(merchantUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -3,10 +3,10 @@ import { PLAN_LABELS } from "@/lib/plan-slugs"
 
 /** Monthly try-on allowance per plan (matches public pricing copy). */
 export const PLAN_MONTHLY_TRY_ON_ALLOWANCE: Record<PlanSlug, number | null> = {
-  starter: 150,
-  growth: 450,
-  pro: 950,
-  enterprise: 2500,
+  starter: 100,
+  growth: 300,
+  pro: 600,
+  enterprise: 1500,
   "enterprise-plus": null,
 }
 
