@@ -1,7 +1,13 @@
 "use client"
 
 import { Children, Fragment, cloneElement, isValidElement, useState } from "react"
+import Image from "next/image"
 import { Check, Copy } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 
 export function GuideSection({
@@ -226,5 +232,54 @@ export function GuideBullets({ children }: { children: React.ReactNode }) {
         return <li key={index}>{child}</li>
       })}
     </ul>
+  )
+}
+
+export function GuideStepScreenshot({ label, src }: { label: string; src?: string }) {
+  const [open, setOpen] = useState(false)
+
+  if (src) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="group mt-4 block w-full max-w-2xl cursor-pointer overflow-hidden rounded-xl border border-border bg-muted/40 text-left transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={`View full size: ${label}`}
+        >
+          <Image
+            src={src}
+            alt={label}
+            width={1024}
+            height={534}
+            className="h-auto w-full"
+          />
+        </button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="flex max-h-[min(96vh,95dvh)] max-w-[min(98vw,80rem)] items-center justify-center gap-0 overflow-hidden border-0 p-0 sm:max-w-[min(98vw,80rem)]">
+            <DialogTitle className="sr-only">{label}</DialogTitle>
+            <Image
+              src={src}
+              alt={label}
+              width={1600}
+              height={900}
+              className="max-h-[min(96vh,95dvh)] max-w-[min(98vw,80rem)] h-auto w-auto object-contain"
+            />
+          </DialogContent>
+        </Dialog>
+      </>
+    )
+  }
+
+  return (
+    <div
+      className={cn(
+        "mt-4 flex aspect-video w-full max-w-2xl items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-xs text-muted-foreground",
+      )}
+      role="img"
+      aria-label={label}
+    >
+      Screenshot placeholder
+    </div>
   )
 }

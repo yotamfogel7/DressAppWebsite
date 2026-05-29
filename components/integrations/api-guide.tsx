@@ -13,7 +13,11 @@ export function ApiGuide() {
       <GuideSection
         title="When to use the API"
         description="For teams building their own UI: mobile apps, server-rendered sites, or anything that does not want our JS bundle. You call the same REST endpoints the SDK uses under the hood."
-      />
+      >
+        <p className="max-w-prose text-sm text-muted-foreground leading-relaxed">
+          Prefer the storefront SDK when you want the fastest path in a browser.
+        </p>
+      </GuideSection>
 
       <GuideSection title="Setup steps">
         <GuideStepList>
@@ -33,7 +37,7 @@ export function ApiGuide() {
   "external_user_ref": "customer-12345"
 }
 
-// Response: { "access_token": "…" }  (JWT — safe for the client)`}
+// Response: { "access_token": "…" }  (JWT - safe for the client)`}
             </GuideCode>
             <p>Never send the secret key to the client; only pass the access token.</p>
           </GuideStep>

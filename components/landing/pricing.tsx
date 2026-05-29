@@ -1,102 +1,21 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Check } from "lucide-react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { PlanFeaturesList } from "@/components/plans/plan-features-list"
 import { cn } from "@/lib/utils"
+import { PRICING_PLANS } from "@/lib/pricing-plans"
 
-type PricingPlan = {
-  name: string
-  price: string
-  priceSuffix?: string
-  description: string
-  features: string[]
-  cta: string
-  ctaHref: string
-  popular?: boolean
-  buttonClassName: string
-}
+function PricingCard({
+  plan,
+  index,
+}: {
+  plan: (typeof PRICING_PLANS)[number]
+  index: number
+}) {
+  const ctaHref = `/plans/select?plan=${encodeURIComponent(plan.slug)}`
 
-const plans: PricingPlan[] = [
-  {
-    name: "Starter",
-    price: "$20",
-    priceSuffix: "/ month",
-    description: "Get started with virtual try-on and clear usage visibility.",
-    features: ["100 try-ons / month", "24/7 support", "Usage dashboard"],
-    cta: "Choose Starter",
-    ctaHref: "#contact-us",
-    buttonClassName:
-      "bg-gradient-to-r from-violet-600 to-purple-500 text-white hover:from-violet-700 hover:to-purple-600 border-0",
-  },
-  {
-    name: "Growth",
-    price: "$50",
-    priceSuffix: "/ month",
-    description: "More try-ons plus hands-on help shaping the experience.",
-    features: [
-      "300 try-ons / month",
-      "24/7 support",
-      "Usage dashboard",
-      "Customization",
-      "Dedicated success manager",
-    ],
-    cta: "Choose Growth",
-    ctaHref: "#contact-us",
-    popular: true,
-    buttonClassName:
-      "bg-gradient-to-r from-emerald-800 to-green-600 text-white hover:from-emerald-900 hover:to-green-700 border-0",
-  },
-  {
-    name: "Pro",
-    price: "$100",
-    priceSuffix: "/ month",
-    description: "Higher volume with a path for product-specific requests.",
-    features: [
-      "600 try-ons / month",
-      "24/7 support",
-      "Usage dashboard",
-      "Customization",
-      "Dedicated success manager",
-      "Custom feature requests",
-    ],
-    cta: "Choose Pro",
-    ctaHref: "#contact-us",
-    buttonClassName:
-      "bg-gradient-to-r from-blue-700 to-blue-500 text-white hover:from-blue-800 hover:to-blue-600 border-0",
-  },
-  {
-    name: "Enterprise",
-    price: "$250",
-    priceSuffix: "/ month",
-    description: "Maximum listed volume with full success and product partnership.",
-    features: [
-      "1,500 try-ons / month",
-      "24/7 support",
-      "Usage dashboard",
-      "Customization",
-      "Dedicated success manager",
-      "Custom feature requests",
-    ],
-    cta: "Choose Enterprise",
-    ctaHref: "#contact-us",
-    buttonClassName:
-      "bg-gradient-to-r from-amber-700 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 border-0",
-  },
-  {
-    name: "Enterprise+",
-    price: "Contact sales",
-    description:
-      "Contact sales for custom plans—limits, terms, and scope tailored to you.",
-    features: ["Custom plans available through sales"],
-    cta: "Contact sales",
-    ctaHref: "#contact-us",
-    buttonClassName:
-      "bg-gradient-to-r from-orange-600 to-amber-500 text-white hover:from-orange-700 hover:to-amber-600 border-0",
-  },
-]
-
-function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -105,7 +24,7 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
       transition={{ duration: 0.5, delay: index * 0.08 }}
       className={cn(
         "relative flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm",
-        plan.popular && "ring-2 ring-amber-400/80"
+        plan.popular && "ring-2 ring-amber-400/80",
       )}
     >
       {plan.popular && (
@@ -119,31 +38,32 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
         <div className="mt-3 flex items-baseline gap-1">
           <span className="text-3xl font-bold tracking-tight">{plan.price}</span>
           {plan.priceSuffix && (
-            <span className="text-sm text-muted-foreground">{plan.priceSuffix}</span>
+            <span className="text-sm text-muted-foreground">
+              {plan.priceSuffix}
+            </span>
           )}
         </div>
-        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{plan.description}</p>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+          {plan.description}
+        </p>
       </div>
 
-      <ul className="mb-8 flex-1 space-y-3">
-        {plan.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2.5 text-sm">
-            <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden="true" />
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
+      <PlanFeaturesList
+        plan={plan}
+        className="mb-8 flex-1 space-y-3"
+        itemClassName="flex items-start gap-2.5 text-sm"
+      />
 
       <Button size="lg" className={cn("w-full", plan.buttonClassName)} asChild>
-        <a href={plan.ctaHref}>{plan.cta}</a>
+        <Link href={ctaHref}>{plan.cta}</Link>
       </Button>
     </motion.div>
   )
 }
 
 export function Pricing() {
-  const topPlans = plans.slice(0, 3)
-  const bottomPlans = plans.slice(3)
+  const topPlans = PRICING_PLANS.slice(0, 3)
+  const bottomPlans = PRICING_PLANS.slice(3)
 
   return (
     <section id="pricing" className="pt-10 pb-10 lg:pt-12 lg:pb-12">
@@ -162,8 +82,8 @@ export function Pricing() {
             Plans that scale with your store
           </h2>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Monthly try-on bundles with support and dashboard included. Pick a tier or talk to us
-            for custom volume.
+            Monthly try-on bundles with support and dashboard included. Pick a
+            tier or talk to us for custom volume.
           </p>
         </motion.div>
 

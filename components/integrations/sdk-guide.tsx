@@ -1,3 +1,4 @@
+import Link from "next/link"
 import {
   GuideBullets,
   GuideCallout,
@@ -30,19 +31,44 @@ export function SdkGuide() {
 
       <GuideSection title="Setup steps">
         <GuideStepList>
-          <GuideStep number={1} title="Get keys">
-            DressApp ops creates a merchant via{" "}
-            <GuideInlineCode>POST /partner/v1/admin/merchants</GuideInlineCode>. You receive a{" "}
-            <strong>secret key</strong> (<GuideInlineCode>dress_sk_…</GuideInlineCode>) and{" "}
-            <strong>publishable key</strong> (<GuideInlineCode>dress_pk_…</GuideInlineCode>).
-            Store the secret in your secrets manager.
+          <GuideStep number={1} title="Credentials & storefront URL">
+            <p>
+              Open{" "}
+              <Link
+                href="/settings/credentials"
+                className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+              >
+                Credentials
+              </Link>{" "}
+              in Settings. Copy your <strong>publishable key</strong> (
+              <GuideInlineCode>dress_pk_…</GuideInlineCode>) and <strong>secret key</strong> (
+              <GuideInlineCode>dress_sk_…</GuideInlineCode>). Keep the secret key on your server
+              only - never in browser code.
+            </p>
+            <p>
+              On the same page, enter and save your <strong>storefront URL</strong> - the public
+              site where try-on runs (e.g. <GuideInlineCode>https://your-store.com</GuideInlineCode>
+              ). DressApp uses this to allow your domain for SDK calls.
+            </p>
+            <p>
+              Add the keys to your backend environment (secrets manager or{" "}
+              <GuideInlineCode>.env</GuideInlineCode>):
+            </p>
+            <GuideCode label="Server environment">
+              {`DRESSAPP_API_BASE_URL=https://YOUR_DRESSAPP_API
+DRESSAPP_MERCHANT_SECRET=dress_sk_live_…
+
+# Optional: expose publishable key to the browser
+DRESSAPP_PUBLISHABLE_KEY=dress_pk_live_…
+NEXT_PUBLIC_DRESSAPP_PUBLISHABLE_KEY=dress_pk_live_…
+NEXT_PUBLIC_DRESSAPP_API_BASE_URL=https://YOUR_DRESSAPP_API`}
+            </GuideCode>
+            <p>
+              Restart your server after updating env vars so session and product routes pick up the
+              new values.
+            </p>
           </GuideStep>
-          <GuideStep number={2} title="Allow your domain">
-            Add your storefront origin to the merchant&apos;s{" "}
-            <GuideInlineCode>allowed_origins</GuideInlineCode>, or ask DressApp to add it to{" "}
-            <GuideInlineCode>PARTNER_CORS_ORIGINS</GuideInlineCode> on the API.
-          </GuideStep>
-          <GuideStep number={3} title="Backend: shopper session">
+          <GuideStep number={2} title="Backend: shopper session">
             <p>
               Add one route on your server, for example{" "}
               <GuideInlineCode>GET /api/dressapp-session</GuideInlineCode>. It calls DressApp with
@@ -62,7 +88,7 @@ export function SdkGuide() {
               Use your logged-in customer ID, or a persistent anonymous cookie ID for guests.
             </p>
           </GuideStep>
-          <GuideStep number={4} title="Backend: product sync">
+          <GuideStep number={3} title="Backend: product sync">
             <p>
               When products are created or updated, call{" "}
               <GuideInlineCode>POST /partner/v1/products</GuideInlineCode> with the same secret key.
@@ -77,7 +103,7 @@ export function SdkGuide() {
 }`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={5} title="Frontend: install the SDK">
+          <GuideStep number={4} title="Frontend: install the SDK">
             <GuideCode label="npm">
               {`npm install @dressapp/web-sdk
 
@@ -85,7 +111,7 @@ export function SdkGuide() {
 npm install @dressapp/react-widget`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={6} title="Frontend: enable DressApp">
+          <GuideStep number={5} title="Frontend: enable DressApp">
             <p>After you fetch the shopper token from your backend:</p>
             <GuideCode label="Enable SDK">
               {`import { DressApp } from "@dressapp/web-sdk";
@@ -97,7 +123,7 @@ await DressApp.enable({
 });`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={7} title="First visit: create a model">
+          <GuideStep number={6} title="First visit: create a model">
             <p>
               Check <GuideInlineCode>await DressApp.hasModel()</GuideInlineCode>. If false, show a
               &quot;Create my model&quot; button:
@@ -110,7 +136,7 @@ await DressApp.enable({
               to come back.
             </p>
           </GuideStep>
-          <GuideStep number={8} title="Try-on">
+          <GuideStep number={7} title="Try-on">
             <p>When <GuideInlineCode>hasModel()</GuideInlineCode> is true:</p>
             <GuideCode label="Request try-on">
               {`await DressApp.requestTryOn(productId, { async: true })
@@ -122,7 +148,7 @@ DressApp.getTryOnJob(jobId)`}
               Or register webhooks on your server (optional) instead of polling.
             </p>
           </GuideStep>
-          <GuideStep number={9} title="Ship it">
+          <GuideStep number={8} title="Ship it">
             Test the full path on HTTPS: session → model → return → try-on on a real product.
           </GuideStep>
         </GuideStepList>

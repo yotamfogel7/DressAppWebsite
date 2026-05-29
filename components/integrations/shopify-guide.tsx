@@ -1,22 +1,11 @@
+import Link from "next/link"
 import {
   GuideBullets,
-  GuideInlineCode,
   GuideSection,
   GuideStep,
   GuideStepList,
+  GuideStepScreenshot,
 } from "@/components/integrations/integration-guide-primitives"
-
-function StepScreenshot({ label }: { label: string }) {
-  return (
-    <div
-      className="mt-4 flex aspect-video w-full max-w-xl items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-xs text-muted-foreground"
-      role="img"
-      aria-label={label}
-    >
-      Screenshot placeholder
-    </div>
-  )
-}
 
 export function ShopifyGuide() {
   return (
@@ -38,40 +27,61 @@ export function ShopifyGuide() {
       <GuideSection title="Setup steps">
         <GuideStepList>
           <GuideStep number={1} title="Install the app">
-            Install from the Shopify App Store, or use the dev install link while testing.
-            <StepScreenshot label="Install the DressApp app from the Shopify App Store" />
+            Install from the{" "}
+            <Link
+              href="https://apps.shopify.com/dressapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+            >
+              Shopify App Store
+            </Link>
+            .
+            <GuideStepScreenshot
+              label="Install the DressApp app from the Shopify App Store"
+              src="/integrations/shopify-app-store-install.png"
+            />
           </GuideStep>
-          <GuideStep number={2} title="Approve permissions">
-            When Shopify asks, approve product access and the app proxy. Both are required for
-            catalog sync and shopper sessions.
-            <StepScreenshot label="Approve DressApp permissions in Shopify" />
-          </GuideStep>
-          <GuideStep number={3} title="Open the app page">
+          <GuideStep number={2} title="Open the app page">
             In Shopify Admin, go to <strong>Apps → DressApp</strong> to open the DressApp setup
             page.
-            <StepScreenshot label="Open the DressApp app page in Shopify Admin" />
+            <GuideStepScreenshot
+              label="Open the DressApp app page in Shopify Admin"
+              src="/integrations/shopify-app-admin-page.png"
+            />
+          </GuideStep>
+          <GuideStep number={3} title="Select a plan">
+            Choose a subscription plan in the DressApp app. Starter plan or above is required to
+            activate try-on on your store.
+            <GuideStepScreenshot
+              label="Select a DressApp subscription plan in Shopify"
+              src="/integrations/shopify-select-plan.png"
+            />
           </GuideStep>
           <GuideStep number={4} title="Add DressApp to your theme">
             On the app page, click <strong>Add DressApp to your theme</strong>. This enables
             storefront components and opens the theme editor with DressApp ready to configure.
-            <StepScreenshot label="Add DressApp to your theme from the app page" />
+            <GuideStepScreenshot
+              label="Add DressApp to your theme from the app page"
+              src="/integrations/shopify-storefront-setup.png"
+            />
           </GuideStep>
           <GuideStep number={5} title="Place the try-on block">
             Add the try-on block to the <strong>header</strong> section if you want it on every
             page, or to a <strong>product</strong> section if you want it only on product pages.
             Save in the theme editor when you are done.
-            <StepScreenshot label="Add the DressApp try-on block to header or product section" />
+            <GuideStepScreenshot
+              label="Add the DressApp try-on block to header or product section"
+              src="/integrations/shopify-try-on-block.png"
+            />
           </GuideStep>
-          <GuideStep number={6} title="Optional: enable app embeds">
-            Under <strong>Theme settings → App embeds</strong>, turn on{" "}
-            <strong>Storefront components (Shopify)</strong> if your theme shows console warnings
-            about <GuideInlineCode>shopify-account</GuideInlineCode>.
-            <StepScreenshot label="Enable DressApp app embeds in theme settings" />
-          </GuideStep>
-          <GuideStep number={7} title="Test on a live product page">
+          <GuideStep number={6} title="Test on a live product page">
             Open your storefront (not Admin), click try-on, create a model if prompted, and
             generate a try-on.
-            <StepScreenshot label="Test virtual try-on on a live product page" />
+            <GuideStepScreenshot
+              label="Test virtual try-on on a live product page"
+              src="/integrations/shopify-live-try-on.png"
+            />
           </GuideStep>
         </GuideStepList>
       </GuideSection>

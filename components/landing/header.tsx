@@ -4,18 +4,25 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
+import { signOut, useSession } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Menu, X } from "lucide-react"
 
 const navLinks = [
-  { href: "/#solution", label: "What is DressApp" },
-  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#how-it-works", label: "Get Started" },
   { href: "/#features", label: "Features" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/integrations", label: "Integrations" },
   { href: "/#contact-us", label: "Contact us" },
-  { href: "/usage", label: "Usage" },
 ]
 
 const navLinkClass =
@@ -36,9 +43,79 @@ type HeaderProps = {
   sticky?: boolean
 }
 
+function getUserInitials(name?: string | null, email?: string | null) {
+  if (name?.trim()) {
+    const parts = name.trim().split(/\s+/)
+    if (parts.length >= 2) {
+      return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase()
+    }
+    return name.trim().slice(0, 2).toUpperCase()
+  }
+  if (email?.trim()) {
+    return email.trim().slice(0, 2).toUpperCase()
+  }
+  return "?"
+}
+
+function UserAccountMenu({
+  onNavigate,
+}: {
+  onNavigate?: () => void
+}) {
+  const { data: session } = useSession()
+  const user = session?.user
+  const initials = getUserInitials(user?.name, user?.email)
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="rounded-full ring-offset-primary transition-shadow hover:ring-2 hover:ring-primary-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/50 focus-visible:ring-offset-2"
+          aria-label="Account menu"
+        >
+          <Avatar className="size-9 border border-primary-foreground/25">
+            <AvatarImage
+              src={user?.image ?? undefined}
+              alt={user?.name ?? user?.email ?? "Your profile"}
+            />
+            <AvatarFallback className="bg-primary-foreground/15 text-sm font-medium text-primary-foreground">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem asChild>
+          <Link href="/settings" onClick={onNavigate}>
+            DressApp Settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/account" onClick={onNavigate}>
+            Account
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => {
+            onNavigate?.()
+            void signOut({ callbackUrl: "/" })
+          }}
+        >
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 export function Header({ sticky = false }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const { status } = useSession()
+  const authed = status === "authenticated"
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -96,9 +173,9 @@ export function Header({ sticky = false }: HeaderProps) {
         scrolled ? "shadow-md" : ""
       }`}
     >
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <nav className="flex items-center justify-between py-2 md:py-2.5">
-          <Link href="/" className="flex items-center shrink-0">
+      <div className="w-full px-6 lg:px-8">
+        <nav className="flex w-full items-center gap-4 py-2 md:py-2.5">
+          <Link href="/" className="flex shrink-0 items-center">
             <Image
               src="/DressApp%20logo%20without%20sub.png"
               alt="DressApp"
@@ -109,7 +186,7 @@ export function Header({ sticky = false }: HeaderProps) {
             />
           </Link>
 
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -122,7 +199,27 @@ export function Header({ sticky = false }: HeaderProps) {
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
+            {authed ? (
+              <UserAccountMenu />
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  className="text-base text-primary-foreground hover:bg-primary-foreground/10"
+                  asChild
+                >
+                  <Link href="/login">Log in</Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-base text-primary-foreground hover:bg-primary-foreground/10"
+                  asChild
+                >
+                  <Link href="/signup">Sign up</Link>
+                </Button>
+              </>
+            )}
             <Button variant="secondary" className="text-base" asChild>
               <a
                 href="https://dressapp-preview.com"
@@ -134,13 +231,16 @@ export function Header({ sticky = false }: HeaderProps) {
             </Button>
           </div>
 
-          <button
-            className="md:hidden p-2 text-primary-foreground"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="ml-auto flex items-center gap-1 md:hidden">
+            {authed ? <UserAccountMenu onNavigate={() => setMobileMenuOpen(false)} /> : null}
+            <button
+              className="p-2 text-primary-foreground"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </nav>
       </div>
 
@@ -167,6 +267,28 @@ export function Header({ sticky = false }: HeaderProps) {
                 </Link>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-primary-foreground/15">
+                {!authed ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      className="text-base text-primary-foreground justify-start"
+                      asChild
+                    >
+                      <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                        Log in
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="text-base text-primary-foreground justify-start"
+                      asChild
+                    >
+                      <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                        Sign up
+                      </Link>
+                    </Button>
+                  </>
+                ) : null}
                 <Button variant="secondary" className="text-base" asChild>
                   <a
                     href="https://dressapp-preview.com"

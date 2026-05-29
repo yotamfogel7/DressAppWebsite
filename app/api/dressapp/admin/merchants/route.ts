@@ -3,6 +3,7 @@ import { dressappLocalDevUrlHint } from "@/lib/dressapp-local-url-hint"
 import { randomMerchantDashboardPassword } from "@/lib/dressapp-http-basic"
 import { normalizeMerchantEmail } from "@/lib/dressapp-merchant-email"
 import { formatPartnerMerchantCreationErrorBody } from "@/lib/dressapp-partner-api-errors"
+import { persistMerchantKeysForSession } from "@/lib/persist-merchant-keys-for-session"
 
 /** Trim and strip optional surrounding quotes from .env values. */
 function readEnvSecret(raw: string | undefined): string {
@@ -182,6 +183,15 @@ export async function POST(req: Request) {
       (json.publishable_key as string) || (json.publishableKey as string) || ""
     const secretKey =
       (json.secret_key as string) || (json.secretKey as string) || ""
+
+    if (secretKey && publishableKey) {
+      await persistMerchantKeysForSession({
+        secretKey,
+        publishableKey,
+        merchantSlug: slug,
+        merchantDashboardPassword: password,
+      })
+    }
 
     const out = {
       ...json,
