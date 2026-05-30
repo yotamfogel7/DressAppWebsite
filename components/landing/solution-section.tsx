@@ -45,7 +45,7 @@ const supportedCategories = [
 
 // Drop try-on images in /public/try-ons/ (1.png, 2.png, …).
 const tryOnRouletteImages = Array.from({ length: 31 }, (_, i) => ({
-  src: `/try-ons/${i + 1}.png`,
+  src: `/try-ons/${i + 1}.webp`,
   alt: `Virtual try-on example ${i + 1}`,
 }))
 
@@ -205,7 +205,7 @@ export function SolutionSection() {
             </div>
           </div>
 
-          <TryOnRoulette />
+          {isInView ? <TryOnRoulette /> : null}
 
           <UserModelDemo />
         </motion.div>

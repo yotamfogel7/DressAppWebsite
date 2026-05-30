@@ -177,7 +177,7 @@ export function Header({ sticky = false }: HeaderProps) {
         <nav className="flex w-full items-center gap-4 py-2 md:py-2.5">
           <Link href="/" className="flex shrink-0 items-center">
             <Image
-              src="/DressApp%20logo%20without%20sub.png"
+              src="/DressApp%20logo%20without%20sub.webp"
               alt="DressApp"
               width={1540}
               height={1453}

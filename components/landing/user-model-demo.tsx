@@ -24,44 +24,44 @@ type DemoUserPhoto = {
 const demoUserPhotos: DemoUserPhoto[] = [
   {
     id: "black-man",
-    photoSrc: "/user_models/black_man.png",
-    modelFrontSrc: "/user_models/black_man-model.png",
-    modelBackSrc: "/user_models/black_man-model.png",
+    photoSrc: "/user_models/black_man.webp",
+    modelFrontSrc: "/user_models/black_man-model.webp",
+    modelBackSrc: "/user_models/black_man-model.webp",
     label: "Black man",
   },
   {
     id: "tattooed-white-man",
-    photoSrc: "/tattooed_white_man.png",
-    modelFrontSrc: "/user_models/tattooed_white_man-demo.png",
-    modelBackSrc: "/user_models/tattooed_white_man-demo.png",
+    photoSrc: "/tattooed_white_man.webp",
+    modelFrontSrc: "/user_models/tattooed_white_man-demo.webp",
+    modelBackSrc: "/user_models/tattooed_white_man-demo.webp",
     label: "Tattooed white man",
   },
   {
     id: "white-guy",
-    photoSrc: "/white_guy.png",
-    modelFrontSrc: "/user_models/white_guy-model.png",
-    modelBackSrc: "/user_models/white_guy-model.png",
+    photoSrc: "/white_guy.webp",
+    modelFrontSrc: "/user_models/white_guy-model.webp",
+    modelBackSrc: "/user_models/white_guy-model.webp",
     label: "White guy",
   },
   {
     id: "white-female",
-    photoSrc: "/white_female.png",
-    modelFrontSrc: "/user_models/white_female-model.png",
-    modelBackSrc: "/user_models/white_female-model.png",
+    photoSrc: "/white_female.webp",
+    modelFrontSrc: "/user_models/white_female-model.webp",
+    modelBackSrc: "/user_models/white_female-model.webp",
     label: "White female",
   },
   {
     id: "obese-white-male",
-    photoSrc: "/obese_white_male.png",
-    modelFrontSrc: "/user_models/obese_white_male-model.png",
-    modelBackSrc: "/user_models/obese_white_male-model.png",
+    photoSrc: "/obese_white_male.webp",
+    modelFrontSrc: "/user_models/obese_white_male-model.webp",
+    modelBackSrc: "/user_models/obese_white_male-model.webp",
     label: "Obese white male",
   },
   {
     id: "tattooed-white-female",
-    photoSrc: "/tattooed%20white_female.png",
-    modelFrontSrc: "/user_models/tattooed%20white_female-demo.png",
-    modelBackSrc: "/user_models/tattooed%20white_female-demo.png",
+    photoSrc: "/tattooed%20white_female.webp",
+    modelFrontSrc: "/user_models/tattooed%20white_female-demo.webp",
+    modelBackSrc: "/user_models/tattooed%20white_female-demo.webp",
     label: "Tattooed white female",
   },
 ]
@@ -114,13 +114,15 @@ export function UserModelDemo() {
   useEffect(() => {
     if (!selectedPhoto) return
 
-    demoUserPhotos.forEach((photo) => {
-      ;[photo.photoSrc, photo.modelFrontSrc, photo.modelBackSrc].forEach((src) => {
-        const img = new window.Image()
-        img.src = src
-      })
-    })
-  }, [])
+    const preload = (src: string) => {
+      const img = new window.Image()
+      img.src = src
+    }
+
+    preload(selectedPhoto.photoSrc)
+    preload(selectedPhoto.modelFrontSrc)
+    preload(selectedPhoto.modelBackSrc)
+  }, [selectedPhoto])
 
   useEffect(() => {
     return () => clearGenerationTimeout()
@@ -158,7 +160,6 @@ export function UserModelDemo() {
                 src={selectedPhoto.photoSrc}
                 alt={selectedPhoto.label}
                 sizes="(min-width: 768px) 340px, 92vw"
-                priority
                 resetKey={selectedPhoto.id}
                 onError={(e) => {
                   console.error(

@@ -22,12 +22,11 @@ export function Hero() {
             className="relative w-full min-w-0 pl-[40px] pt-[70px] text-left lg:col-start-1 lg:row-start-1 lg:-mt-[54px]"
           >
             <Image
-              src="/DressApp%20logo%20without%20sub.png"
+              src="/DressApp%20logo%20without%20sub.webp"
               alt="DressApp"
               width={1540}
               height={1453}
               className="relative -top-[40px] mb-3 h-[116px] w-auto sm:h-[124px] md:h-[140px]"
-              priority
             />
             <h1 className="relative -top-[40px] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance">
               Premium Virtual Try-ons

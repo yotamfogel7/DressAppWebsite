@@ -37,7 +37,7 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center shrink-0">
               <Image
-                src="/DressApp%20Logo%20Transparent.png"
+                src="/DressApp%20Logo%20Transparent.webp"
                 alt="DressApp"
                 width={400}
                 height={112}
