@@ -30,7 +30,7 @@ export function CtaSection() {
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" className="group" asChild>
               <a
-                href="https://dressapp-preview.com"
+                href="https://dressapp-demo.myshopify.com/"
                 target="_blank"
                 rel="noopener noreferrer"
               >

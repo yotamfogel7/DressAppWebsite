@@ -1,4 +1,5 @@
 import { withAuthDb, getUserOnboardingProfile } from "@/lib/auth-db"
+import { normalizeBusinessName } from "@/lib/onboarding"
 import { randomMerchantDashboardPassword } from "@/lib/dressapp-http-basic"
 import { normalizeMerchantEmail } from "@/lib/dressapp-merchant-email"
 import {
@@ -77,7 +78,8 @@ export async function ensureMerchantForUser(
     return false
   }
   const profile = await getUserOnboardingProfile(id)
-  const name = profile?.business_name?.trim() || resolvedName || "DressApp merchant"
+  const name =
+    normalizeBusinessName(profile?.business_name) || resolvedName || "DressApp merchant"
   const email = normalizeMerchantEmail(resolvedEmail)
   if (!email) {
     console.error("[ensureMerchantForUser] Invalid email for user", id)

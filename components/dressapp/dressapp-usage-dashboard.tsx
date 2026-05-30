@@ -52,7 +52,7 @@ import {
   Legend,
 } from "recharts"
 
-const USAGE_PATH = "/partner/v1/merchants/me/usage"
+const USAGE_PROXY_PATH = "/api/dressapp/usage"
 
 const CHART_FILLS = [
   "var(--chart-1)",
@@ -128,32 +128,6 @@ function UsageMetricMiniLine({
       </div>
     </div>
   )
-}
-
-/** Strip accidental `Bearer ` prefix when pasting from docs; trim whitespace. */
-function normalizeMerchantSecretKeyInput(raw: string): string {
-  let s = raw.trim()
-  const bearerPrefix = s.match(/^Bearer\s+(.+)$/i)
-  if (bearerPrefix?.[1]) {
-    s = bearerPrefix[1].trim()
-  }
-  return s
-}
-
-/** Reject publishable keys before calling the API (403 from require_partner_scopes). */
-function validateMerchantSecretKey(secret: string): string | null {
-  const s = secret.trim()
-  if (!s) return "Your merchant secret key is not available yet."
-  if (s.startsWith("dress_pk_")) {
-    return (
-      "Publishable keys (dress_pk_…) cannot call this endpoint. " +
-      "Use your secret key (dress_sk_live_…) with sessions:write scope — the API returns 403 otherwise."
-    )
-  }
-  if (!s.startsWith("dress_sk_")) {
-    return "Expected a secret key starting with dress_sk_ (e.g. dress_sk_live_…)."
-  }
-  return null
 }
 
 const LOOKBACK_UNITS = ["hours", "days", "weeks", "months", "years"] as const
@@ -254,10 +228,6 @@ function formatApiFailure(data: Record<string, unknown>, res: Response, fallback
   const hint = typeof data.hint === "string" ? data.hint : ""
   const parts = [err, message, detail, hint].filter(Boolean)
   return parts.length ? parts.join("\n\n") : fallback
-}
-
-function normalizeApiBase(raw: string): string {
-  return raw.trim().replace(/\/$/, "")
 }
 
 type GalleryJson = {
@@ -383,11 +353,6 @@ function UsageTryOnGalleryMarquee() {
 }
 
 export function DressAppUsageDashboard() {
-  const apiBase = useMemo(
-    () => normalizeApiBase(process.env.NEXT_PUBLIC_DRESSAPP_API_BASE_URL ?? ""),
-    [],
-  )
-
   const [secretKey, setSecretKey] = useState("")
   const [keysLoaded, setKeysLoaded] = useState(false)
   const autoLoadedRef = useRef(false)
@@ -424,21 +389,6 @@ export function DressAppUsageDashboard() {
       setUsage(null)
     }
 
-    const base = apiBase
-    if (!base) {
-      setError(
-        "This site is missing NEXT_PUBLIC_DRESSAPP_API_BASE_URL. Add it to the deployment environment and rebuild.",
-      )
-      return
-    }
-    const secret = normalizeMerchantSecretKeyInput(secretKey)
-    const keyErr = validateMerchantSecretKey(secret)
-    if (keyErr) {
-      setError(keyErr)
-      return
-    }
-
-    const path = USAGE_PATH
     const qs = new URLSearchParams()
     if (rangeMode === "custom") {
       const rawLookback = lookbackAmount.trim()
@@ -460,24 +410,19 @@ export function DressAppUsageDashboard() {
       qs.set("to", to)
     }
     const query = qs.toString()
-    const url = query ? `${base}${path}?${query}` : `${base}${path}`
-
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${secret}`,
-      Accept: "application/json",
-    }
+    const url = query ? `${USAGE_PROXY_PATH}?${query}` : USAGE_PROXY_PATH
 
     setLoading(true)
     try {
       const res = await fetch(url, {
         method: "GET",
-        headers,
-        credentials: "omit",
+        credentials: "same-origin",
+        cache: "no-store",
       })
 
       const data = await parseJsonBody(res)
 
-      if (!res.ok) {
+      if (!res.ok || data.ok === false) {
         const msg = formatApiFailure(
           data,
           res,
@@ -502,13 +447,11 @@ export function DressAppUsageDashboard() {
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
       console.error("[DressApp usage] network or parse error", e)
-      setError(
-        `${message}\n\nIf the browser blocked the request, the API may need CORS for this origin, or use a server-side proxy — see backend.md.`,
-      )
+      setError(message)
     } finally {
       setLoading(false)
     }
-  }, [apiBase, secretKey, rangeMode, lookbackAmount, lookbackUnit])
+  }, [rangeMode, lookbackAmount, lookbackUnit])
 
   useEffect(() => {
     if (!secretKey.trim() || autoLoadedRef.current) return

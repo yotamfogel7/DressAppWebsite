@@ -222,7 +222,7 @@ export function Header({ sticky = false }: HeaderProps) {
             )}
             <Button variant="secondary" className="text-base" asChild>
               <a
-                href="https://dressapp-preview.com"
+                href="https://dressapp-demo.myshopify.com/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -291,7 +291,7 @@ export function Header({ sticky = false }: HeaderProps) {
                 ) : null}
                 <Button variant="secondary" className="text-base" asChild>
                   <a
-                    href="https://dressapp-preview.com"
+                    href="https://dressapp-demo.myshopify.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                   >

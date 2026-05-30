@@ -12,6 +12,7 @@ type IntegrationDetailShellProps = {
   imageAlt?: string
   backHref?: string
   backLabel?: string
+  titleAction?: React.ReactNode
   children: React.ReactNode
 }
 
@@ -23,6 +24,7 @@ export function IntegrationDetailShell({
   imageAlt,
   backHref = "/integrations",
   backLabel = "All integrations",
+  titleAction,
   children,
 }: IntegrationDetailShellProps) {
   return (
@@ -50,7 +52,10 @@ export function IntegrationDetailShell({
               <Icon className="h-7 w-7" aria-hidden />
             ) : null}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
+            {titleAction}
+          </div>
           <p className="mt-3 max-w-2xl text-lg text-muted-foreground text-pretty">
             {description}
           </p>

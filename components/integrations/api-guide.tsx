@@ -1,3 +1,4 @@
+import Link from "next/link"
 import {
   GuideBullets,
   GuideCode,
@@ -21,15 +22,28 @@ export function ApiGuide() {
 
       <GuideSection title="Setup steps">
         <GuideStepList>
-          <GuideStep number={1} title="Get keys">
-            Same as SDK: <GuideInlineCode>POST /partner/v1/admin/merchants</GuideInlineCode> returns
-            your secret and publishable keys.
+          <GuideStep number={1} title="Credentials & storefront URL">
+            <p>
+              Open{" "}
+              <Link
+                href="/settings/credentials"
+                className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+              >
+                Credentials
+              </Link>{" "}
+              in Settings. Copy your <strong>publishable key</strong> (
+              <GuideInlineCode>dress_pk_…</GuideInlineCode>) and <strong>secret key</strong> (
+              <GuideInlineCode>dress_sk_…</GuideInlineCode>). Keep the secret key on your server
+              only - never in client code.
+            </p>
+            <p>
+              On the same page, enter and save your <strong>storefront URL</strong> - the public
+              site or app origin where try-on runs (e.g.{" "}
+              <GuideInlineCode>https://your-store.com</GuideInlineCode>). DressApp uses this to allow
+              your domain for API calls.
+            </p>
           </GuideStep>
-          <GuideStep number={2} title="Allow your domain">
-            Add your origin to <GuideInlineCode>allowed_origins</GuideInlineCode> or{" "}
-            <GuideInlineCode>PARTNER_CORS_ORIGINS</GuideInlineCode>.
-          </GuideStep>
-          <GuideStep number={3} title="Create shopper sessions (server only)">
+          <GuideStep number={2} title="Create shopper sessions (server only)">
             <GuideCode label="POST /partner/v1/sessions">
               {`Authorization: Bearer dress_sk_live_…
 
@@ -41,7 +55,7 @@ export function ApiGuide() {
             </GuideCode>
             <p>Never send the secret key to the client; only pass the access token.</p>
           </GuideStep>
-          <GuideStep number={4} title="Sync catalog (server only)">
+          <GuideStep number={3} title="Sync catalog (server only)">
             <GuideCode label="POST /partner/v1/products">
               {`Authorization: Bearer dress_sk_live_…
 
@@ -56,14 +70,14 @@ export function ApiGuide() {
 // Store the returned product_id for try-on calls`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={5} title="Check if the shopper has a model">
+          <GuideStep number={4} title="Check if the shopper has a model">
             <GuideCode label="GET /user-model/current">
               {`Authorization: Bearer <shopper access_token>
 
 // null or empty → they need onboarding first`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={6} title="Model creation">
+          <GuideStep number={5} title="Model creation">
             <p>Send the shopper to DressApp&apos;s model studio:</p>
             <GuideCode label="Embed model studio">
               {`GET /embed/model-studio?access_token=<token>&partner_return=https://yoursite.com/return`}
@@ -74,14 +88,14 @@ export function ApiGuide() {
               <GuideInlineCode>/onboarding?access_token=…</GuideInlineCode>.
             </p>
           </GuideStep>
-          <GuideStep number={7} title="Start a try-on">
+          <GuideStep number={6} title="Start a try-on">
             <GuideCode label="POST /tryon/{product_id}?async=true">
               {`Authorization: Bearer <shopper access_token>
 
 // Response (HTTP 202): { "job_id": "…" }`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={8} title="Poll for the result">
+          <GuideStep number={7} title="Poll for the result">
             <GuideCode label="GET /tryon/jobs/{job_id}">
               {`Authorization: Bearer <shopper access_token>
 
@@ -94,7 +108,7 @@ export function ApiGuide() {
               <GuideInlineCode>tryon.job.failed</GuideInlineCode> and skip polling.
             </p>
           </GuideStep>
-          <GuideStep number={9} title="Optional extras">
+          <GuideStep number={8} title="Optional extras">
             <GuideBullets>
               <>
                 Try-on history: <GuideInlineCode>GET /tryon/history</GuideInlineCode>
@@ -109,7 +123,7 @@ export function ApiGuide() {
               </>
             </GuideBullets>
           </GuideStep>
-          <GuideStep number={10} title="Verify before launch">
+          <GuideStep number={9} title="Verify before launch">
             HTTPS everywhere, secret key never in client code, one full test run end to end.
           </GuideStep>
         </GuideStepList>

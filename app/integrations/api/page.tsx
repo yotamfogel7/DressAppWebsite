@@ -5,9 +5,14 @@ import { planApiAccessAllowed } from "@/lib/plan-api-access"
 import type { Metadata } from "next"
 import { Code2 } from "lucide-react"
 import { ApiAccessGate } from "@/components/integrations/api-access-gate"
+import { DownloadAgentInstructionsButton } from "@/components/integrations/download-agent-instructions-button"
 import { IntegrationDetailShell } from "@/components/integrations/integration-detail-shell"
 import { ApiGuide } from "@/components/integrations/api-guide"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  API_AGENT_INSTRUCTIONS,
+  API_AGENT_INSTRUCTIONS_FILENAME,
+} from "@/lib/integration-agent-instructions/api-integration"
 
 export const metadata: Metadata = {
   title: "API Integration | DressApp",
@@ -30,6 +35,12 @@ export default async function ApiIntegrationPage() {
       title="API"
       description="For teams building their own UI. You call the same REST endpoints the SDK uses under the hood."
       icon={Code2}
+      titleAction={
+        <DownloadAgentInstructionsButton
+          filename={API_AGENT_INSTRUCTIONS_FILENAME}
+          content={API_AGENT_INSTRUCTIONS}
+        />
+      }
     >
       {showUpgradeGate ? (
         <ApiAccessGate />
