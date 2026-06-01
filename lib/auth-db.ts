@@ -6,7 +6,7 @@ import {
   serializePrimaryCategories,
   type PrimaryCategory,
 } from "@/lib/onboarding-categories"
-import type { UserOnboardingProfile } from "@/lib/onboarding"
+import { normalizeBusinessName, type UserOnboardingProfile } from "@/lib/onboarding"
 
 export type AuthUserRow = {
   id: number
@@ -145,7 +145,7 @@ export async function getUserAccountDetails(
       email: row.email,
       name: row.name,
       selectedPlan: row.selected_plan,
-      businessName: row.business_name,
+      businessName: normalizeBusinessName(row.business_name),
       primaryCategories: normalizePrimaryCategories(row.primary_category),
       hasPasswordAuth: Boolean(row.password_hash),
     }
@@ -185,7 +185,7 @@ export async function getUserOnboardingProfile(
     const row = res.rows[0]
     if (!row) return null
     return {
-      business_name: row.business_name,
+      business_name: normalizeBusinessName(row.business_name),
       primary_categories: normalizePrimaryCategories(row.primary_category),
     }
   })
@@ -206,6 +206,10 @@ export async function updateUserOnboardingProfile(
   if (params.primaryCategories.length === 0) {
     throw new Error("At least one category is required")
   }
+  const businessName = normalizeBusinessName(params.businessName)
+  if (!businessName) {
+    throw new Error("Business name is required")
+  }
   await withAuthDb(async (pool) => {
     await pool.query(
       `UPDATE users
@@ -213,7 +217,7 @@ export async function updateUserOnboardingProfile(
        WHERE id = $1`,
       [
         id,
-        params.businessName.trim(),
+        businessName,
         serializePrimaryCategories(params.primaryCategories),
       ],
     )

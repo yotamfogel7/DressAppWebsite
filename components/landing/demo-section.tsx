@@ -30,42 +30,42 @@ type DemoGarment = {
 const demoGarments: DemoGarment[] = [
   {
     id: 1,
-    originalSrc: "/component/demo1_original.jpg",
-    userPhotoSrc: "/component/usermodel_original.jpg",
+    originalSrc: "/component/demo1_original.webp",
+    userPhotoSrc: "/component/usermodel_original.webp",
     recommendedSize: "L",
     sizes: [
       {
         id: "xs",
         label: "XS",
-        tryOnSrc: "/component/demo1_xs.png",
+        tryOnSrc: "/component/demo1_xs.webp",
         fitStatus: "SMALL BY 9CM",
         fitTone: "bad",
       },
       {
         id: "s",
         label: "S",
-        tryOnSrc: "/component/demo1_s.png",
+        tryOnSrc: "/component/demo1_s.webp",
         fitStatus: "SMALL BY 4.7CM",
         fitTone: "warn",
       },
       {
         id: "m",
         label: "M",
-        tryOnSrc: "/component/demo1_m.png",
+        tryOnSrc: "/component/demo1_m.webp",
         fitStatus: "GOOD FIT - SMALL BY 1.1CM",
         fitTone: "good",
       },
       {
         id: "l",
         label: "L",
-        tryOnSrc: "/component/demo1_l.png",
+        tryOnSrc: "/component/demo1_l.webp",
         fitStatus: "GOOD FIT - BIG BY 3.6CM",
         fitTone: "good",
       },
       {
         id: "xl",
         label: "XL",
-        tryOnSrc: "/component/demo1_xl.png",
+        tryOnSrc: "/component/demo1_xl.webp",
         fitStatus: "BIG BY 4.2CM",
         fitTone: "warn",
       },
@@ -147,13 +147,15 @@ export function SeeItInActionDemo() {
   }
 
   useEffect(() => {
-    garment.sizes.forEach((size) => {
+    const preload = (src: string) => {
       const img = new window.Image()
-      img.src = size.tryOnSrc
-    })
-    const userPhoto = new window.Image()
-    userPhoto.src = garment.userPhotoSrc
-  }, [garment.sizes, garment.userPhotoSrc])
+      img.src = src
+    }
+
+    preload(garment.originalSrc)
+    preload(activeSize.tryOnSrc)
+    preload(garment.userPhotoSrc)
+  }, [garment.originalSrc, garment.userPhotoSrc, activeSize.tryOnSrc])
 
   return (
     <div id="product" className="relative mt-0 w-full min-w-0 lg:-mt-[54px]">
@@ -176,7 +178,6 @@ export function SeeItInActionDemo() {
                   src={garment.originalSrc}
                   alt="Product photo"
                   sizes="(min-width: 768px) 340px, 92vw"
-                  priority
                   imageClassName="object-cover object-center"
                   onError={(e) => {
                     console.error(

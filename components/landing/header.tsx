@@ -174,10 +174,10 @@ export function Header({ sticky = false }: HeaderProps) {
       }`}
     >
       <div className="w-full px-6 lg:px-8">
-        <nav className="flex w-full items-center gap-4 py-2 md:py-2.5">
-          <Link href="/" className="flex shrink-0 items-center">
+        <nav className="flex w-full items-center gap-4 py-2 md:grid md:grid-cols-[1fr_auto_1fr] md:py-2.5">
+          <Link href="/" className="flex shrink-0 items-center md:justify-self-start">
             <Image
-              src="/DressApp%20logo%20without%20sub.png"
+              src="/DressApp%20logo%20without%20sub.webp"
               alt="DressApp"
               width={1540}
               height={1453}
@@ -186,7 +186,7 @@ export function Header({ sticky = false }: HeaderProps) {
             />
           </Link>
 
-          <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
+          <div className="hidden items-center justify-center gap-2 md:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -199,7 +199,7 @@ export function Header({ sticky = false }: HeaderProps) {
             ))}
           </div>
 
-          <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
+          <div className="ml-auto hidden shrink-0 items-center gap-2 md:ml-0 md:flex md:justify-self-end">
             {authed ? (
               <UserAccountMenu />
             ) : (

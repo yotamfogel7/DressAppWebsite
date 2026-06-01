@@ -2,7 +2,7 @@
 
 import { motion, useInView } from "framer-motion"
 import Image from "next/image"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
 import { Scan, Shirt, Eye } from "lucide-react"
 import { UserModelDemo } from "@/components/landing/user-model-demo"
 
@@ -43,11 +43,58 @@ const supportedCategories = [
   { label: "Watches", icon: "/icons/wristwatch.png" },
 ] as const
 
-// Drop try-on images in /public/try-ons/ (1.png, 2.png, …).
+// Drop try-on images in /public/try-ons/ (1.webp, 2.webp, …).
 const tryOnRouletteImages = Array.from({ length: 31 }, (_, i) => ({
-  src: `/try-ons/${i + 1}.png`,
+  src: `/try-ons/${i + 1}.webp`,
   alt: `Virtual try-on example ${i + 1}`,
 }))
+
+function LazyMarqueeImage({ src, alt }: { src: string; alt: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [shouldLoad, setShouldLoad] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || shouldLoad) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShouldLoad(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "320px" },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [shouldLoad])
+
+  return (
+    <div
+      ref={ref}
+      className="relative h-full aspect-[9/16] shrink-0 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+    >
+      {shouldLoad ? (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          draggable={false}
+          loading="lazy"
+          className="pointer-events-none object-cover object-center"
+          sizes="(max-width: 640px) 99px, (max-width: 768px) 117px, 135px"
+          onError={() => {
+            console.error("[TryOnRoulette] Failed to load image:", src)
+          }}
+        />
+      ) : (
+        <div aria-hidden className="h-full w-full bg-secondary/50" />
+      )}
+    </div>
+  )
+}
 
 function shuffleImages<T>(items: T[]): T[] {
   const shuffled = [...items]
@@ -58,9 +105,37 @@ function shuffleImages<T>(items: T[]): T[] {
   return shuffled
 }
 
+const MARQUEE_LOOP_MS = 50_000
+
 function TryOnRoulette() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const offsetRef = useRef(0)
+  const halfWidthRef = useRef(0)
+  const pausedRef = useRef(false)
+  const momentumRef = useRef(0)
+  const tickFrameRef = useRef(0)
+  const dragRef = useRef({
+    active: false,
+    pointerId: -1,
+    startX: 0,
+    startOffset: 0,
+    lastX: 0,
+    lastTime: 0,
+    velocity: 0,
+  })
   const [reducedMotion, setReducedMotion] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const [rouletteImages, setRouletteImages] = useState(tryOnRouletteImages)
+
+  const loop = useMemo(
+    () =>
+      rouletteImages.length && !reducedMotion
+        ? [...rouletteImages, ...rouletteImages]
+        : [...rouletteImages],
+    [reducedMotion, rouletteImages],
+  )
 
   useEffect(() => {
     setRouletteImages(shuffleImages(tryOnRouletteImages))
@@ -74,15 +149,124 @@ function TryOnRoulette() {
     return () => mq.removeEventListener("change", apply)
   }, [])
 
-  const loop = useMemo(
-    () =>
-      rouletteImages.length && !reducedMotion
-        ? [...rouletteImages, ...rouletteImages]
-        : [...rouletteImages],
-    [reducedMotion, rouletteImages],
-  )
+  const applyOffset = (offset: number, wrap = true) => {
+    const half = halfWidthRef.current
+    let next = offset
+
+    if (wrap && half > 0) {
+      while (next <= -half) next += half
+      while (next > 0) next -= half
+    }
+
+    offsetRef.current = next
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translate3d(${next}px, 0, 0)`
+    }
+  }
+
+  const measureTrack = () => {
+    if (!trackRef.current) return
+    halfWidthRef.current = trackRef.current.scrollWidth / 2
+  }
+
+  useEffect(() => {
+    if (reducedMotion) return
+
+    measureTrack()
+    const observer = trackRef.current ? new ResizeObserver(measureTrack) : null
+    if (trackRef.current && observer) {
+      observer.observe(trackRef.current)
+    }
+
+    let lastTime = performance.now()
+
+    const tick = (now: number) => {
+      const dt = now - lastTime
+      lastTime = now
+
+      if (Math.abs(momentumRef.current) >= 0.4) {
+        applyOffset(offsetRef.current + momentumRef.current * (dt / 16))
+        momentumRef.current *= 0.92 ** (dt / 16)
+      } else if (!pausedRef.current && halfWidthRef.current > 0) {
+        momentumRef.current = 0
+        const pxPerMs = halfWidthRef.current / MARQUEE_LOOP_MS
+        applyOffset(offsetRef.current - pxPerMs * dt)
+      } else {
+        momentumRef.current = 0
+        if (!dragRef.current.active) {
+          pausedRef.current = false
+        }
+      }
+
+      tickFrameRef.current = requestAnimationFrame(tick)
+    }
+
+    tickFrameRef.current = requestAnimationFrame(tick)
+
+    return () => {
+      observer?.disconnect()
+      cancelAnimationFrame(tickFrameRef.current)
+    }
+  }, [reducedMotion, loop])
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (reducedMotion || event.button !== 0) return
+
+    const el = containerRef.current
+    if (!el) return
+
+    pausedRef.current = true
+    momentumRef.current = 0
+    dragRef.current = {
+      active: true,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startOffset: offsetRef.current,
+      lastX: event.clientX,
+      lastTime: performance.now(),
+      velocity: 0,
+    }
+    setIsDragging(true)
+    el.setPointerCapture(event.pointerId)
+  }
+
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (reducedMotion || !dragRef.current.active || event.pointerId !== dragRef.current.pointerId) {
+      return
+    }
+
+    const deltaX = event.clientX - dragRef.current.startX
+    applyOffset(dragRef.current.startOffset + deltaX, false)
+
+    const now = performance.now()
+    const elapsed = now - dragRef.current.lastTime
+    if (elapsed > 0) {
+      dragRef.current.velocity = ((event.clientX - dragRef.current.lastX) / elapsed) * 16
+    }
+    dragRef.current.lastX = event.clientX
+    dragRef.current.lastTime = now
+  }
+
+  const finishDrag = () => {
+    if (!dragRef.current.active) return
+    dragRef.current.active = false
+    setIsDragging(false)
+    applyOffset(offsetRef.current)
+    momentumRef.current = dragRef.current.velocity * 1.35
+    pausedRef.current = Math.abs(momentumRef.current) >= 0.4
+  }
+
+  const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current.active || event.pointerId !== dragRef.current.pointerId) return
+    containerRef.current?.releasePointerCapture(event.pointerId)
+    finishDrag()
+  }
 
   if (!rouletteImages.length) return null
+
+  const imageStrip = loop.map((image, index) => (
+    <LazyMarqueeImage key={`${image.src}-${index}`} src={image.src} alt={image.alt} />
+  ))
 
   return (
     <div
@@ -98,32 +282,31 @@ function TryOnRoulette() {
         className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-background to-transparent sm:w-20"
       />
 
-      <div
-        className={`relative h-44 sm:h-52 md:h-60 ${reducedMotion ? "overflow-x-auto" : "overflow-hidden"}`}
-      >
+      {reducedMotion ? (
         <div
-          className={`flex h-full items-center gap-4 px-4 ${loop.length && !reducedMotion ? "usage-gallery-marquee w-max" : "w-max min-w-full"}`}
-          style={!reducedMotion ? { animationDuration: "50s" } : undefined}
+          ref={scrollRef}
+          className="relative h-44 overflow-x-auto sm:h-52 md:h-60 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
-          {loop.map((image, index) => (
-            <div
-              key={`${image.src}-${index}`}
-              className="relative h-full aspect-[9/16] shrink-0 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
-            >
-              <Image
-                src={image.src}
-                alt={image.alt}
-                fill
-                className="object-cover object-center"
-                sizes="(max-width: 640px) 99px, (max-width: 768px) 117px, 135px"
-                onError={() => {
-                  console.error("[TryOnRoulette] Failed to load image:", image.src)
-                }}
-              />
-            </div>
-          ))}
+          <div className="flex h-full w-max min-w-full items-center gap-4 px-4">{imageStrip}</div>
         </div>
-      </div>
+      ) : (
+        <div
+          ref={containerRef}
+          className={`relative h-44 overflow-hidden sm:h-52 md:h-60 touch-pan-y ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onLostPointerCapture={finishDrag}
+        >
+          <div
+            ref={trackRef}
+            className="flex h-full w-max items-center gap-4 px-4 will-change-transform"
+          >
+            {imageStrip}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -205,7 +388,7 @@ export function SolutionSection() {
             </div>
           </div>
 
-          <TryOnRoulette />
+          {isInView ? <TryOnRoulette /> : null}
 
           <UserModelDemo />
         </motion.div>

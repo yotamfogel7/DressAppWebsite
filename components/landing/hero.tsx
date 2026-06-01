@@ -13,23 +13,22 @@ export function Hero() {
     <section className="relative flex items-start overflow-x-clip pt-20 pb-6 lg:pb-8">
       <div className="absolute top-1/4 left-1/4 w-[480px] h-[480px] bg-accent/15 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-[calc(5rem-10px)] pb-4 lg:pt-[calc(5rem-10px)] lg:pb-6">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-0 pb-4 lg:pt-[calc(5rem-10px)] lg:pb-6">
         <div className="grid w-full grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.55fr)] lg:gap-x-12 xl:gap-x-16 lg:gap-y-0 items-start">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="relative w-full min-w-0 pl-[40px] pt-[70px] text-left lg:col-start-1 lg:row-start-1 lg:-mt-[54px]"
+            className="relative w-full min-w-0 pl-[40px] pt-8 text-left lg:pt-[70px] lg:col-start-1 lg:row-start-1 lg:-mt-[54px]"
           >
             <Image
-              src="/DressApp%20logo%20without%20sub.png"
+              src="/DressApp%20logo%20without%20sub.webp"
               alt="DressApp"
               width={1540}
               height={1453}
-              className="relative -top-[40px] mb-3 h-[116px] w-auto sm:h-[124px] md:h-[140px]"
-              priority
+              className="relative max-lg:-top-[24px] lg:-top-[40px] mb-3 h-[116px] w-auto sm:h-[124px] md:h-[140px]"
             />
-            <h1 className="relative -top-[40px] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance">
+            <h1 className="relative max-lg:-top-[24px] lg:-top-[40px] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance">
               Premium Virtual Try-ons
               <br />
               <span className="text-muted-foreground">for your store</span>

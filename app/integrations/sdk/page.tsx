@@ -5,9 +5,14 @@ import { planApiAccessAllowed } from "@/lib/plan-api-access"
 import type { Metadata } from "next"
 import { Package } from "lucide-react"
 import { ApiAccessGate } from "@/components/integrations/api-access-gate"
+import { DownloadAgentInstructionsButton } from "@/components/integrations/download-agent-instructions-button"
 import { IntegrationDetailShell } from "@/components/integrations/integration-detail-shell"
 import { SdkGuide } from "@/components/integrations/sdk-guide"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  SDK_AGENT_INSTRUCTIONS,
+  SDK_AGENT_INSTRUCTIONS_FILENAME,
+} from "@/lib/integration-agent-instructions/sdk-integration"
 
 export const metadata: Metadata = {
   title: "SDK Integration | DressApp",
@@ -30,6 +35,12 @@ export default async function SdkIntegrationPage() {
       title="SDK"
       description="For any website you control. DressApp ships a browser SDK that wraps sessions, model studio, and try-on calls."
       icon={Package}
+      titleAction={
+        <DownloadAgentInstructionsButton
+          filename={SDK_AGENT_INSTRUCTIONS_FILENAME}
+          content={SDK_AGENT_INSTRUCTIONS}
+        />
+      }
     >
       {showUpgradeGate ? (
         <ApiAccessGate />
