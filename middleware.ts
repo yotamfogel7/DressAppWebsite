@@ -41,7 +41,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const token = await getToken({ req: request, secret })
+  const token = await getToken({
+    req: request,
+    secret,
+    // Must match Auth.js cookie naming (secure prefix on HTTPS).
+    secureCookie: request.nextUrl.protocol === "https:",
+  })
   const isAuthed = Boolean(token?.sub)
   const onboardingComplete = Boolean(token?.onboardingComplete)
 

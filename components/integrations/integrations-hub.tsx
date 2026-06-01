@@ -105,7 +105,7 @@ function IntegrationCard({
         ) : null}
         {apiLocked ? (
           <Button asChild size="sm" variant="outline" className="mt-3 w-fit">
-            <Link href="/account/plans">Upgrade to Pro</Link>
+            <Link href="/plans">Upgrade to Pro</Link>
           </Button>
         ) : null}
       </div>
@@ -202,7 +202,7 @@ export function IntegrationsHub({ embedded = false, apiAccessAllowed = true }: I
               ) : (
                 <>
                   → SDK (Pro plan and above).{" "}
-                  <Link href="/account/plans" className="text-foreground underline underline-offset-2 hover:text-primary">
+                  <Link href="/plans" className="text-foreground underline underline-offset-2 hover:text-primary">
                     Upgrade your plan
                   </Link>
                   .
@@ -225,7 +225,7 @@ export function IntegrationsHub({ embedded = false, apiAccessAllowed = true }: I
               ) : (
                 <>
                   → API (Pro plan and above).{" "}
-                  <Link href="/account/plans" className="text-foreground underline underline-offset-2 hover:text-primary">
+                  <Link href="/plans" className="text-foreground underline underline-offset-2 hover:text-primary">
                     Upgrade your plan
                   </Link>
                   .

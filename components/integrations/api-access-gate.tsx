@@ -13,7 +13,7 @@ export function ApiAccessGate() {
         </AlertDescription>
       </Alert>
       <Button asChild>
-        <Link href="/account/plans">View plans</Link>
+        <Link href="/plans">View plans</Link>
       </Button>
     </div>
   )

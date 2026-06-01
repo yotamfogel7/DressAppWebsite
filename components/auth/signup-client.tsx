@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
@@ -53,19 +53,48 @@ type Step = "details" | "verify"
 
 const RESEND_COOLDOWN_SECONDS = 60
 
+function resolvePostSignupRedirect(plan: string, callbackUrl: string): string {
+  if (plan) {
+    return `/plans/select?plan=${encodeURIComponent(plan)}`
+  }
+  const trimmed = callbackUrl.trim()
+  if (trimmed && !trimmed.startsWith("/signup")) {
+    return trimmed
+  }
+  return "/onboarding"
+}
+
+function pathFromUrl(url: string): string {
+  try {
+    return url.startsWith("http")
+      ? new URL(url).pathname
+      : url.split("?")[0] ?? url
+  } catch {
+    return url.split("?")[0] ?? url
+  }
+}
+
+function isAuthEntryPath(url: string): boolean {
+  const path = pathFromUrl(url)
+  return (
+    path === "/signup" ||
+    path.startsWith("/signup/") ||
+    path === "/login" ||
+    path.startsWith("/login/")
+  )
+}
+
 export function SignupClient({
   googleClientId,
   googleEnabled,
   githubEnabled,
 }: SignupClientProps) {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const plan = searchParams.get("plan") ?? ""
-  const callbackUrl =
-    searchParams.get("callbackUrl") ??
-    (plan
-      ? `/plans/select?plan=${encodeURIComponent(plan)}`
-      : "/continue")
+  const callbackUrl = resolvePostSignupRedirect(
+    plan,
+    searchParams.get("callbackUrl") ?? "",
+  )
 
   const [step, setStep] = useState<Step>("details")
   const [formError, setFormError] = useState<string | null>(null)
@@ -134,6 +163,7 @@ export function SignupClient({
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: values.email,
@@ -153,26 +183,27 @@ export function SignupClient({
         return
       }
 
+      const destination = resolvePostSignupRedirect(plan, callbackUrl)
+
       const sign = await signIn("credentials", {
-        email: values.email,
+        email: values.email.trim(),
         password: values.password,
         redirect: false,
-        callbackUrl,
+        callbackUrl: destination,
       })
-      if (sign?.error) {
-        console.error("[signup] post-register sign-in failed:", sign.error)
+      if (sign?.error || !sign?.ok) {
+        console.error("[signup] post-register sign-in failed:", sign)
         setFormError(
           "Your account was created. Please log in with your email and password.",
         )
         return
       }
-      if (sign?.ok && sign.url) {
-        router.push(sign.url)
-        router.refresh()
-        return
-      }
-      router.push(callbackUrl)
-      router.refresh()
+
+      const signInUrl =
+        sign.url && !isAuthEntryPath(sign.url) ? sign.url : destination
+      // Full navigation so middleware reads the session cookie immediately.
+      window.location.assign(signInUrl)
+      return
     } finally {
       setIsVerifying(false)
     }
