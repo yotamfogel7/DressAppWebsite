@@ -62,7 +62,7 @@ export function Hero() {
           >
             <Button size="lg" className="group w-fit" asChild>
               <a
-                href="https://dressapp-preview.com"
+                href="https://dressapp-demo.myshopify.com/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
