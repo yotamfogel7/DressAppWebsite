@@ -43,11 +43,58 @@ const supportedCategories = [
   { label: "Watches", icon: "/icons/wristwatch.png" },
 ] as const
 
-// Drop try-on images in /public/try-ons/ (1.png, 2.png, …).
+// Drop try-on images in /public/try-ons/ (1.webp, 2.webp, …).
 const tryOnRouletteImages = Array.from({ length: 31 }, (_, i) => ({
   src: `/try-ons/${i + 1}.webp`,
   alt: `Virtual try-on example ${i + 1}`,
 }))
+
+function LazyMarqueeImage({ src, alt }: { src: string; alt: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [shouldLoad, setShouldLoad] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || shouldLoad) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShouldLoad(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "320px" },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [shouldLoad])
+
+  return (
+    <div
+      ref={ref}
+      className="relative h-full aspect-[9/16] shrink-0 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+    >
+      {shouldLoad ? (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          draggable={false}
+          loading="lazy"
+          className="pointer-events-none object-cover object-center"
+          sizes="(max-width: 640px) 99px, (max-width: 768px) 117px, 135px"
+          onError={() => {
+            console.error("[TryOnRoulette] Failed to load image:", src)
+          }}
+        />
+      ) : (
+        <div aria-hidden className="h-full w-full bg-secondary/50" />
+      )}
+    </div>
+  )
+}
 
 function shuffleImages<T>(items: T[]): T[] {
   const shuffled = [...items]
@@ -218,22 +265,7 @@ function TryOnRoulette() {
   if (!rouletteImages.length) return null
 
   const imageStrip = loop.map((image, index) => (
-    <div
-      key={`${image.src}-${index}`}
-      className="relative h-full aspect-[9/16] shrink-0 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
-    >
-      <Image
-        src={image.src}
-        alt={image.alt}
-        fill
-        draggable={false}
-        className="pointer-events-none object-cover object-center"
-        sizes="(max-width: 640px) 99px, (max-width: 768px) 117px, 135px"
-        onError={() => {
-          console.error("[TryOnRoulette] Failed to load image:", image.src)
-        }}
-      />
-    </div>
+    <LazyMarqueeImage key={`${image.src}-${index}`} src={image.src} alt={image.alt} />
   ))
 
   return (
