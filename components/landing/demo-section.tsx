@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { AnimatePresence, motion } from "framer-motion"
 import {
@@ -38,36 +38,36 @@ const demoGarments: DemoGarment[] = [
         id: "xs",
         label: "XS",
         tryOnSrc: "/component/demo1_xs.webp",
-        fitStatus: "SMALL BY 9CM",
+        fitStatus: "VERY SMALL - EXTREMELY TIGHT",
         fitTone: "bad",
       },
       {
         id: "s",
         label: "S",
         tryOnSrc: "/component/demo1_s.webp",
-        fitStatus: "SMALL BY 4.7CM",
+        fitStatus: "SMALL - TIGHT",
         fitTone: "warn",
       },
       {
         id: "m",
         label: "M",
         tryOnSrc: "/component/demo1_m.webp",
-        fitStatus: "GOOD FIT - SMALL BY 1.1CM",
+        fitStatus: "GOOD FIT - JUST YOUR SIZE",
         fitTone: "good",
       },
       {
         id: "l",
         label: "L",
         tryOnSrc: "/component/demo1_l.webp",
-        fitStatus: "GOOD FIT - BIG BY 3.6CM",
+        fitStatus: "GOOD FIT - A BIT OVERSIZED",
         fitTone: "good",
       },
       {
         id: "xl",
         label: "XL",
         tryOnSrc: "/component/demo1_xl.webp",
-        fitStatus: "BIG BY 4.2CM",
-        fitTone: "warn",
+        fitStatus: "VERY BIG - EXTREMELY OVERSIZED",
+        fitTone: "bad",
       },
     ],
   },
@@ -95,6 +95,17 @@ const FIT_TONE_STYLES = {
   warn: "border-amber-500/35 bg-amber-50 text-amber-800",
   bad: "border-red-500/35 bg-red-50 text-red-700",
 } as const
+
+const AUTO_SCROLL_MIN_MS = 2000
+const AUTO_SCROLL_MAX_MS = 5000
+const AUTO_SCROLL_PAUSE_AFTER_USER_MS = 6000
+
+function randomAutoScrollDelayMs() {
+  return (
+    AUTO_SCROLL_MIN_MS +
+    Math.random() * (AUTO_SCROLL_MAX_MS - AUTO_SCROLL_MIN_MS)
+  )
+}
 
 /** Try-on demo for the hero. Anchor id `product` for in-page nav. */
 function SketchArrowToPhoto({ className }: { className?: string }) {
@@ -130,8 +141,22 @@ export function SeeItInActionDemo() {
   const [sizeId, setSizeId] = useState("m")
   const [slideDirection, setSlideDirection] = useState(0)
   const [showUserPhoto, setShowUserPhoto] = useState(false)
+  const [autoScrollPaused, setAutoScrollPaused] = useState(false)
+  const autoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
 
   const activeSize = garment.sizes.find((s) => s.id === sizeId) ?? garment.sizes[2]!
+
+  const advanceToNextSize = useCallback(() => {
+    setSizeId((current) => {
+      const currentIndex = garment.sizes.findIndex((s) => s.id === current)
+      const nextIndex = (currentIndex + 1) % garment.sizes.length
+      setSlideDirection(nextIndex > currentIndex ? 1 : -1)
+      return garment.sizes[nextIndex]!.id
+    })
+    setShowUserPhoto(false)
+  }, [garment.sizes])
 
   const handleSizeChange = (nextId: string) => {
     if (nextId === sizeId) return
@@ -140,6 +165,7 @@ export function SeeItInActionDemo() {
     setSlideDirection(nextIndex > currentIndex ? 1 : -1)
     setSizeId(nextId)
     setShowUserPhoto(false)
+    setAutoScrollPaused(true)
   }
 
   const handleUserPhotoClick = () => {
@@ -156,6 +182,33 @@ export function SeeItInActionDemo() {
     preload(activeSize.tryOnSrc)
     preload(garment.userPhotoSrc)
   }, [garment.originalSrc, garment.userPhotoSrc, activeSize.tryOnSrc])
+
+  useEffect(() => {
+    if (!autoScrollPaused) return
+    const resumeTimer = window.setTimeout(() => {
+      setAutoScrollPaused(false)
+    }, AUTO_SCROLL_PAUSE_AFTER_USER_MS)
+    return () => window.clearTimeout(resumeTimer)
+  }, [autoScrollPaused, sizeId])
+
+  useEffect(() => {
+    if (showUserPhoto || autoScrollPaused) return
+
+    const scheduleNext = () => {
+      autoScrollTimeoutRef.current = window.setTimeout(() => {
+        advanceToNextSize()
+        scheduleNext()
+      }, randomAutoScrollDelayMs())
+    }
+
+    scheduleNext()
+    return () => {
+      if (autoScrollTimeoutRef.current !== null) {
+        window.clearTimeout(autoScrollTimeoutRef.current)
+        autoScrollTimeoutRef.current = null
+      }
+    }
+  }, [showUserPhoto, autoScrollPaused, advanceToNextSize])
 
   return (
     <div id="product" className="relative mt-0 w-full min-w-0 lg:-mt-[54px]">
@@ -327,11 +380,12 @@ export function SeeItInActionDemo() {
                         aria-label={`Size ${s.label}`}
                         onClick={() => handleSizeChange(s.id)}
                         className={[
-                          "flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[10px] font-semibold tabular-nums shadow-sm transition-colors duration-200 outline-none sm:h-8 sm:w-8 sm:text-[11px]",
+                          "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-xs font-semibold tabular-nums shadow-sm transition-all duration-200 outline-none sm:h-10 sm:w-10 sm:text-sm",
                           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                          "hover:scale-105 active:scale-95",
                           selected
-                            ? "bg-primary text-primary-foreground"
-                            : "border border-border bg-background/95 text-muted-foreground backdrop-blur-[2px] hover:border-accent/40 hover:text-foreground",
+                            ? "scale-105 border-2 border-primary bg-primary text-primary-foreground shadow-md ring-2 ring-primary/30 ring-offset-1 ring-offset-background"
+                            : "border-2 border-border bg-background/95 text-muted-foreground backdrop-blur-[2px] hover:border-accent/50 hover:bg-background hover:text-foreground hover:shadow",
                         ].join(" ")}
                       >
                         {s.label}

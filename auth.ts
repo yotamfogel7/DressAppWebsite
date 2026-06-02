@@ -6,7 +6,7 @@ import Google from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
 import { getUserOnboardingProfile, getUserWithPasswordByEmail } from "@/lib/auth-db"
 import { ensureAuthSchema } from "@/lib/auth-schema"
-import { getAuthPool } from "@/lib/auth-pool"
+import { initAuthPool } from "@/lib/auth-pool"
 import { ensureMerchantForUser } from "@/lib/ensure-merchant-for-user"
 import { isOnboardingComplete } from "@/lib/onboarding"
 
@@ -84,7 +84,7 @@ function buildProviders(): NextAuthConfig["providers"] {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
-  const pool = getAuthPool()
+  const pool = await initAuthPool()
   await ensureAuthSchema(pool)
 
   return {

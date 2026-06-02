@@ -1,5 +1,5 @@
 import type { Pool } from "pg"
-import { getAuthPool } from "@/lib/auth-pool"
+import { initAuthPool } from "@/lib/auth-pool"
 import { ensureAuthSchema } from "@/lib/auth-schema"
 
 export type UserMerchantCredentials = {
@@ -22,7 +22,7 @@ export type SaveUserMerchantCredentialsInput = {
 }
 
 async function withCredentialsDb<T>(fn: (pool: Pool) => Promise<T>): Promise<T> {
-  const pool = getAuthPool()
+  const pool = await initAuthPool()
   await ensureAuthSchema(pool)
   return fn(pool)
 }

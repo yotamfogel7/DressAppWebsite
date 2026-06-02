@@ -16,6 +16,7 @@
     "@auth/pg-adapter": "^1.11.2",
     "@dressapp/react-widget": "^0.2.0",
     "@dressapp/web-sdk": "^0.2.0",
+    "@electric-sql/pglite": "^0.4.6",
     "@hookform/resolvers": "^3.9.1",
     "@paypal/react-paypal-js": "^9.2.0",
     "@radix-ui/react-accordion": "1.2.12",
