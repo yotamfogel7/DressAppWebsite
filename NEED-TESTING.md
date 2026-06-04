@@ -1,0 +1,1 @@
+1. Hero try-on demo: click each size pill (XS–XL) and confirm the fit label under the try-on image matches the new bands (e.g. "VERY SMALL - EXTREMELY TIGHT" for XS, "GOOD FIT - JUST YOUR SIZE" for M) and colors look right (red for XS/XL, amber for S, green for M/L).

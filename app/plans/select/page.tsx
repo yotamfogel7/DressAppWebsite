@@ -39,7 +39,9 @@ export default async function PlanSelectPage({
   const paypalPlanId = getPayPalPlanIdForSlug(slug)
   if (!paypalPlanId) {
     if (slug === "enterprise-plus") {
-      redirect("/payment/setup-error?code=contact_sales")
+      redirect(
+        "mailto:dressappsupport@gmail.com?subject=Enterprise%2B%20plan%20-%20DressApp",
+      )
     }
     console.error("[plans/select] Missing PayPal plan id env for slug:", slug)
     redirect("/payment/setup-error?code=missing_plan_mapping")

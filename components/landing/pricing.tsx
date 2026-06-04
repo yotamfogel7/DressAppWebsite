@@ -14,7 +14,8 @@ function PricingCard({
   plan: (typeof PRICING_PLANS)[number]
   index: number
 }) {
-  const ctaHref = `/plans/select?plan=${encodeURIComponent(plan.slug)}`
+  const ctaHref =
+    plan.ctaHref ?? `/plans/select?plan=${encodeURIComponent(plan.slug)}`
 
   return (
     <motion.div

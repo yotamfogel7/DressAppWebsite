@@ -14,10 +14,14 @@ type OnboardingPlansStepProps = {
 export function OnboardingPlansStep({ onBack }: OnboardingPlansStepProps) {
   const [busySlug, setBusySlug] = useState<string | null>(null)
 
-  function choosePlan(slug: string) {
-    setBusySlug(slug)
+  function choosePlan(plan: (typeof PRICING_PLANS)[number]) {
+    if (plan.ctaHref) {
+      window.location.assign(plan.ctaHref)
+      return
+    }
+    setBusySlug(plan.slug)
     window.location.assign(
-      `/plans/select?plan=${encodeURIComponent(slug)}`,
+      `/plans/select?plan=${encodeURIComponent(plan.slug)}`,
     )
   }
 
@@ -39,7 +43,7 @@ export function OnboardingPlansStep({ onBack }: OnboardingPlansStepProps) {
             plan={plan}
             index={index}
             busy={busySlug === plan.slug}
-            onChoose={() => choosePlan(plan.slug)}
+            onChoose={() => choosePlan(plan)}
           />
         ))}
       </div>
@@ -51,7 +55,7 @@ export function OnboardingPlansStep({ onBack }: OnboardingPlansStepProps) {
             plan={plan}
             index={index + 3}
             busy={busySlug === plan.slug}
-            onChoose={() => choosePlan(plan.slug)}
+            onChoose={() => choosePlan(plan)}
           />
         ))}
       </div>
