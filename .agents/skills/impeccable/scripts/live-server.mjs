@@ -37,7 +37,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // DESIGN sidecar is project-local at .impeccable/design.json, with legacy
 // DESIGN.json fallback for existing projects.
 const CONTEXT_DIR = resolveContextDir(process.cwd());
-const DEFAULT_POLL_TIMEOUT = 600_000;   // 10 min — agent re-polls on timeout anyway
+const DEFAULT_POLL_TIMEOUT = 600_000;   // 10 min - agent re-polls on timeout anyway
 const SSE_HEARTBEAT_INTERVAL = 30_000;  // keepalive ping every 30s
 
 // ---------------------------------------------------------------------------
@@ -157,7 +157,7 @@ function broadcast(msg) {
 function loadBrowserScripts() {
   // Detection script: look relative to the skill scripts dir, then fall back
   // to the npm package location (cli/engine/detect-antipatterns-browser.js).
-  // This one IS cached — detect.js rarely changes during a session.
+  // This one IS cached - detect.js rarely changes during a session.
   const detectPaths = [
     path.join(__dirname, '..', '..', '..', '..', 'cli', 'engine', 'detect-antipatterns-browser.js'),
     path.join(process.cwd(), 'node_modules', 'impeccable', 'cli', 'engine', 'detect-antipatterns-browser.js'),
@@ -183,7 +183,7 @@ function loadBrowserScripts() {
 }
 
 function hasProjectContext() {
-  // PRODUCT.md carries brand voice / anti-references — that's what determines
+  // PRODUCT.md carries brand voice / anti-references - that's what determines
   // whether variants are brand-aware. DESIGN.md (visual tokens) is a separate
   // concern, surfaced by the design panel's own empty state. Legacy
   // .impeccable.md is auto-migrated to PRODUCT.md by load-context.mjs.
@@ -198,7 +198,7 @@ function statOrNull(filePath) {
 }
 
 // ---------------------------------------------------------------------------
-// Validation (inline — no external import needed for self-contained script)
+// Validation (inline - no external import needed for self-contained script)
 // ---------------------------------------------------------------------------
 
 const VISUAL_ACTIONS = [
@@ -275,7 +275,7 @@ function createRequestHandler({ detectScript, sessionPath, livePath }) {
     if (p === '/live.js') {
       // Re-read from disk each request so edits to live-browser.js land on
       // the next tab reload. No-store headers prevent browser caching across
-      // sessions — during iteration, a cached old script silently breaks
+      // sessions - during iteration, a cached old script silently breaks
       // every subsequent session.
       let sessionScript;
       let liveScript;

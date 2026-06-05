@@ -12,8 +12,8 @@ export function PrivacyPolicyContent() {
         <p>
           Our commitment to privacy and data protection is reflected in this Privacy Policy. It
           explains how <strong>DressApp</strong> (“we,” “us,” or “our”) handles information that
-          identifies you or your business—such as contact details, store identifiers, try-on photos,
-          and measurements—as well as other data we process to run our services.
+          identifies you or your business-such as contact details, store identifiers, try-on photos,
+          and measurements-as well as other data we process to run our services.
         </p>
         <p>
           DressApp provides AI-powered virtual try-on for Shopify: shoppers can build a digital body
@@ -75,7 +75,7 @@ export function PrivacyPolicyContent() {
         <h2>Information collection</h2>
         <p>
           We collect information directly from merchants and shoppers, automatically through use of
-          our services, and from trusted partners—only as needed to operate virtual try-on within
+          our services, and from trusted partners-only as needed to operate virtual try-on within
           Shopify’s platform rules. We do <strong>not</strong> sell personal information.
         </p>
 
@@ -180,7 +180,7 @@ export function PrivacyPolicyContent() {
       <section className="space-y-4">
         <h2>Data protection</h2>
         <p>
-          We use administrative, technical, and organizational measures appropriate to the risk—
+          We use administrative, technical, and organizational measures appropriate to the risk-
           including HTTPS, access controls, and secured credentials. No method of transmission or
           storage is completely secure; protect your Shopify admin access and use strong passwords.
         </p>
@@ -282,7 +282,7 @@ export function PrivacyPolicyContent() {
           <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
             logged_in_customer_id
           </code>{" "}
-          only to maintain a consistent try-on session—not to access customer records beyond granted
+          only to maintain a consistent try-on session-not to access customer records beyond granted
           scopes.
         </p>
       </section>
@@ -304,7 +304,7 @@ export function PrivacyPolicyContent() {
             authentication and sessions.
           </li>
           <li>
-            <strong>Storefront widget:</strong> Primarily API calls and optional session storage—we
+            <strong>Storefront widget:</strong> Primarily API calls and optional session storage-we
             do not run third-party ad trackers in the widget. Other apps or themes may set their own
             cookies.
           </li>
@@ -324,14 +324,14 @@ export function PrivacyPolicyContent() {
         <h2>Contact us</h2>
         <p>
           If you have questions about this Privacy Policy or need to exercise your rights, reach out
-          to us—we’re happy to help merchants and shoppers.
+          to us-we’re happy to help merchants and shoppers.
         </p>
         <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-foreground">Privacy & data requests</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Subject line: <span className="text-foreground">Privacy — DressApp</span>
+                Subject line: <span className="text-foreground">Privacy - DressApp</span>
               </p>
             </div>
             <Link

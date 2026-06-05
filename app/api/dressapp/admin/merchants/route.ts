@@ -66,7 +66,7 @@ type CreateMerchantBody = {
 }
 
 /**
- * POST /partner/v1/admin/merchants — requires X-Partner-Admin-Secret on DressApp API.
+ * POST /partner/v1/admin/merchants - requires X-Partner-Admin-Secret on DressApp API.
  * Gated in production unless DRESSAPP_ENABLE_MERCHANT_REGISTRATION=true.
  */
 export async function POST(req: Request) {

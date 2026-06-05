@@ -1,6 +1,20 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
+import { clearAuthSessionCookies } from "@/lib/auth-cookies"
+import {
+  allowsIncompleteOnboardingSession,
+  buildOnboardingRedirectPath,
+  tokenNeedsOnboarding,
+} from "@/lib/onboarding-access"
+import {
+  hasPendingSignupCookie,
+  isPendingSignupToken,
+  PENDING_SIGNUP_COOKIE,
+  PENDING_SIGNUP_QUERY_PARAM,
+} from "@/lib/pending-signup-cookie-constants"
+
+const PENDING_SIGNUP_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
 
 const secret = process.env.AUTH_SECRET
 
@@ -29,15 +43,31 @@ function isProtectedPath(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const secure = request.nextUrl.protocol === "https:"
 
-  if (!isProtectedPath(pathname)) {
-    return NextResponse.next()
+  if (pathname === "/onboarding" || pathname.startsWith("/onboarding/")) {
+    const pst = request.nextUrl.searchParams.get(PENDING_SIGNUP_QUERY_PARAM)
+    if (isPendingSignupToken(pst)) {
+      const url = request.nextUrl.clone()
+      url.searchParams.delete(PENDING_SIGNUP_QUERY_PARAM)
+      const response = NextResponse.redirect(url)
+      response.cookies.set(PENDING_SIGNUP_COOKIE, pst!.trim(), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure,
+        path: "/",
+        maxAge: PENDING_SIGNUP_MAX_AGE_SECONDS,
+      })
+      return response
+    }
   }
 
   if (!secret) {
-    console.error(
-      "[middleware] AUTH_SECRET is not set; skipping auth protection",
-    )
+    if (isProtectedPath(pathname)) {
+      console.error(
+        "[middleware] AUTH_SECRET is not set; skipping auth protection",
+      )
+    }
     return NextResponse.next()
   }
 
@@ -48,14 +78,60 @@ export async function middleware(request: NextRequest) {
     secureCookie: request.nextUrl.protocol === "https:",
   })
   const isAuthed = Boolean(token?.sub)
-  const onboardingComplete = Boolean(token?.onboardingComplete)
+  const fullCallback = `${pathname}${request.nextUrl.search}`
+
+  if (isAuthed && token && tokenNeedsOnboarding(token)) {
+    if (!allowsIncompleteOnboardingSession(pathname)) {
+      if (isProtectedPath(pathname)) {
+        const onboarding = new URL(
+          buildOnboardingRedirectPath(fullCallback),
+          request.url,
+        )
+        return NextResponse.redirect(onboarding)
+      }
+
+      const response = NextResponse.next()
+      clearAuthSessionCookies(response, request)
+      return response
+    }
+  }
+
+  if (!isAuthed && hasPendingSignupCookie(request)) {
+    if (pathname === "/onboarding" || pathname.startsWith("/onboarding/")) {
+      return NextResponse.next()
+    }
+    if (isProtectedPath(pathname)) {
+      const onboarding = new URL(
+        buildOnboardingRedirectPath(fullCallback),
+        request.url,
+      )
+      return NextResponse.redirect(onboarding)
+    }
+  }
+
+  if (!isProtectedPath(pathname)) {
+    return NextResponse.next()
+  }
 
   if (!isAuthed) {
-    const fullCallback = `${pathname}${request.nextUrl.search}`
+    if (pathname.startsWith("/onboarding")) {
+      const login = new URL("/login", request.url)
+      login.searchParams.set("callbackUrl", "/onboarding")
+      const response = NextResponse.redirect(login)
+      if (hasPendingSignupCookie(request)) {
+        response.cookies.set(PENDING_SIGNUP_COOKIE, "", {
+          httpOnly: true,
+          sameSite: "lax",
+          secure,
+          path: "/",
+          maxAge: 0,
+        })
+      }
+      return response
+    }
     if (
       pathname.startsWith("/plans/select") ||
-      pathname.startsWith("/plans") ||
-      pathname.startsWith("/onboarding")
+      pathname.startsWith("/plans")
     ) {
       const signup = new URL("/signup", request.url)
       const plan = request.nextUrl.searchParams.get("plan") ?? ""
@@ -68,26 +144,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(login)
   }
 
-  if (!onboardingComplete && !pathname.startsWith("/onboarding")) {
-    const onboarding = new URL("/onboarding", request.url)
-    const fullCallback = `${pathname}${request.nextUrl.search}`
-    onboarding.searchParams.set("next", fullCallback)
-    return NextResponse.redirect(onboarding)
-  }
-
   return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    "/onboarding",
-    "/plans",
-    "/plans/select",
-    "/account",
-    "/account/:path*",
-    "/settings",
-    "/settings/:path*",
-    "/payment/success",
-    "/payment/cancel",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 }

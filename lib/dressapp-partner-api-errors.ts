@@ -41,18 +41,18 @@ function formatOneDetail(item: DetailItem): string {
     const min = ctx.min_length
     if (fieldKey === "password") {
       return typeof min === "number"
-        ? `Choose a stronger dashboard password — at least ${min} characters.`
+        ? `Choose a stronger dashboard password - at least ${min} characters.`
         : "Choose a longer dashboard password."
     }
     return typeof min === "number"
-      ? `${label} is too short — use at least ${min} characters.`
+      ? `${label} is too short - use at least ${min} characters.`
       : `${label} is too short.`
   }
 
   if (t === "string_too_long") {
     const max = ctx.max_length
     return typeof max === "number"
-      ? `${label} is too long — use at most ${max} characters.`
+      ? `${label} is too long - use at most ${max} characters.`
       : `${label} is too long.`
   }
 
@@ -61,7 +61,7 @@ function formatOneDetail(item: DetailItem): string {
   }
 
   if (t.startsWith("type_error") || t === "string_type") {
-    return `${label} has the wrong type — check the value you entered.`
+    return `${label} has the wrong type - check the value you entered.`
   }
 
   if (t.startsWith("value_error")) {
@@ -115,10 +115,10 @@ export function formatPartnerApiErrorPayload(data: Record<string, unknown>, http
     return e
   }
 
-  if (httpStatus === 401) return "Sign-in was rejected — check your keys or password."
+  if (httpStatus === 401) return "Sign-in was rejected - check your keys or password."
   if (httpStatus === 403) return "You don’t have permission to do that."
   if (httpStatus === 404) return "That resource was not found."
-  if (httpStatus === 409) return "That name or slug is already in use — try a different one."
+  if (httpStatus === 409) return "That name or slug is already in use - try a different one."
 
   return `Something went wrong (HTTP ${httpStatus}). Please try again or contact support.`
 }

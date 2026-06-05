@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { getUserSelectedPlan } from "@/lib/auth-db"
-import { fetchMonthlyTryOnCount } from "@/lib/dressapp-monthly-usage"
+import { fetchMerchantUsage, fetchMonthlyTryOnCount } from "@/lib/dressapp-monthly-usage"
 import {
   getPlanLabel,
   getPlanMonthlyTryOnAllowance,
 } from "@/lib/plan-try-on-allowance"
 import { normalizePlanSlug, type PlanSlug } from "@/lib/plan-slugs"
+import {
+  isUserOnSignupTrial,
+  SIGNUP_TRIAL_TRYON_ALLOWANCE,
+} from "@/lib/signup-trial"
 import { getUserMerchantCredentials } from "@/lib/user-merchant-credentials-db"
 
 export async function GET() {
@@ -18,6 +22,7 @@ export async function GET() {
   try {
     const planRaw = await getUserSelectedPlan(session.user.id)
     const planSlug: PlanSlug | null = planRaw ? normalizePlanSlug(planRaw) : null
+    const onSignupTrial = !planSlug && (await isUserOnSignupTrial(session.user.id))
     const monthlyAllowance = getPlanMonthlyTryOnAllowance(planSlug)
 
     const credentials = await getUserMerchantCredentials(session.user.id)
@@ -34,9 +39,44 @@ export async function GET() {
               monthlyAllowance,
             }
           : null,
+        signupTrial: onSignupTrial
+          ? { allowance: SIGNUP_TRIAL_TRYON_ALLOWANCE, used: null, remaining: null }
+          : null,
         keys: null,
         quota: null,
         message: "No merchant keys are saved for your account yet.",
+      })
+    }
+
+    if (onSignupTrial) {
+      const usage = await fetchMerchantUsage({
+        secretKey: credentials.secretKey,
+        dashboardPassword: credentials.merchantDashboardPassword,
+      })
+      const used = usage.ok ? usage.usage.try_on_count : null
+      const remaining =
+        used != null
+          ? Math.max(0, SIGNUP_TRIAL_TRYON_ALLOWANCE - used)
+          : null
+
+      return NextResponse.json({
+        ok: true,
+        authenticated: true,
+        hasKeys: true,
+        plan: null,
+        signupTrial: {
+          allowance: SIGNUP_TRIAL_TRYON_ALLOWANCE,
+          used,
+          remaining,
+          usageError: usage.ok ? null : usage.error,
+        },
+        keys: {
+          secretKey: credentials.secretKey,
+          publishableKey: credentials.publishableKey,
+          googleApiKey: credentials.googleApiKey,
+          merchantSlug: credentials.merchantSlug,
+        },
+        quota: null,
       })
     }
 

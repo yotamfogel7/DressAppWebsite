@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,16 +16,11 @@ import {
   Wallet,
   LineChart as LineChartIcon,
   PieChart as PieChartIcon,
-  ImageIcon,
 } from "lucide-react"
-import { UsageMyKeysSection } from "@/components/dressapp/usage-my-keys-section"
 import {
-  subDays,
-  subHours,
-  subMonths,
-  subWeeks,
-  subYears,
-} from "date-fns"
+  UsageMyKeysSection,
+  type UsageQuotaDisplay,
+} from "@/components/dressapp/usage-my-keys-section"
 import {
   Select,
   SelectContent,
@@ -32,27 +28,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
   DRESSAPP_TRY_ON_USD,
   DRESSAPP_USER_MODEL_USD,
   formatUsd,
 } from "@/lib/dressapp-usage-pricing"
 import {
-  CartesianGrid,
   Cell,
-  Line,
-  LineChart,
+  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
-  Legend,
 } from "recharts"
-
-const USAGE_PROXY_PATH = "/api/dressapp/usage"
+import {
+  UsageSeriesChart,
+  USAGE_RANGE_UNIT_OPTIONS,
+  MAX_USAGE_RANGE_SPAN,
+  formatPctOrEmpty,
+  usageRangeHint,
+  type UsageRangeUnit,
+  type UsageTimeseriesBucket,
+} from "@/components/dressapp/usage-series-chart"
+import { UsageImageRoulette } from "@/components/dressapp/usage-image-roulette"
+import {
+  UsageFunnelMetricCard,
+  UsageTopTryonProducts,
+  UsageTryonToPurchaseMetric,
+  type TopTryonProduct,
+} from "@/components/dressapp/usage-insights-sections"
 
 const CHART_FILLS = [
   "var(--chart-1)",
@@ -61,163 +65,50 @@ const CHART_FILLS = [
   "var(--chart-4)",
 ] as const
 
-const USAGE_LINE_TOOLTIP = {
-  contentStyle: {
-    background: "oklch(0.12 0 0)",
-    border: "1px solid oklch(0.22 0 0)",
-    borderRadius: "8px",
-    fontSize: "12px",
-    color: "#fff",
-  },
-  labelStyle: { color: "#fff" },
-  itemStyle: { color: "#fff" },
-} as const
-
-/** Two points so a line renders for a single API total (not a time series). */
-function buildTotalRampData(count: number) {
-  return [
-    { step: 0, count: 0 },
-    { step: 1, count: count },
-  ]
+type UsageSummaryJson = {
+  ok?: boolean
+  error?: string
+  tryon_quota_per_month?: number
+  tryon_used_this_month?: number
+  tryons_remaining?: number
+  try_on_count?: number
+  user_model_generation_count?: number
+  users_with_model_count?: number
+  users_with_try_on_count?: number
+  total_site_visitors?: number
+  total_checkout_users?: number
+  percent_users_with_model_pct?: number | null
+  percent_users_with_tryon_pct?: number | null
+  conversion_rate_without_tryon_session_pct?: number | null
+  conversion_rate_with_tryon_session_pct?: number | null
 }
 
-function UsageMetricMiniLine({
-  title,
-  value,
-  stroke,
-}: {
-  title: string
-  value: number
-  stroke: string
-}) {
-  const data = useMemo(() => buildTotalRampData(value), [value])
-  const yMax = Math.max(value, 1)
-  return (
-    <div className="rounded-xl border border-border bg-card/30 p-3 md:p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</p>
-      <p className="mt-1 font-mono text-xl font-semibold tabular-nums md:text-2xl">{value.toLocaleString()}</p>
-      <div className="mt-2 h-36 w-full min-w-0 md:h-40">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.22 0 0)" />
-            <XAxis dataKey="step" type="number" domain={[0, 1]} hide />
-            <YAxis
-              domain={[0, yMax]}
-              width={36}
-              tick={{ fill: "oklch(0.65 0 0)", fontSize: 10 }}
-              axisLine={{ stroke: "oklch(0.22 0 0)" }}
-              tickFormatter={(v) => (typeof v === "number" ? v.toLocaleString() : String(v))}
-            />
-            <Tooltip
-              cursor={{ stroke: "oklch(0.35 0 0)", strokeWidth: 1 }}
-              {...USAGE_LINE_TOOLTIP}
-              formatter={(n: number) => [n.toLocaleString(), "Count"]}
-            />
-            <Line
-              type="linear"
-              dataKey="count"
-              name="Count"
-              stroke={stroke}
-              strokeWidth={2}
-              dot={{ fill: stroke, strokeWidth: 0, r: 4 }}
-              activeDot={{ r: 6 }}
-              isAnimationActive={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  )
+type TimeseriesJson = {
+  ok?: boolean
+  error?: string
+  buckets?: UsageTimeseriesBucket[]
 }
 
-const LOOKBACK_UNITS = ["hours", "days", "weeks", "months", "years"] as const
-type LookbackUnit = (typeof LOOKBACK_UNITS)[number]
-
-const LOOKBACK_LABELS: Record<LookbackUnit, string> = {
-  hours: "Hours",
-  days: "Days",
-  weeks: "Weeks",
-  months: "Months",
-  years: "Years",
-}
-
-type UsageRangeMode = "all" | "custom"
-
-/** `to` = now, `from` = now minus the lookback window (ISO strings for query params). */
-function computeFromToIso(amount: number, unit: LookbackUnit): { from: string; to: string } {
-  const to = new Date()
-  let from: Date
-  switch (unit) {
-    case "hours":
-      from = subHours(to, amount)
-      break
-    case "days":
-      from = subDays(to, amount)
-      break
-    case "weeks":
-      from = subWeeks(to, amount)
-      break
-    case "months":
-      from = subMonths(to, amount)
-      break
-    case "years":
-      from = subYears(to, amount)
-      break
-    default:
-      from = subDays(to, amount)
+type InsightsJson = {
+  ok?: boolean
+  error?: string
+  top_products?: TopTryonProduct[]
+  tryon_to_purchase?: {
+    attribution_window_days?: number
+    tryon_pairs?: number
+    converted_pairs?: number
+    conversion_rate_pct?: number | null
+    order_tracking_enabled?: boolean
   }
-  return { from: from.toISOString(), to: to.toISOString() }
-}
-
-export type DressAppUsagePayload = {
-  try_on_count: number
-  user_model_generation_count: number
-  users_with_model_count: number
-  users_with_try_on_count: number
-  merchant_id?: string
-  period_from?: string
-  period_to?: string
 }
 
 async function parseJsonBody(res: Response): Promise<Record<string, unknown>> {
   const text = await res.text()
-  if (!text.trim()) {
-    return {}
-  }
+  if (!text.trim()) return {}
   try {
     return JSON.parse(text) as Record<string, unknown>
   } catch {
     throw new Error(`Non-JSON response (HTTP ${res.status}): ${text.slice(0, 400)}`)
-  }
-}
-
-function readNonNegativeInt(val: unknown, field: string): number {
-  if (typeof val !== "number" || !Number.isFinite(val) || val < 0 || !Number.isInteger(val)) {
-    throw new Error(
-      `Invalid or missing integer field "${field}" in usage response (got ${String(val)}).`,
-    )
-  }
-  return val
-}
-
-function parseUsagePayload(data: Record<string, unknown>): DressAppUsagePayload {
-  return {
-    try_on_count: readNonNegativeInt(data.try_on_count, "try_on_count"),
-    user_model_generation_count: readNonNegativeInt(
-      data.user_model_generation_count,
-      "user_model_generation_count",
-    ),
-    users_with_model_count: readNonNegativeInt(
-      data.users_with_model_count,
-      "users_with_model_count",
-    ),
-    users_with_try_on_count: readNonNegativeInt(
-      data.users_with_try_on_count,
-      "users_with_try_on_count",
-    ),
-    merchant_id: typeof data.merchant_id === "string" ? data.merchant_id : undefined,
-    period_from: typeof data.period_from === "string" ? data.period_from : undefined,
-    period_to: typeof data.period_to === "string" ? data.period_to : undefined,
   }
 }
 
@@ -230,124 +121,83 @@ function formatApiFailure(data: Record<string, unknown>, res: Response, fallback
   return parts.length ? parts.join("\n\n") : fallback
 }
 
-type GalleryJson = {
-  ok?: boolean
-  images?: { url: string }[]
-  configured?: boolean
-  message?: string
-  error?: string
-}
-
-function UsageTryOnGalleryMarquee() {
-  const [items, setItems] = useState<{ url: string }[]>([])
-  const [loading, setLoading] = useState(true)
-  const [info, setInfo] = useState<string | null>(null)
-  const [err, setErr] = useState<string | null>(null)
-  const [reducedMotion, setReducedMotion] = useState(false)
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
-    const apply = () => setReducedMotion(mq.matches)
-    apply()
-    mq.addEventListener("change", apply)
-    return () => mq.removeEventListener("change", apply)
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      setLoading(true)
-      setErr(null)
-      setInfo(null)
-      try {
-        const res = await fetch("/api/dressapp/usage/try-on-gallery", { credentials: "same-origin" })
-        const data = (await res.json()) as GalleryJson
-        if (cancelled) return
-        if (!res.ok) {
-          const msg = typeof data.error === "string" ? data.error : `HTTP ${res.status}`
-          console.error("[DressApp usage gallery] bad response", res.status, data)
-          setErr(msg)
-          setItems([])
-          return
-        }
-        if (data.error) {
-          console.error("[DressApp usage gallery]", data.error)
-          setErr(data.error)
-        }
-        if (data.message && !data.configured) {
-          setInfo(data.message)
-        }
-        setItems(Array.isArray(data.images) ? data.images.filter((x) => x?.url) : [])
-      } catch (e) {
-        if (cancelled) return
-        const message = e instanceof Error ? e.message : String(e)
-        console.error("[DressApp usage gallery] fetch failed", e)
-        setErr(message)
-        setItems([])
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const loop = useMemo(
-    () => (items.length && !reducedMotion ? [...items, ...items] : items),
-    [items, reducedMotion],
-  )
-
+function UsageQuotaSummary({ quota }: { quota: UsageQuotaDisplay }) {
   return (
     <section
-      className="border-t border-border bg-muted/20"
-      aria-label="Recent try-on images from your database"
+      className="rounded-xl border border-border bg-card/40 p-4 md:p-5"
+      aria-label="Try-on allowance"
     >
-      <div className="flex items-center gap-2 border-b border-border/80 px-4 py-2">
-        <ImageIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Try-on gallery
-        </span>
-        {loading ? (
-          <Loader2 className="ml-auto h-4 w-4 animate-spin text-muted-foreground" aria-hidden />
-        ) : null}
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Plan try-ons
+          </p>
+          {quota.planLabel ? (
+            <p className="mt-1 text-sm font-semibold text-foreground">{quota.planLabel}</p>
+          ) : null}
+        </div>
+        <span className="text-xs text-muted-foreground">{quota.usageLabel}</span>
       </div>
-      <div
-        className={`relative h-[7.5rem] md:h-[8.5rem] ${reducedMotion ? "overflow-x-auto" : "overflow-hidden"}`}
-      >
-        {err ? (
-          <div className="flex h-full items-center px-4 text-xs text-destructive">
-            Gallery could not load: {err}
+
+      {quota.allowance != null ? (
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-border bg-background/80 px-3 py-3">
+              <p className="text-xs text-muted-foreground">Included</p>
+              <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
+                {quota.allowance.toLocaleString()}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/80 px-3 py-3">
+              <p className="text-xs text-muted-foreground">Used</p>
+              <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
+                {quota.used != null ? quota.used.toLocaleString() : "-"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/80 px-3 py-3">
+              <p className="text-xs text-muted-foreground">Remaining</p>
+              <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
+                {quota.remaining != null ? quota.remaining.toLocaleString() : "-"}
+              </p>
+            </div>
           </div>
-        ) : info && !items.length ? (
-          <div className="flex h-full items-center px-4 text-xs text-muted-foreground">{info}</div>
-        ) : !items.length && !loading ? (
-          <div className="flex h-full items-center px-4 text-xs text-muted-foreground">
-            No image URLs returned. Check table rows and URL column values.
-          </div>
-        ) : (
-          <div
-            className={`flex h-full items-center gap-3 px-3 py-2 ${loop.length && !reducedMotion ? "usage-gallery-marquee w-max" : "w-max min-w-full"}`}
-          >
-            {loop.map((im, i) => (
-              <div
-                key={`${im.url}-${i}`}
-                className="relative h-[5.75rem] w-[5.75rem] shrink-0 overflow-hidden rounded-lg border border-border bg-card shadow-sm md:h-[6.75rem] md:w-[6.75rem]"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={im.url}
-                  alt=""
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+
+          {quota.usageError ? (
+            <p className="text-xs text-destructive">Usage unavailable: {quota.usageError}</p>
+          ) : quota.remaining === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              {quota.isSignupTrial ? (
+                <>
+                  Trial used up.{" "}
+                  <Link href="/plans" className="font-medium text-primary underline-offset-4 hover:underline">
+                    Choose a plan
+                  </Link>{" "}
+                  to keep try-ons running.
+                </>
+              ) : (
+                <>
+                  Plan cap reached.{" "}
+                  <Link
+                    href="/settings/billing"
+                    className="font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    Set up on-demand billing
+                  </Link>
+                </>
+              )}
+            </p>
+          ) : quota.remaining != null ? (
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{quota.remaining.toLocaleString()}</span>{" "}
+              {quota.remainingLabel}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Custom allowance - contact sales for your monthly limit.
+        </p>
+      )}
     </section>
   )
 }
@@ -355,24 +205,28 @@ function UsageTryOnGalleryMarquee() {
 export function DressAppUsageDashboard() {
   const [secretKey, setSecretKey] = useState("")
   const [keysLoaded, setKeysLoaded] = useState(false)
-  const autoLoadedRef = useRef(false)
-  const [rangeMode, setRangeMode] = useState<UsageRangeMode>("all")
-  const [lookbackAmount, setLookbackAmount] = useState("")
-  const [lookbackUnit, setLookbackUnit] = useState<LookbackUnit>("days")
+  const [span, setSpan] = useState(1)
+  const [spanDraft, setSpanDraft] = useState("1")
+  const [unit, setUnit] = useState<UsageRangeUnit>("all")
   const [loading, setLoading] = useState(false)
+  const [metricsLoading, setMetricsLoading] = useState(false)
+  const initialLoadDoneRef = useRef(false)
   const [error, setError] = useState<string | null>(null)
-  const [usage, setUsage] = useState<DressAppUsagePayload | null>(null)
+  const [seriesErr, setSeriesErr] = useState<string | null>(null)
+  const [insightsErr, setInsightsErr] = useState<string | null>(null)
+  const [summary, setSummary] = useState<UsageSummaryJson | null>(null)
+  const [series, setSeries] = useState<UsageTimeseriesBucket[]>([])
+  const [insights, setInsights] = useState<InsightsJson | null>(null)
+  const [quota, setQuota] = useState<UsageQuotaDisplay | null>(null)
+
+  const rangeHint = usageRangeHint(unit, span)
 
   const estimates = useMemo(() => {
-    if (!usage) return null
-    const tryOnCost = usage.try_on_count * DRESSAPP_TRY_ON_USD
-    const modelCost = usage.user_model_generation_count * DRESSAPP_USER_MODEL_USD
-    return {
-      tryOnCost,
-      modelCost,
-      combined: tryOnCost + modelCost,
-    }
-  }, [usage])
+    if (!summary) return null
+    const tryOnCost = (summary.try_on_count ?? 0) * DRESSAPP_TRY_ON_USD
+    const modelCost = (summary.user_model_generation_count ?? 0) * DRESSAPP_USER_MODEL_USD
+    return { tryOnCost, modelCost, combined: tryOnCost + modelCost }
+  }, [summary])
 
   const spendSlices = useMemo(() => {
     if (!estimates || estimates.combined <= 0) return []
@@ -382,82 +236,164 @@ export function DressAppUsageDashboard() {
     ]
   }, [estimates])
 
-  const handleLoad = useCallback(async (mode: "initial" | "refresh" = "initial") => {
-    const isRefresh = mode === "refresh"
+  const applySpanDraft = useCallback(() => {
+    if (unit === "all") return
+    const n = Number.parseInt(spanDraft.trim(), 10)
+    if (!Number.isFinite(n)) {
+      setSpanDraft(String(span))
+      return
+    }
+    const cap = MAX_USAGE_RANGE_SPAN[unit]
+    const clamped = Math.min(cap, Math.max(1, n))
+    setSpan(clamped)
+    setSpanDraft(String(clamped))
+  }, [spanDraft, span, unit])
+
+  useEffect(() => {
+    if (unit === "all") return
+    const cap = MAX_USAGE_RANGE_SPAN[unit]
+    setSpan((s) => {
+      const next = Math.min(cap, Math.max(1, s))
+      if (next !== s) setSpanDraft(String(next))
+      return next
+    })
+  }, [unit])
+
+  const handleSecretKeyLoaded = useCallback((sk: string) => {
+    setSecretKey((prev) => (prev === sk ? prev : sk))
+  }, [])
+
+  const handleKeysFetchComplete = useCallback(() => {
+    setKeysLoaded(true)
+  }, [])
+
+  const handleQuotaLoaded = useCallback((next: UsageQuotaDisplay | null) => {
+    setQuota(next)
+  }, [])
+
+  const loadAll = useCallback(async () => {
+    if (!secretKey.trim()) return
+
     setError(null)
-    if (!isRefresh) {
-      setUsage(null)
+    setSeriesErr(null)
+    setInsightsErr(null)
+    if (!initialLoadDoneRef.current) {
+      setLoading(true)
+    } else {
+      setMetricsLoading(true)
     }
 
-    const qs = new URLSearchParams()
-    if (rangeMode === "custom") {
-      const rawLookback = lookbackAmount.trim()
-      if (rawLookback === "") {
-        setError(
-          "Custom time range: enter a whole number of 1 or more, or switch to All time.",
-        )
-        return
-      }
-      const n = Number.parseInt(rawLookback, 10)
-      if (!Number.isFinite(n) || n < 1) {
-        setError(
-          "Custom time range: use a whole number of 1 or more, or switch to All time.",
-        )
-        return
-      }
-      const { from, to } = computeFromToIso(n, lookbackUnit)
-      qs.set("from", from)
-      qs.set("to", to)
-    }
-    const query = qs.toString()
-    const url = query ? `${USAGE_PROXY_PATH}?${query}` : USAGE_PROXY_PATH
+    const qs = new URLSearchParams({ span: String(span), unit })
 
-    setLoading(true)
     try {
-      const res = await fetch(url, {
-        method: "GET",
-        credentials: "same-origin",
-        cache: "no-store",
-      })
+      const [summaryRes, seriesRes, insightsRes] = await Promise.all([
+        fetch(`/api/dressapp/usage/summary?${qs}`, { credentials: "same-origin", cache: "no-store" }),
+        fetch(`/api/dressapp/usage/timeseries?${qs}`, { credentials: "same-origin", cache: "no-store" }),
+        fetch(`/api/dressapp/usage/insights?${qs}`, { credentials: "same-origin", cache: "no-store" }),
+      ])
 
-      const data = await parseJsonBody(res)
+      const summaryData = (await parseJsonBody(summaryRes)) as UsageSummaryJson
+      const seriesData = (await parseJsonBody(seriesRes)) as TimeseriesJson
+      const insightsData = (await parseJsonBody(insightsRes)) as InsightsJson
 
-      if (!res.ok || data.ok === false) {
+      if (!summaryRes.ok || summaryData.ok === false) {
         const msg = formatApiFailure(
-          data,
-          res,
-          `Usage request failed (HTTP ${res.status}).`,
+          summaryData,
+          summaryRes,
+          `Usage summary failed (HTTP ${summaryRes.status}).`,
         )
-        console.error("[DressApp usage] request failed", {
-          status: res.status,
-          url,
-          body: data,
-        })
-        setError(`${msg}\n\nHTTP ${res.status}`)
-        return
+        console.error("[DressApp usage] summary failed", summaryRes.status, summaryData)
+        setError(`${msg}\n\nHTTP ${summaryRes.status}`)
+        setSummary(null)
+      } else {
+        setSummary(summaryData)
       }
 
-      try {
-        setUsage(parseUsagePayload(data))
-      } catch (e) {
-        const message = e instanceof Error ? e.message : String(e)
-        console.error("[DressApp usage] invalid response shape", { data, message })
-        setError(`${message}\n\nHTTP ${res.status}`)
+      if (!seriesRes.ok || seriesData.ok === false) {
+        const msg = formatApiFailure(
+          seriesData,
+          seriesRes,
+          `Usage chart failed (HTTP ${seriesRes.status}).`,
+        )
+        console.error("[DressApp usage] timeseries failed", seriesRes.status, seriesData)
+        setSeriesErr(msg)
+        setSeries([])
+      } else {
+        setSeries(Array.isArray(seriesData.buckets) ? seriesData.buckets : [])
+      }
+
+      if (!insightsRes.ok || insightsData.ok === false) {
+        const msg = formatApiFailure(
+          insightsData,
+          insightsRes,
+          `Usage insights failed (HTTP ${insightsRes.status}).`,
+        )
+        console.error("[DressApp usage] insights failed", insightsRes.status, insightsData)
+        setInsightsErr(msg)
+        setInsights(null)
+      } else {
+        setInsights(insightsData)
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
-      console.error("[DressApp usage] network or parse error", e)
+      console.error("[DressApp usage] load error", e)
       setError(message)
     } finally {
       setLoading(false)
+      setMetricsLoading(false)
+      initialLoadDoneRef.current = true
     }
-  }, [rangeMode, lookbackAmount, lookbackUnit])
+  }, [secretKey, span, unit])
 
   useEffect(() => {
-    if (!secretKey.trim() || autoLoadedRef.current) return
-    autoLoadedRef.current = true
-    void handleLoad("initial")
-  }, [secretKey, handleLoad])
+    if (!keysLoaded || !secretKey.trim()) return
+    void loadAll()
+  }, [keysLoaded, secretKey, span, unit, loadAll])
+
+  const loadTryonGalleryUrls = useCallback(
+    async (opts?: { limit?: number; offset?: number }) => {
+      const limit = opts?.limit ?? 16
+      const offset = opts?.offset ?? 0
+      const res = await fetch(
+        `/api/dressapp/usage/recent-tryon-previews?limit=${encodeURIComponent(String(limit))}&offset=${encodeURIComponent(String(offset))}`,
+        { credentials: "same-origin", cache: "no-store" },
+      )
+      const data = await parseJsonBody(res)
+      if (!res.ok || data.ok === false) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : `HTTP ${res.status}`,
+        )
+      }
+      const raw = data.image_urls
+      return Array.isArray(raw) ? raw.filter((u): u is string => typeof u === "string") : []
+    },
+    [],
+  )
+
+  const loadUserModelGalleryUrls = useCallback(async () => {
+    const res = await fetch("/api/dressapp/usage/recent-user-model-previews?limit=16", {
+      credentials: "same-origin",
+      cache: "no-store",
+    })
+    const data = await parseJsonBody(res)
+    if (!res.ok || data.ok === false) {
+      throw new Error(typeof data.error === "string" ? data.error : `HTTP ${res.status}`)
+    }
+    const raw = data.image_urls
+    return Array.isArray(raw) ? raw.filter((u): u is string => typeof u === "string") : []
+  }, [])
+
+  const tryons = summary?.try_on_count ?? 0
+  const models = summary?.user_model_generation_count ?? 0
+  const usersModel = summary?.users_with_model_count ?? 0
+  const usersTryon = summary?.users_with_try_on_count ?? 0
+  const totalSiteVisitors = summary?.total_site_visitors ?? 0
+  const totalCheckoutUsers = summary?.total_checkout_users ?? 0
+  const conversion = insights?.tryon_to_purchase
+  const conversionTrackingOn = Boolean(conversion?.order_tracking_enabled)
+  const conversionRate =
+    conversion?.conversion_rate_pct != null ? `${conversion.conversion_rate_pct}%` : null
+  const topProducts = insights?.top_products ?? []
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
@@ -466,110 +402,85 @@ export function DressAppUsageDashboard() {
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="text-lg font-semibold tracking-tight md:text-xl">Usage dashboard</h1>
             <span className="text-xs text-muted-foreground md:text-sm">
-              Partner usage and list-price estimates
+              Partner usage, funnel metrics, and list-price estimates
             </span>
           </div>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-        <aside className="w-full shrink-0 border-b border-border bg-card/30 lg:w-[min(100%,22rem)] lg:border-b-0 lg:border-r">
-          <div className="max-h-[42vh] overflow-y-auto p-4 md:max-h-none lg:max-h-full lg:p-5">
+        <aside className="flex w-full shrink-0 flex-col border-b border-border bg-card/30 lg:w-[min(100%,22rem)] lg:max-h-full lg:border-b-0 lg:border-r">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-5">
             <div className="space-y-4">
               <UsageMyKeysSection
-                onSecretKeyLoaded={(sk) => {
-                  setSecretKey(sk)
-                }}
-                onKeysFetchComplete={() => setKeysLoaded(true)}
+                onSecretKeyLoaded={handleSecretKeyLoaded}
+                onKeysFetchComplete={handleKeysFetchComplete}
+                onQuotaLoaded={handleQuotaLoaded}
               />
+
               <div className="space-y-2">
                 <Label>Time range</Label>
-                <ToggleGroup
-                  type="single"
-                  variant="outline"
-                  size="sm"
-                  value={rangeMode}
-                  onValueChange={(v) => {
-                    if (!v) return
-                    const mode = v as UsageRangeMode
-                    setRangeMode(mode)
-                    if (mode === "custom" && !lookbackAmount.trim()) {
-                      setLookbackAmount("30")
-                    }
-                  }}
-                  className="flex w-full flex-wrap gap-1"
-                >
-                  <ToggleGroupItem value="all" className="flex-1 text-xs">
-                    All time
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="custom" className="flex-1 text-xs">
-                    Custom window
-                  </ToggleGroupItem>
-                </ToggleGroup>
-                {rangeMode === "custom" ? (
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="text-sm text-muted-foreground">Last</span>
-                    <Input
-                      id="usage-lookback-amount"
-                      name="usageLookbackAmount"
-                      type="number"
-                      min={1}
-                      step={1}
-                      inputMode="numeric"
-                      autoComplete="off"
-                      placeholder="30"
-                      className="w-[5.5rem]"
-                      value={lookbackAmount}
-                      onChange={(e) => setLookbackAmount(e.target.value)}
-                    />
-                    <Select
-                      value={lookbackUnit}
-                      onValueChange={(v) => setLookbackUnit(v as LookbackUnit)}
-                    >
-                      <SelectTrigger id="usage-lookback-unit" className="w-[8.5rem]" size="default">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LOOKBACK_UNITS.map((u) => (
-                          <SelectItem key={u} value={u}>
-                            {LOOKBACK_LABELS[u]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : null}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  onClick={() => void handleLoad("initial")}
-                  disabled={loading || !secretKey.trim()}
-                >
-                  {loading ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  {unit !== "all" ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                      Loading…
+                      <span className="text-sm text-muted-foreground">Last</span>
+                      <Input
+                        id="usage-lookback-amount"
+                        type="number"
+                        min={1}
+                        max={MAX_USAGE_RANGE_SPAN[unit]}
+                        step={1}
+                        inputMode="numeric"
+                        autoComplete="off"
+                        className="w-[5.5rem]"
+                        value={spanDraft}
+                        onChange={(e) => setSpanDraft(e.target.value)}
+                        onBlur={applySpanDraft}
+                      />
                     </>
-                  ) : (
-                    "Load usage"
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void handleLoad("refresh")}
-                  disabled={loading || !usage}
-                  title={!usage ? "Load usage first, then refresh" : undefined}
-                >
-                  {loading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                  ) : (
-                    <RefreshCw className="mr-2 h-4 w-4" aria-hidden />
-                  )}
-                  Refresh
-                </Button>
+                  ) : null}
+                  <Select
+                    value={unit}
+                    onValueChange={(v) => {
+                      const next = v as UsageRangeUnit
+                      setUnit(next)
+                      if (next !== "all" && !spanDraft.trim()) setSpanDraft("1")
+                    }}
+                  >
+                    <SelectTrigger id="usage-lookback-unit" className="w-[8.5rem]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {USAGE_RANGE_UNIT_OPTIONS.map((o) => (
+                        <SelectItem key={o.id} value={o.id}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {metricsLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden />
+                  ) : null}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Metrics and charts use {rangeHint.toLowerCase()}.
+                </p>
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => void loadAll()}
+                disabled={loading || metricsLoading || !secretKey.trim()}
+                aria-label="Refresh usage"
+              >
+                {loading || metricsLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <RefreshCw className="h-4 w-4" aria-hidden />
+                )}
+              </Button>
             </div>
           </div>
         </aside>
@@ -588,118 +499,168 @@ export function DressAppUsageDashboard() {
                 </Alert>
               ) : null}
 
-              {usage && estimates ? (
+              {quota ? <UsageQuotaSummary quota={quota} /> : null}
+
+              {summary && estimates ? (
                 <>
+                  <div className="space-y-2">
+                    <h2 className="text-base font-semibold">Usage overview</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {(summary.tryons_remaining ?? 0).toLocaleString()} try-ons left in this billing
+                      period · {(summary.tryon_used_this_month ?? 0).toLocaleString()} used of{" "}
+                      {(summary.tryon_quota_per_month ?? 0).toLocaleString()} in your plan allowance.
+                    </p>
+                  </div>
+
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-xl border border-border bg-gradient-to-br from-chart-1/12 to-transparent p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1/20 text-chart-1">
-                          <Shirt className="h-5 w-5" aria-hidden />
-                        </span>
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Try-ons
-                          </p>
-                          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
-                            {usage.try_on_count}
-                          </p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {formatUsd(DRESSAPP_TRY_ON_USD)} each →{" "}
-                            <span className="text-foreground">{formatUsd(estimates.tryOnCost)}</span> est.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-border bg-gradient-to-br from-chart-2/12 to-transparent p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-2/20 text-chart-2">
-                          <Sparkles className="h-5 w-5" aria-hidden />
-                        </span>
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Model jobs
-                          </p>
-                          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
-                            {usage.user_model_generation_count}
-                          </p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {formatUsd(DRESSAPP_USER_MODEL_USD)} each →{" "}
-                            <span className="text-foreground">{formatUsd(estimates.modelCost)}</span> est.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-border bg-muted/20 p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                          <UserCircle2 className="h-5 w-5" aria-hidden />
-                        </span>
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Users with model
-                          </p>
-                          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
-                            {usage.users_with_model_count}
-                          </p>
-                          <p className="mt-1 text-xs text-muted-foreground">Distinct shoppers</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-border bg-muted/20 p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                          <Users className="h-5 w-5" aria-hidden />
-                        </span>
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Users with try-on
-                          </p>
-                          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
-                            {usage.users_with_try_on_count}
-                          </p>
-                          <p className="mt-1 text-xs text-muted-foreground">Distinct shoppers</p>
-                        </div>
-                      </div>
+                    <MetricCard
+                      icon={<UserCircle2 className="h-5 w-5" aria-hidden />}
+                      label="Users with model"
+                      value={usersModel}
+                      hint={rangeHint}
+                    />
+                    <MetricCard
+                      icon={<Sparkles className="h-5 w-5" aria-hidden />}
+                      label="Model jobs"
+                      value={models}
+                      hint={rangeHint}
+                      sub={
+                        <>
+                          {formatUsd(DRESSAPP_USER_MODEL_USD)} each →{" "}
+                          <span className="text-foreground">{formatUsd(estimates.modelCost)}</span> est.
+                        </>
+                      }
+                      chart={2}
+                    />
+                    <MetricCard
+                      icon={<Users className="h-5 w-5" aria-hidden />}
+                      label="Users with try-on"
+                      value={usersTryon}
+                      hint={rangeHint}
+                    />
+                    <MetricCard
+                      icon={<Shirt className="h-5 w-5" aria-hidden />}
+                      label="Try-ons"
+                      value={tryons}
+                      hint={rangeHint}
+                      sub={
+                        <>
+                          {formatUsd(DRESSAPP_TRY_ON_USD)} each →{" "}
+                          <span className="text-foreground">{formatUsd(estimates.tryOnCost)}</span> est.
+                        </>
+                      }
+                      chart={1}
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium">Storefront funnel</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Based on tracked storefront visitors. In the selected timeframe there were{" "}
+                      {totalSiteVisitors.toLocaleString()} visitors, and out of them{" "}
+                      {totalCheckoutUsers.toLocaleString()} checked out.
+                    </p>
+                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                      <UsageFunnelMetricCard
+                        label="Users with model"
+                        value={formatPctOrEmpty(summary.percent_users_with_model_pct)}
+                        hint="Active models / tracked visitors (regenerations not counted)"
+                      />
+                      <UsageFunnelMetricCard
+                        label="Users with try-on"
+                        value={formatPctOrEmpty(summary.percent_users_with_tryon_pct)}
+                        hint="Visitors who generated at least one try-on"
+                      />
+                      <UsageFunnelMetricCard
+                        label="Conversion without try-on"
+                        value={formatPctOrEmpty(summary.conversion_rate_without_tryon_session_pct)}
+                        hint="Sessions without try-on that checked out / all sessions without try-on"
+                      />
+                      <UsageFunnelMetricCard
+                        label="Conversion with try-on"
+                        value={formatPctOrEmpty(summary.conversion_rate_with_tryon_session_pct)}
+                        hint="Sessions with try-on that checked out / all sessions with try-on"
+                      />
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-border bg-card/30 p-4 md:p-5">
+                  <section className="rounded-xl border border-border bg-card/30 p-4 md:p-5">
                     <div className="mb-4 flex flex-wrap items-center gap-2 text-sm font-medium">
                       <LineChartIcon className="h-4 w-4 text-chart-4" aria-hidden />
-                      Usage metrics
+                      Dashboard
                       <span className="text-xs font-normal text-muted-foreground">
-                        One total per chart for the range you loaded (not daily history).
+                        Charts follow your activity in UTC ({rangeHint.toLowerCase()}).
                       </span>
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <UsageMetricMiniLine
-                        title="Try-ons"
-                        value={usage.try_on_count}
-                        stroke={CHART_FILLS[0]}
-                      />
-                      <UsageMetricMiniLine
-                        title="Models generated"
-                        value={usage.user_model_generation_count}
-                        stroke={CHART_FILLS[1]}
-                      />
-                      <UsageMetricMiniLine
-                        title="Users with a model"
-                        value={usage.users_with_model_count}
-                        stroke={CHART_FILLS[2]}
-                      />
-                      <UsageMetricMiniLine
-                        title="Users with try-on"
-                        value={usage.users_with_try_on_count}
-                        stroke={CHART_FILLS[3]}
-                      />
+
+                    {insightsErr ? (
+                      <Alert variant="destructive" className="mb-4">
+                        <AlertTitle>Could not load insights</AlertTitle>
+                        <AlertDescription>{insightsErr}</AlertDescription>
+                      </Alert>
+                    ) : null}
+
+                    <UsageTryonToPurchaseMetric
+                      loading={metricsLoading}
+                      conversionTrackingOn={conversionTrackingOn}
+                      conversionRate={conversionRate}
+                      tryonPairs={conversion?.tryon_pairs ?? 0}
+                      convertedPairs={conversion?.converted_pairs ?? 0}
+                      attributionWindowDays={conversion?.attribution_window_days ?? 30}
+                    />
+
+                    {seriesErr ? (
+                      <Alert variant="destructive" className="my-4">
+                        <AlertTitle>Could not load chart</AlertTitle>
+                        <AlertDescription>{seriesErr}</AlertDescription>
+                      </Alert>
+                    ) : null}
+
+                    <div className="mt-4 grid gap-5 sm:grid-cols-2">
+                      <ChartBlock title="Users with a model">
+                        <UsageSeriesChart
+                          buckets={series}
+                          getValue={(b) => b.users_with_model_count}
+                          stroke="#00848e"
+                        />
+                      </ChartBlock>
+                      <ChartBlock title="Model jobs">
+                        <UsageSeriesChart
+                          buckets={series}
+                          getValue={(b) => b.user_model_generation_count}
+                          stroke="#108043"
+                        />
+                      </ChartBlock>
+                      <ChartBlock title="Users with try-on">
+                        <UsageSeriesChart
+                          buckets={series}
+                          getValue={(b) => b.users_with_try_on_count}
+                          stroke="#b98900"
+                        />
+                      </ChartBlock>
+                      <ChartBlock title="Try-ons">
+                        <UsageSeriesChart
+                          buckets={series}
+                          getValue={(b) => b.try_on_count}
+                          stroke="#7c3aed"
+                        />
+                      </ChartBlock>
                     </div>
-                  </div>
+                    <p className="mt-4 text-xs text-muted-foreground">
+                      X-axis labels are UTC bucket boundaries; each point is the total inside that
+                      bucket (not cumulative across the whole range).
+                    </p>
+                  </section>
+
+                  <UsageTopTryonProducts loading={metricsLoading} products={topProducts} />
 
                   <div className="rounded-xl border border-border bg-card/40 p-4 md:p-5">
                     <div className="mb-4 flex flex-wrap items-center gap-2">
                       <Wallet className="h-4 w-4 text-chart-3" aria-hidden />
                       <span className="text-sm font-medium">Estimated total (list rates)</span>
-                      <span className="text-xs text-muted-foreground">Try-ons plus model jobs, not an invoice.</span>
+                      <span className="text-xs text-muted-foreground">
+                        Try-ons plus model jobs, not an invoice.
+                      </span>
                     </div>
                     <p className="font-mono text-3xl font-semibold tabular-nums tracking-tight md:text-4xl">
                       {formatUsd(estimates.combined)}
@@ -715,18 +676,7 @@ export function DressAppUsageDashboard() {
                       <div className="mx-auto h-64 max-w-md w-full min-w-0 md:h-72">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                            <Tooltip
-                              formatter={(v: number) => formatUsd(v)}
-                              contentStyle={{
-                                background: "oklch(0.12 0 0)",
-                                border: "1px solid oklch(0.22 0 0)",
-                                borderRadius: "8px",
-                                fontSize: "12px",
-                                color: "#fff",
-                              }}
-                              labelStyle={{ color: "#fff" }}
-                              itemStyle={{ color: "#fff" }}
-                            />
+                            <Tooltip formatter={(v: number) => formatUsd(v)} />
                             <Legend wrapperStyle={{ fontSize: 11 }} />
                             <Pie
                               data={spendSlices}
@@ -747,11 +697,36 @@ export function DressAppUsageDashboard() {
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        At zero usage there is nothing to chart for spend mix. Load a merchant with activity or
-                        confirm counts from the API.
+                        At zero usage there is nothing to chart for spend mix.
                       </p>
                     )}
                   </div>
+
+                  <UsageImageRoulette
+                    rouletteId="userModel"
+                    loadImageUrls={loadUserModelGalleryUrls}
+                    title="Recent user models"
+                    subtitle="Digital models created by shoppers on your storefront."
+                    loadingLabel="Loading recent user models…"
+                    errorTitle="Could not load model previews"
+                    emptyLabel="No user models yet"
+                    logPrefix="[DressApp usage/user-model-roulette]"
+                  />
+
+                  <UsageImageRoulette
+                    rouletteId="tryon"
+                    loadImageUrls={loadTryonGalleryUrls}
+                    title="Recent try-ons"
+                    subtitle="Successful try-ons from shoppers on your storefront."
+                    loadingLabel="Loading recent try-ons…"
+                    errorTitle="Could not load try-on previews"
+                    emptyLabel="No generated try-ons yet"
+                    logPrefix="[DressApp usage/tryon-roulette]"
+                    initialFetchLimit={50}
+                    loadMoreBatchSize={10}
+                    loadMoreIntervalMs={5000}
+                    prefetchImages
+                  />
                 </>
               ) : keysLoaded && !secretKey.trim() ? (
                 <div className="rounded-xl border border-dashed border-border bg-muted/10 px-4 py-10 text-center text-sm text-muted-foreground">
@@ -766,16 +741,74 @@ export function DressAppUsageDashboard() {
                       Loading your usage…
                     </span>
                   ) : (
-                    "Adjust the time range and load usage to see charts and totals."
+                    "Adjust the time range, then press refresh to load charts and totals."
                   )}
                 </div>
               )}
             </div>
           </div>
-
-          <UsageTryOnGalleryMarquee />
         </div>
       </div>
+    </div>
+  )
+}
+
+function MetricCard({
+  icon,
+  label,
+  value,
+  hint,
+  sub,
+  chart,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: number
+  hint: string
+  sub?: React.ReactNode
+  chart?: number
+}) {
+  const bg =
+    chart === 1
+      ? "bg-gradient-to-br from-chart-1/12 to-transparent"
+      : chart === 2
+        ? "bg-gradient-to-br from-chart-2/12 to-transparent"
+        : "bg-muted/20"
+  const iconWrap =
+    chart === 1
+      ? "bg-chart-1/20 text-chart-1"
+      : chart === 2
+        ? "bg-chart-2/20 text-chart-2"
+        : "bg-muted text-muted-foreground"
+
+  return (
+    <div className={`rounded-xl border border-border p-4 ${bg}`}>
+      <div className="flex items-start gap-3">
+        <span
+          className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconWrap}`}
+        >
+          {icon}
+        </span>
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
+            {value.toLocaleString()}
+          </p>
+          {sub ? <p className="mt-1 text-xs text-muted-foreground">{sub}</p> : null}
+          <p className={`text-xs text-muted-foreground ${sub ? "mt-1" : "mt-1"}`}>{hint}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ChartBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="mb-2 text-xs text-muted-foreground">{title}</p>
+      {children}
     </div>
   )
 }

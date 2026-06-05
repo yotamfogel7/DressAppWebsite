@@ -15,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { AuthFormError } from "@/components/auth/auth-form-error"
 import { parseApiErrorResponse } from "@/lib/auth-user-messages"
 
@@ -114,7 +114,7 @@ export function AccountSecuritySection({ email, hasPasswordAuth }: AccountSecuri
                   <FormItem>
                     <FormLabel>Current password</FormLabel>
                     <FormControl>
-                      <Input {...field} type="password" autoComplete="current-password" />
+                      <PasswordInput {...field} autoComplete="current-password" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -127,7 +127,7 @@ export function AccountSecuritySection({ email, hasPasswordAuth }: AccountSecuri
                   <FormItem>
                     <FormLabel>New password</FormLabel>
                     <FormControl>
-                      <Input {...field} type="password" autoComplete="new-password" />
+                      <PasswordInput {...field} autoComplete="new-password" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -140,7 +140,7 @@ export function AccountSecuritySection({ email, hasPasswordAuth }: AccountSecuri
                   <FormItem>
                     <FormLabel>Confirm new password</FormLabel>
                     <FormControl>
-                      <Input {...field} type="password" autoComplete="new-password" />
+                      <PasswordInput {...field} autoComplete="new-password" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

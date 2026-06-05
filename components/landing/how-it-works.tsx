@@ -1,29 +1,29 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Code2, ShoppingBag, BarChart3 } from "lucide-react"
+import { UserPlus, Code2, BarChart3 } from "lucide-react"
 
 const steps = [
   {
-    icon: Code2,
+    icon: UserPlus,
     step: "01",
-    title: "Integrate DressApp into your website",
+    title: "Create an account",
     description:
-      "Use our SDK, API or our Shopify app to embed DressApp in your store.",
+      "Sign up in minutes, pick a plan, and get your DressApp credentials ready.",
   },
   {
-    icon: ShoppingBag,
+    icon: Code2,
     step: "02",
-    title: "Customers try on items",
+    title: "Integrate DressApp into your storefront",
     description:
-      "Shoppers create their own user model, then scroll your store and visualize how your items look on them, with sizing guidance they can trust.",
+      "Use our SDK, API, or Shopify app to embed virtual try-on in your store.",
   },
   {
     icon: BarChart3,
     step: "03",
-    title: "Track your results",
+    title: "Customers try on items and you track the results",
     description:
-      "Monitor engagement, conversion uplift, and return reduction through our analytics dashboard.",
+      "Shoppers visualize fit on their own model while you monitor engagement, conversions, and return reduction.",
   },
 ]
 

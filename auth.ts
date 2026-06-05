@@ -4,11 +4,16 @@ import Credentials from "next-auth/providers/credentials"
 import GitHub from "next-auth/providers/github"
 import Google from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
-import { getUserOnboardingProfile, getUserWithPasswordByEmail } from "@/lib/auth-db"
+import {
+  getUserOnboardingProfile,
+  getUserWithPasswordByEmail,
+  resolveAuthUserId,
+} from "@/lib/auth-db"
 import { ensureAuthSchema } from "@/lib/auth-schema"
 import { initAuthPool } from "@/lib/auth-pool"
 import { ensureMerchantForUser } from "@/lib/ensure-merchant-for-user"
 import { isOnboardingComplete } from "@/lib/onboarding"
+import { userCanAccessProduct } from "@/lib/user-active-plan"
 
 function buildProviders(): NextAuthConfig["providers"] {
   const providers: NextAuthConfig["providers"] = [
@@ -29,7 +34,7 @@ function buildProviders(): NextAuthConfig["providers"] {
           )
           return null
         }
-        const user = await getUserWithPasswordByEmail(email)
+        const user = await getUserWithPasswordByEmail(email.trim().toLowerCase())
         if (!user?.password_hash) {
           console.error(
             "[auth] Credentials authorize: no user or no password for email",
@@ -99,19 +104,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
     events: {
       async createUser({ user }) {
         if (!user.id) return
-        await ensureMerchantForUser(user.id)
+        await ensureMerchantForUser(user.id, {
+          email: user.email,
+          name: user.name,
+        })
       },
     },
     callbacks: {
       async signIn({ user }) {
         if (user?.id) {
-          await ensureMerchantForUser(user.id)
+          try {
+            await ensureMerchantForUser(user.id, {
+              email: user.email,
+              name: user.name,
+            })
+          } catch (e) {
+            console.error("[auth] signIn: merchant provisioning failed", e)
+          }
         }
         return true
       },
       async jwt({ token, user, trigger }) {
-        if (user?.id) {
-          token.sub = String(user.id)
+        if (user?.email) {
+          const account = await getUserWithPasswordByEmail(
+            user.email.trim().toLowerCase(),
+          )
+          if (account) {
+            token.sub = String(account.id)
+            token.loginEmail = account.email
+          } else {
+            token.loginEmail = user.email.trim().toLowerCase()
+            if (user.id) token.sub = String(user.id)
+          }
         }
         const userId = token.sub
         if (
@@ -119,23 +143,60 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
           (user?.id ||
             trigger === "update" ||
             typeof token.onboardingComplete !== "boolean" ||
-            token.onboardingComplete === false)
+            token.onboardingComplete === false ||
+            typeof token.canAccessProduct !== "boolean" ||
+            token.canAccessProduct === false)
         ) {
           try {
             const profile = await getUserOnboardingProfile(userId)
             token.onboardingComplete = isOnboardingComplete(profile)
+            token.canAccessProduct = token.onboardingComplete
+              ? await userCanAccessProduct(userId)
+              : false
           } catch (e) {
             console.error("[auth] jwt: could not load onboarding profile", e)
             token.onboardingComplete = false
+            token.canAccessProduct = false
+          }
+        }
+        if (userId && !token.loginEmail) {
+          const account = await resolveAuthUserId(userId, token.loginEmail)
+          if (account?.email) {
+            token.loginEmail = account.email
+            if (account.id !== Number.parseInt(String(userId), 10)) {
+              token.sub = String(account.id)
+            }
           }
         }
         return token
       },
       async session({ session, token }) {
-        if (session.user && token.sub) {
-          session.user.id = token.sub
-          session.user.onboardingComplete = Boolean(token.onboardingComplete)
+        if (!session.user || !token.sub) {
+          return session
         }
+
+        const onboardingComplete = token.onboardingComplete === true
+        const canAccessProduct = token.canAccessProduct === true
+        const productSessionActive = onboardingComplete && canAccessProduct
+
+        session.user.id = token.sub
+        session.user.onboardingComplete = onboardingComplete
+        session.user.canAccessProduct = canAccessProduct
+
+        const loginEmail =
+          typeof token.loginEmail === "string" && token.loginEmail.trim()
+            ? token.loginEmail.trim()
+            : null
+
+        if (!productSessionActive) {
+          session.user.name = null
+          session.user.image = null
+          // Keep email during onboarding so server routes can resolve the account.
+          session.user.email = loginEmail
+        } else if (loginEmail) {
+          session.user.email = loginEmail
+        }
+
         return session
       },
     },

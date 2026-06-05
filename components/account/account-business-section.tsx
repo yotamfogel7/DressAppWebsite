@@ -30,7 +30,7 @@ const businessSchema = z.object({
   businessName: z
     .string()
     .trim()
-    .min(1, "Business name is required")
+    .min(2, "Business name must be at least 2 characters")
     .max(120, "Business name is too long"),
   primaryCategories: z
     .array(z.enum(PRIMARY_CATEGORIES as unknown as [string, ...string[]]))

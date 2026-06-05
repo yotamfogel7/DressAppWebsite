@@ -1,28 +1,107 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { useSession } from "next-auth/react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { AuthFormError } from "@/components/auth/auth-form-error"
 import { PlanFeaturesList } from "@/components/plans/plan-features-list"
+import { parseApiErrorResponse } from "@/lib/auth-user-messages"
 import { PRICING_PLANS } from "@/lib/pricing-plans"
 import { cn } from "@/lib/utils"
 
 type OnboardingPlansStepProps = {
   onBack: () => void
+  isPendingSignup?: boolean
 }
 
-export function OnboardingPlansStep({ onBack }: OnboardingPlansStepProps) {
+export function OnboardingPlansStep({
+  onBack,
+  isPendingSignup = false,
+}: OnboardingPlansStepProps) {
+  const { update } = useSession()
   const [busySlug, setBusySlug] = useState<string | null>(null)
+  const [skippingTrial, setSkippingTrial] = useState(false)
+  const [skipError, setSkipError] = useState<string | null>(null)
 
-  function choosePlan(plan: (typeof PRICING_PLANS)[number]) {
+  async function choosePlan(plan: (typeof PRICING_PLANS)[number]) {
     if (plan.ctaHref) {
       window.location.assign(plan.ctaHref)
       return
     }
     setBusySlug(plan.slug)
-    window.location.assign(
-      `/plans/select?plan=${encodeURIComponent(plan.slug)}`,
-    )
+    setSkipError(null)
+    try {
+      if (isPendingSignup) {
+        const res = await fetch("/api/auth/onboarding/prepare-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan: plan.slug }),
+        })
+        const data: unknown = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          const errMsg = parseApiErrorResponse(
+            data,
+            "Could not continue to checkout. Please try again.",
+          )
+          console.error("[onboarding] prepare-plan:", errMsg, data)
+          setSkipError(errMsg)
+          return
+        }
+        const redirect =
+          typeof data === "object" &&
+          data !== null &&
+          "redirect" in data &&
+          typeof (data as { redirect?: unknown }).redirect === "string"
+            ? (data as { redirect: string }).redirect
+            : `/plans/select?plan=${encodeURIComponent(plan.slug)}`
+        await update()
+        window.location.assign(redirect)
+        return
+      }
+      window.location.assign(
+        `/plans/select?plan=${encodeURIComponent(plan.slug)}`,
+      )
+    } finally {
+      setBusySlug(null)
+    }
+  }
+
+  async function skipToFreeTrial() {
+    setSkipError(null)
+    setSkippingTrial(true)
+    try {
+      const res = await fetch("/api/auth/onboarding/skip-plan", {
+        method: "POST",
+        credentials: "same-origin",
+      })
+      const data: unknown = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const errMsg = parseApiErrorResponse(
+          data,
+          "Could not start your free trial. Please try again.",
+        )
+        console.error("[onboarding] skip-plan:", errMsg, data)
+        setSkipError(errMsg)
+        return
+      }
+      const accountCreated =
+        typeof data === "object" &&
+        data !== null &&
+        "accountCreated" in data &&
+        (data as { accountCreated?: boolean }).accountCreated === true
+
+      if (accountCreated) {
+        await update()
+        window.location.assign("/settings/usage")
+        return
+      }
+
+      await update()
+      window.location.assign("/continue?next=/settings/usage")
+    } finally {
+      setSkippingTrial(false)
+    }
   }
 
   const topPlans = PRICING_PLANS.slice(0, 3)
@@ -43,7 +122,7 @@ export function OnboardingPlansStep({ onBack }: OnboardingPlansStepProps) {
             plan={plan}
             index={index}
             busy={busySlug === plan.slug}
-            onChoose={() => choosePlan(plan)}
+            onChoose={() => void choosePlan(plan)}
           />
         ))}
       </div>
@@ -55,18 +134,37 @@ export function OnboardingPlansStep({ onBack }: OnboardingPlansStepProps) {
             plan={plan}
             index={index + 3}
             busy={busySlug === plan.slug}
-            onChoose={() => choosePlan(plan)}
+            onChoose={() => void choosePlan(plan)}
           />
         ))}
       </div>
 
-      <div className="mt-10 flex items-center justify-between gap-3">
-        <Button type="button" variant="ghost" onClick={onBack}>
+      {skipError ? (
+        <div className="mt-6">
+          <AuthFormError message={skipError} />
+        </div>
+      ) : null}
+
+      <div className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onBack}
+          disabled={skippingTrial || busySlug !== null}
+        >
           Back
         </Button>
-        <p className="text-right text-sm text-muted-foreground">
-          A plan is required to use DressApp on your storefront.
-        </p>
+        <Button
+          type="button"
+          variant="link"
+          className="h-auto px-0 text-sm font-medium text-primary"
+          disabled={skippingTrial || busySlug !== null}
+          onClick={() => void skipToFreeTrial()}
+        >
+          {skippingTrial
+            ? "Starting your free trial…"
+            : "Skip for now, use my 10 free trial try-ons"}
+        </Button>
       </div>
     </motion.div>
   )

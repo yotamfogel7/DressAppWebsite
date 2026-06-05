@@ -13,7 +13,7 @@ export async function handleDressAppSessionPost(req: Request): Promise<Response>
     return NextResponse.json(
       {
         error:
-          "Server missing DRESSAPP_API_BASE_URL or DRESSAPP_MERCHANT_SECRET. Create a merchant (partner admin) and set the merchant secret_key — not the partner admin secret.",
+          "Server missing DRESSAPP_API_BASE_URL or DRESSAPP_MERCHANT_SECRET. Create a merchant (partner admin) and set the merchant secret_key - not the partner admin secret.",
       },
       { status: 500 },
     )

@@ -10,11 +10,11 @@ Use this when you want virtual **model creation** + **try-on** on a site you con
 |------|---------|
 | DressApp **API** reachable over HTTPS | Partner endpoints live on the same API as the main app |
 | **Merchant** provisioned | You get `dress_sk_live_…` (secret) + `dress_pk_live_…` (publishable) |
-| Your storefront URL allowed | CORS — see step 1 |
+| Your storefront URL allowed | CORS - see step 1 |
 
 ---
 
-## Step 1 — One-time API setup (DressApp ops / backend)
+## Step 1 - One-time API setup (DressApp ops / backend)
 
 1. Set **`PARTNER_ADMIN_SECRET`** in the DressApp API `.env` and restart the API.
 2. Create the merchant:
@@ -31,11 +31,11 @@ Use this when you want virtual **model creation** + **try-on** on a site you con
 
 ---
 
-## Step 2 — Your backend (required)
+## Step 2 - Your backend (required)
 
 Implement **one server-side flow** that holds the **secret** key.
 
-### 2a — Shopper session (every visitor or logged-in user)
+### 2a - Shopper session (every visitor or logged-in user)
 
 `POST https://<API>/partner/v1/sessions`  
 
@@ -44,7 +44,7 @@ Body: `{ "external_user_ref": "<stable id>" }` (e.g. your customer id or anonymo
 
 Response: **`access_token`** → send this to your frontend (short-lived JWT).
 
-### 2b — Catalog (so try-on knows which product)
+### 2b - Catalog (so try-on knows which product)
 
 For each sellable SKU you want to try on:
 
@@ -57,7 +57,7 @@ Save the returned **`product_id`** next to that SKU in **your** database or cach
 
 ---
 
-## Step 3 — Your frontend (SDK)
+## Step 3 - Your frontend (SDK)
 
 1. Add **`@dressapp/web-sdk`** (build from `packages/dressapp-web-sdk` or publish to your CDN).
 
@@ -87,7 +87,7 @@ await DressApp.enable({
 
 ---
 
-## Step 4 — Verify before launch
+## Step 4 - Verify before launch
 
 - [ ] HTTPS everywhere (your site + API).
 - [ ] Secret key **never** in HTML, GitHub, or client bundles.
@@ -107,7 +107,7 @@ await DressApp.enable({
 
 ---
 
-## Quick reference — URLs
+## Quick reference - URLs
 
 | Action | Method / path |
 |--------|----------------|
@@ -122,6 +122,6 @@ await DressApp.enable({
 
 ## Support files in this repo
 
-- `backend/app/routers/partner_v1.py` — Partner API  
-- `packages/dressapp-web-sdk` — Browser SDK  
-- `docs/partner/quickstart.md` — Expanded API examples  
+- `backend/app/routers/partner_v1.py` - Partner API  
+- `packages/dressapp-web-sdk` - Browser SDK  
+- `docs/partner/quickstart.md` - Expanded API examples  

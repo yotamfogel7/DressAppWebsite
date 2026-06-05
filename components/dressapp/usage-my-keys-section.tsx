@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useSession } from "next-auth/react"
 import {
   Copy,
@@ -13,8 +13,18 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Progress } from "@/components/ui/progress"
 import type { PlanSlug } from "@/lib/plan-slugs"
+
+export type UsageQuotaDisplay = {
+  planLabel: string | null
+  isSignupTrial: boolean
+  allowance: number | null
+  used: number | null
+  remaining: number | null
+  usageError: string | null
+  usageLabel: string
+  remainingLabel: string
+}
 
 type MyKeysPayload = {
   ok?: boolean
@@ -26,6 +36,12 @@ type MyKeysPayload = {
     slug: PlanSlug
     label: string | null
     monthlyAllowance: number | null
+  } | null
+  signupTrial?: {
+    allowance: number
+    used: number | null
+    remaining: number | null
+    usageError?: string | null
   } | null
   keys?: {
     secretKey: string
@@ -45,6 +61,7 @@ type MyKeysPayload = {
 type UsageMyKeysSectionProps = {
   onSecretKeyLoaded?: (secretKey: string) => void
   onKeysFetchComplete?: () => void
+  onQuotaLoaded?: (quota: UsageQuotaDisplay | null) => void
 }
 
 function KeyRow({
@@ -108,14 +125,50 @@ function KeyRow({
   )
 }
 
+function buildQuotaDisplay(data: MyKeysPayload | null): UsageQuotaDisplay | null {
+  const plan = data?.plan
+  const signupTrial = data?.signupTrial
+  const quota = data?.quota
+  if (!plan && !signupTrial) return null
+
+  const allowance = plan?.monthlyAllowance ?? signupTrial?.allowance ?? null
+  const used = quota?.usedThisMonth ?? signupTrial?.used ?? null
+  const remaining = quota?.remaining ?? signupTrial?.remaining ?? null
+  const usageError = quota?.usageError ?? signupTrial?.usageError ?? null
+
+  return {
+    planLabel: signupTrial ? "Free trial" : (plan?.label ?? plan?.slug ?? null),
+    isSignupTrial: Boolean(signupTrial),
+    allowance,
+    used,
+    remaining,
+    usageError,
+    usageLabel: signupTrial ? "All-time try-ons used" : "Try-ons this month",
+    remainingLabel: signupTrial
+      ? "try-ons remaining in your free trial (all time)"
+      : "try-ons remaining until renewal",
+  }
+}
+
 export function UsageMyKeysSection({
   onSecretKeyLoaded,
   onKeysFetchComplete,
+  onQuotaLoaded,
 }: UsageMyKeysSectionProps) {
   const { status } = useSession()
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<MyKeysPayload | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const initialLoadDoneRef = useRef(false)
+  const onSecretKeyLoadedRef = useRef(onSecretKeyLoaded)
+  const onKeysFetchCompleteRef = useRef(onKeysFetchComplete)
+  const onQuotaLoadedRef = useRef(onQuotaLoaded)
+
+  useEffect(() => {
+    onSecretKeyLoadedRef.current = onSecretKeyLoaded
+    onKeysFetchCompleteRef.current = onKeysFetchComplete
+    onQuotaLoadedRef.current = onQuotaLoaded
+  })
 
   const load = useCallback(async () => {
     if (status !== "authenticated") return
@@ -129,27 +182,30 @@ export function UsageMyKeysSection({
         console.error("[My Keys] load failed", res.status, json)
         setError(msg)
         setData(null)
+        onQuotaLoadedRef.current?.(null)
         return
       }
       setData(json)
+      onQuotaLoadedRef.current?.(buildQuotaDisplay(json))
       if (json.keys?.secretKey) {
-        onSecretKeyLoaded?.(json.keys.secretKey)
+        onSecretKeyLoadedRef.current?.(json.keys.secretKey)
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       console.error("[My Keys] fetch error", e)
       setError(msg)
       setData(null)
+      onQuotaLoadedRef.current?.(null)
     } finally {
       setLoading(false)
-      onKeysFetchComplete?.()
+      onKeysFetchCompleteRef.current?.()
     }
-  }, [status, onSecretKeyLoaded, onKeysFetchComplete])
+  }, [status])
 
   useEffect(() => {
-    if (status === "authenticated") {
-      void load()
-    }
+    if (status !== "authenticated" || initialLoadDoneRef.current) return
+    initialLoadDoneRef.current = true
+    void load()
   }, [status, load])
 
   if (status === "loading") {
@@ -169,7 +225,7 @@ export function UsageMyKeysSection({
           <div>
             <p className="text-sm font-medium">My Keys</p>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-              Sign in to see your merchant keys and plan allowance.
+              Sign in to see your merchant keys and active plan.
             </p>
             <Button asChild variant="link" className="mt-2 h-auto p-0 text-xs">
               <Link href="/login?callbackUrl=/usage">Sign in</Link>
@@ -181,14 +237,7 @@ export function UsageMyKeysSection({
   }
 
   const plan = data?.plan
-  const quota = data?.quota
-  const allowance = plan?.monthlyAllowance ?? null
-  const used = quota?.usedThisMonth ?? null
-  const remaining = quota?.remaining ?? null
-  const usagePct =
-    allowance != null && allowance > 0 && used != null
-      ? Math.min(100, Math.round((used / allowance) * 100))
-      : null
+  const signupTrial = data?.signupTrial
 
   return (
     <section className="space-y-4 rounded-xl border border-border bg-card/40 p-4" aria-labelledby="my-keys-heading">
@@ -199,7 +248,7 @@ export function UsageMyKeysSection({
             <h2 id="my-keys-heading" className="text-sm font-semibold">
               My Keys
             </h2>
-            <p className="text-xs text-muted-foreground">Your merchant credentials and plan quota</p>
+            <p className="text-xs text-muted-foreground">Your merchant credentials and active plan</p>
           </div>
         </div>
         <Button
@@ -225,41 +274,11 @@ export function UsageMyKeysSection({
         <div className="rounded-lg border border-border bg-background/60 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Active plan</p>
           <p className="mt-1 text-base font-semibold">{plan.label ?? plan.slug}</p>
-          {allowance != null ? (
-            <div className="mt-3 space-y-2">
-              <div className="flex items-baseline justify-between gap-2 text-xs">
-                <span className="text-muted-foreground">Try-ons this month</span>
-                <span className="font-mono tabular-nums text-foreground">
-                  {used != null ? used.toLocaleString() : "—"} / {allowance.toLocaleString()}
-                </span>
-              </div>
-              {usagePct != null ? <Progress value={usagePct} className="h-2" /> : null}
-              {remaining != null && remaining === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Plan cap reached.{" "}
-                  <Link
-                    href="/settings/billing"
-                    className="font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    Set up on-demand billing
-                  </Link>
-                </p>
-              ) : remaining != null ? (
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{remaining.toLocaleString()}</span> try-ons
-                  remaining this month
-                </p>
-              ) : quota?.usageError ? (
-                <p className="text-xs text-destructive">Usage unavailable: {quota.usageError}</p>
-              ) : loading ? (
-                <p className="text-xs text-muted-foreground">Loading usage…</p>
-              ) : null}
-            </div>
-          ) : (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Custom allowance — contact sales for your monthly limit.
-            </p>
-          )}
+        </div>
+      ) : signupTrial ? (
+        <div className="rounded-lg border border-border bg-background/60 p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Active plan</p>
+          <p className="mt-1 text-base font-semibold">Free trial</p>
         </div>
       ) : !loading ? (
         <p className="text-xs text-muted-foreground">

@@ -33,7 +33,7 @@ const schema = z.object({
   businessName: z
     .string()
     .trim()
-    .min(1, "Business name is required")
+    .min(2, "Business name must be at least 2 characters")
     .max(120, "Business name is too long"),
   primaryCategories: z
     .array(
@@ -84,11 +84,14 @@ type OnboardingFlowProps = {
   initialStep?: OnboardingStep
   /** After profile save, go straight to PayPal plan checkout (from landing plan click). */
   pendingCheckoutPath?: string | null
+  /** Email verified but account not created until plan/skip. */
+  isPendingSignup?: boolean
 }
 
 export function OnboardingFlow({
   initialStep = 1,
   pendingCheckoutPath = null,
+  isPendingSignup = false,
 }: OnboardingFlowProps) {
   const { update } = useSession()
   const [step, setStep] = useState<OnboardingStep>(initialStep)
@@ -118,6 +121,7 @@ export function OnboardingFlow({
     try {
       const res = await fetch("/api/auth/onboarding", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           businessName: values.businessName,
@@ -135,7 +139,9 @@ export function OnboardingFlow({
         return
       }
 
-      await update()
+      if (!isPendingSignup) {
+        await update()
+      }
       if (pendingCheckoutPath) {
         // Full navigation so middleware sees the refreshed session cookie.
         window.location.assign(pendingCheckoutPath)
@@ -163,10 +169,10 @@ export function OnboardingFlow({
               "Select every category that fits your catalog. You can change these later.",
           }
         : {
-            eyebrow: "Choose a plan",
-            title: "Pick the tier that fits your store",
+            eyebrow: "Your plan",
+            title: "You are on the free trial",
             description:
-              "Every plan includes support and a usage dashboard. Billing setup comes after you choose.",
+              "You already have 10 all-time try-ons and full usage access. Upgrade anytime, or continue with your free trial.",
           }
 
   return (
@@ -259,7 +265,7 @@ export function OnboardingFlow({
                         <div
                           role="group"
                           aria-label="Product categories"
-                          className="max-h-[min(28rem,50vh)] overflow-y-auto overscroll-y-contain scroll-smooth rounded-xl px-0.5 py-0.5"
+                          className="max-h-[min(28rem,50vh)] overflow-y-auto overscroll-y-contain scroll-smooth rounded-xl px-0.5 py-0.5 sm:max-h-none sm:overflow-y-visible"
                         >
                           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                           {PRIMARY_CATEGORIES.map((category, index) => {
@@ -350,7 +356,10 @@ export function OnboardingFlow({
           </motion.div>
         ) : (
           <div ref={stepRegionRef}>
-            <OnboardingPlansStep onBack={() => setStep(2)} />
+            <OnboardingPlansStep
+              onBack={() => setStep(2)}
+              isPendingSignup={isPendingSignup}
+            />
           </div>
         )}
       </AnimatePresence>

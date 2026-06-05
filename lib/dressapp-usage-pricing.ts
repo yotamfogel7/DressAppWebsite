@@ -1,4 +1,4 @@
-/** List USD per unit — public pricing; keep in sync with marketing copy. */
+/** List USD per unit - public pricing; keep in sync with marketing copy. */
 export const DRESSAPP_TRY_ON_USD = 0.37
 export const DRESSAPP_USER_MODEL_USD = 0.6
 

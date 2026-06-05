@@ -66,7 +66,7 @@ export async function fetchDressAppShopperSession(): Promise<DressAppShopperSess
   }
 }
 
-/** JWT only — for widgets that expect `getAccessToken(): Promise<string>`. */
+/** JWT only - for widgets that expect `getAccessToken(): Promise<string>`. */
 export async function fetchDressAppShopperAccessToken(): Promise<string> {
   const s = await fetchDressAppShopperSession()
   return s.access_token

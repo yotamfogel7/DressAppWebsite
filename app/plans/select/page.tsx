@@ -24,7 +24,7 @@ export default async function PlanSelectPage({
 }) {
   const session = await auth()
   if (!session?.user?.id) {
-    redirect("/signup")
+    redirect("/login?callbackUrl=/plans/select")
   }
   if (!session.user.onboardingComplete) {
     redirect("/onboarding")
@@ -55,7 +55,10 @@ export default async function PlanSelectPage({
 
   try {
     await updateUserSelectedPlan(session.user.id, slug)
-    await ensureMerchantForUser(session.user.id)
+    await ensureMerchantForUser(session.user.id, {
+      email: session.user.email,
+      name: session.user.name,
+    })
   } catch (e) {
     console.error("[plans/select] Could not prepare account for checkout:", e)
     redirect("/payment/setup-error?code=paypal_api_error")

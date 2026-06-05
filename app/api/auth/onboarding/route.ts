@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { auth } from "@/auth"
-import { updateUserOnboardingProfile } from "@/lib/auth-db"
+import { resolveAuthUserId, updateUserOnboardingProfile } from "@/lib/auth-db"
+import { resolveOnboardingActor } from "@/lib/onboarding-actor"
 import {
   isPrimaryCategory,
   PRIMARY_CATEGORIES,
 } from "@/lib/onboarding-categories"
+import { updatePendingSignupProfile } from "@/lib/pending-signup-db"
 
 const categorySchema = z.enum(
   PRIMARY_CATEGORIES as unknown as [string, ...string[]],
@@ -15,7 +16,7 @@ const bodySchema = z.object({
   businessName: z
     .string()
     .trim()
-    .min(1, "Business name is required")
+    .min(2, "Business name must be at least 2 characters")
     .max(120, "Business name is too long"),
   primaryCategories: z
     .array(categorySchema)
@@ -24,8 +25,8 @@ const bodySchema = z.object({
 })
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const actor = await resolveOnboardingActor()
+  if (!actor) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 })
   }
 
@@ -52,10 +53,30 @@ export async function POST(req: Request) {
   }
 
   try {
-    await updateUserOnboardingProfile(session.user.id, {
+    if (actor.kind === "pending") {
+      await updatePendingSignupProfile(actor.email, {
+        businessName,
+        primaryCategories: unique,
+      })
+      return NextResponse.json({ ok: true, pendingOnboarding: true })
+    }
+
+    const resolvedUser = await resolveAuthUserId(actor.id, actor.email)
+    if (!resolvedUser) {
+      return NextResponse.json(
+        {
+          error:
+            "Could not find your account. Sign out, sign in again, and retry.",
+        },
+        { status: 401 },
+      )
+    }
+
+    await updateUserOnboardingProfile(resolvedUser.id, {
       businessName,
       primaryCategories: unique,
     })
+
     return NextResponse.json({ ok: true })
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)

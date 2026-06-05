@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function SettingsUsagePage() {
   return (
-    <div className="flex h-[min(72dvh,calc(100dvh-8rem))] min-h-[28rem] flex-col overflow-hidden rounded-xl border border-border">
+    <div className="-m-6 flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden md:-m-8">
       <DressAppUsageDashboard />
     </div>
   )

@@ -1,3 +1,6 @@
+export const ACCOUNT_EXISTS_ERROR =
+  "An account with this email already exists."
+
 const SIGN_IN_ERROR_MESSAGES: Record<string, string> = {
   CredentialsSignin: "Incorrect email or password.",
   OAuthSignin: "Could not sign in with that provider. Please try again.",

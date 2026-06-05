@@ -1,4 +1,5 @@
 import type { Pool } from "pg"
+import { withAuthDb } from "@/lib/auth-db"
 import { initAuthPool } from "@/lib/auth-pool"
 import { ensureAuthSchema } from "@/lib/auth-schema"
 
@@ -78,6 +79,57 @@ export async function getUserMerchantCredentials(
     const row = res.rows[0]
     return row ? rowToCredentials(row) : null
   })
+}
+
+/** Reuse keys from another account with the same email (e.g. after local DB reset). */
+export async function copyMerchantCredentialsByEmail(
+  targetUserId: string | number,
+  email: string,
+): Promise<boolean> {
+  const targetId = parseUserId(targetUserId)
+  const normalizedEmail = email.trim()
+  if (!normalizedEmail) return false
+
+  const source = await withAuthDb(async (pool) => {
+    const res = await pool.query<{
+      user_id: number
+      secret_key: string
+      publishable_key: string
+      merchant_slug: string | null
+      merchant_dashboard_password: string | null
+      google_api_key: string | null
+    }>(
+      `SELECT c.user_id, c.secret_key, c.publishable_key, c.merchant_slug,
+              c.merchant_dashboard_password, c.google_api_key
+       FROM user_merchant_credentials c
+       INNER JOIN users u ON u.id = c.user_id
+       WHERE lower(u.email) = lower($1)
+         AND c.user_id <> $2
+         AND c.secret_key <> ''
+         AND c.publishable_key <> ''
+       ORDER BY c.updated_at DESC NULLS LAST, c.user_id DESC
+       LIMIT 1`,
+      [normalizedEmail, targetId],
+    )
+    return res.rows[0] ?? null
+  })
+
+  if (!source) return false
+
+  try {
+    await saveUserMerchantCredentials({
+      userId: targetId,
+      secretKey: source.secret_key,
+      publishableKey: source.publishable_key,
+      merchantSlug: source.merchant_slug,
+      merchantDashboardPassword: source.merchant_dashboard_password,
+      googleApiKey: source.google_api_key,
+    })
+    return true
+  } catch (e) {
+    console.error("[copyMerchantCredentialsByEmail] save failed", e)
+    return false
+  }
 }
 
 export async function saveUserMerchantCredentials(

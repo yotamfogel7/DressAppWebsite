@@ -23,46 +23,46 @@ type DemoUserPhoto = {
 
 const demoUserPhotos: DemoUserPhoto[] = [
   {
-    id: "black-man",
+    id: "deep-skin-masculine",
     photoSrc: "/user_models/black_man.webp",
     modelFrontSrc: "/user_models/black_man-model.webp",
     modelBackSrc: "/user_models/black_man-model.webp",
-    label: "Black man",
+    label: "Deep skin tone, masculine",
   },
   {
-    id: "tattooed-white-man",
-    photoSrc: "/tattooed_white_man.webp",
-    modelFrontSrc: "/user_models/tattooed_white_man-demo.webp",
-    modelBackSrc: "/user_models/tattooed_white_man-demo.webp",
-    label: "Tattooed white man",
-  },
-  {
-    id: "white-guy",
-    photoSrc: "/white_guy.webp",
-    modelFrontSrc: "/user_models/white_guy-model.webp",
-    modelBackSrc: "/user_models/white_guy-model.webp",
-    label: "White guy",
-  },
-  {
-    id: "white-female",
-    photoSrc: "/white_female.webp",
+    id: "fair-skin-feminine",
+    photoSrc: "/user_models/white_female.webp",
     modelFrontSrc: "/user_models/white_female-model.webp",
     modelBackSrc: "/user_models/white_female-model.webp",
-    label: "White female",
+    label: "Fair skin tone, feminine",
   },
   {
-    id: "obese-white-male",
-    photoSrc: "/obese_white_male.webp",
+    id: "plus-size-deep-feminine",
+    photoSrc: "/user_models/obese_black_female.webp",
+    modelFrontSrc: "/user_models/obese_black_female-model.webp",
+    modelBackSrc: "/user_models/obese_black_female-model.webp",
+    label: "Plus-size, deep skin tone, feminine",
+  },
+  {
+    id: "plus-size-fair-masculine",
+    photoSrc: "/user_models/obese_white_male.webp",
     modelFrontSrc: "/user_models/obese_white_male-model.webp",
     modelBackSrc: "/user_models/obese_white_male-model.webp",
-    label: "Obese white male",
+    label: "Plus-size, fair skin tone, masculine",
   },
   {
-    id: "tattooed-white-female",
-    photoSrc: "/tattooed%20white_female.webp",
+    id: "fair-skin-masculine",
+    photoSrc: "/user_models/white_guy.webp",
+    modelFrontSrc: "/user_models/white_guy-model.webp",
+    modelBackSrc: "/user_models/white_guy-model.webp",
+    label: "Fair skin tone, masculine",
+  },
+  {
+    id: "medium-skin-feminine-tattoos",
+    photoSrc: "/user_models/tattooed%20white_female.webp",
     modelFrontSrc: "/user_models/tattooed%20white_female-demo.webp",
     modelBackSrc: "/user_models/tattooed%20white_female-demo.webp",
-    label: "Tattooed white female",
+    label: "Medium skin tone, feminine, tattoos",
   },
 ]
 
@@ -215,7 +215,7 @@ export function UserModelDemo() {
                 Original user photo
               </p>
               <p className="text-[9px] text-muted-foreground sm:text-[10px]">
-                Used to build the model
+                {selectedPhoto.label}
               </p>
             </div>
           </div>
@@ -353,16 +353,23 @@ export function UserModelDemo() {
                 "group w-full cursor-pointer rounded-full border px-3 py-2 text-center transition-all duration-200 outline-none sm:px-4 sm:py-2.5",
                 "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 phase === "generating"
-                  ? "border-accent/30 bg-accent/10 text-foreground"
+                  ? "border-primary/30 bg-primary/10 text-primary"
                   : [
-                      "border-accent/30 bg-secondary",
-                      "hover:border-accent hover:bg-accent/15 hover:shadow-[0_4px_20px_-4px_color-mix(in_oklch,var(--accent)_30%,transparent)] hover:-translate-y-0.5",
+                      "border-primary bg-primary text-primary-foreground",
+                      "hover:bg-primary/90 hover:shadow-[0_4px_20px_-4px_color-mix(in_oklch,var(--primary)_35%,transparent)] hover:-translate-y-0.5",
                       "active:translate-y-0 active:scale-[0.99]",
                     ].join(" "),
                 phase === "generating" ? "pointer-events-none opacity-80" : "",
               ].join(" ")}
             >
-              <p className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground transition-colors duration-200 group-hover:text-accent sm:text-[11px]">
+              <p
+                className={[
+                  "flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors duration-200 sm:text-[11px]",
+                  phase === "generating"
+                    ? "text-primary"
+                    : "text-primary-foreground",
+                ].join(" ")}
+              >
                 {phase === "generating" && (
                   <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
                 )}

@@ -8,8 +8,8 @@ export function ApiAccessGate() {
       <Alert>
         <AlertTitle>Available on Pro and above</AlertTitle>
         <AlertDescription>
-          The JavaScript SDK and direct REST API are included with Pro, Scale, and Enterprise+
-          plans. Starter and Growth can still use the Shopify app.
+          The direct REST API is included with Pro, Scale, and Enterprise+ plans. Starter, Growth,
+          and the free trial can still use the Shopify app or JavaScript SDK.
         </AlertDescription>
       </Alert>
       <Button asChild>

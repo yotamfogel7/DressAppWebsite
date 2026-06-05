@@ -362,7 +362,7 @@ export function SolutionSection() {
                     <span className="text-sm font-medium text-accent">Step {index + 1}</span>
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{step.description}</p>
+                  <p className="text-sm text-foreground/75 leading-relaxed">{step.description}</p>
                 </div>
               </motion.div>
             ))}

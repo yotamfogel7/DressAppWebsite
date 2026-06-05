@@ -5,6 +5,7 @@ declare module "next-auth" {
     user: {
       id: string
       onboardingComplete?: boolean
+      canAccessProduct?: boolean
     } & DefaultSession["user"]
   }
 }
@@ -12,6 +13,8 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     sub?: string
+    loginEmail?: string
     onboardingComplete?: boolean
+    canAccessProduct?: boolean
   }
 }

@@ -2,8 +2,13 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow"
+import {
+  buildOnboardingRedirectPath,
+  isFullyOnboarded,
+} from "@/lib/onboarding-access"
 import { parsePendingPlanCheckoutPath } from "@/lib/onboarding-pending-checkout"
-import { userHasActivePlan } from "@/lib/user-active-plan"
+import { resolveOnboardingActor } from "@/lib/onboarding-actor"
+import { userCanAccessProduct } from "@/lib/user-active-plan"
 
 export const metadata: Metadata = {
   title: "Set up your store | DressApp",
@@ -15,25 +20,53 @@ export default async function OnboardingPage({
 }: {
   searchParams: Promise<{ next?: string }>
 }) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    redirect("/signup?callbackUrl=/onboarding")
-  }
-
   const sp = await searchParams
+  const session = await auth()
+  const actor = await resolveOnboardingActor()
+  if (!actor) {
+    if (session?.user?.id) {
+      console.error(
+        "[onboarding] authenticated session could not resolve onboarding actor",
+        session.user.id,
+      )
+      const loginCallback = encodeURIComponent(
+        buildOnboardingRedirectPath(sp.next),
+      )
+      redirect(
+        `/api/auth/signout?callbackUrl=${encodeURIComponent(`/login?callbackUrl=${loginCallback}`)}`,
+      )
+    }
+    redirect(
+      `/login?callbackUrl=${encodeURIComponent(buildOnboardingRedirectPath(sp.next))}`,
+    )
+  }
   const pendingCheckoutPath = parsePendingPlanCheckoutPath(sp.next)
 
-  if (session.user.onboardingComplete && (await userHasActivePlan(session.user.id))) {
-    if (pendingCheckoutPath) {
-      redirect(pendingCheckoutPath)
+  if (actor.kind === "user") {
+    if (
+      actor.profileComplete &&
+      (await userCanAccessProduct(String(actor.id)))
+    ) {
+      if (pendingCheckoutPath) {
+        redirect(pendingCheckoutPath)
+      }
+      const destination = sp.next?.startsWith("/settings")
+        ? sp.next
+        : "/settings/usage"
+      if (!isFullyOnboarded(session?.user)) {
+        redirect(
+          `/onboarding/sync?next=${encodeURIComponent(destination)}`,
+        )
+      }
+      redirect(destination)
     }
-    redirect(sp.next?.startsWith("/settings") ? sp.next : "/settings")
   }
 
   return (
     <OnboardingFlow
-      initialStep={session.user.onboardingComplete ? 3 : 1}
+      initialStep={actor.profileComplete ? 3 : 1}
       pendingCheckoutPath={pendingCheckoutPath}
+      isPendingSignup={actor.kind === "pending"}
     />
   )
 }

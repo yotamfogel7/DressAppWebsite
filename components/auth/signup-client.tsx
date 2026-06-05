@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import {
   Form,
   FormControl,
@@ -25,15 +26,28 @@ import {
 import { AuthFormError } from "@/components/auth/auth-form-error"
 import { Header } from "@/components/landing/header"
 import { OAuthProviderButtons } from "@/components/auth/oauth-provider-buttons"
-import { parseApiErrorResponse } from "@/lib/auth-user-messages"
+import {
+  ACCOUNT_EXISTS_ERROR,
+  parseApiErrorResponse,
+} from "@/lib/auth-user-messages"
+import { storeLoginPrefillPassword } from "@/lib/login-prefill"
 
-const detailsSchema = z.object({
+const sharedSignupFields = z.object({
   name: z.string().trim().max(120).optional(),
   email: z.string().email("Enter a valid email"),
   password: z.string().min(8, "Use at least 8 characters"),
 })
 
-const verifySchema = detailsSchema.extend({
+const detailsSchema = sharedSignupFields
+  .extend({
+    confirmPassword: z.string().min(8, "Use at least 8 characters"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+
+const verifySchema = sharedSignupFields.extend({
   code: z
     .string()
     .trim()
@@ -55,11 +69,17 @@ const RESEND_COOLDOWN_SECONDS = 60
 
 function resolvePostSignupRedirect(plan: string, callbackUrl: string): string {
   if (plan) {
-    return `/plans/select?plan=${encodeURIComponent(plan)}`
+    const next = `/plans/select?plan=${encodeURIComponent(plan)}`
+    return `/onboarding?next=${encodeURIComponent(next)}`
   }
   const trimmed = callbackUrl.trim()
-  if (trimmed && !trimmed.startsWith("/signup")) {
-    return trimmed
+  if (
+    trimmed &&
+    !trimmed.startsWith("/signup") &&
+    !trimmed.startsWith("/login") &&
+    !trimmed.startsWith("/onboarding")
+  ) {
+    return `/onboarding?next=${encodeURIComponent(trimmed)}`
   }
   return "/onboarding"
 }
@@ -112,7 +132,7 @@ export function SignupClient({
 
   const detailsForm = useForm<DetailsValues>({
     resolver: zodResolver(detailsSchema),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   })
 
   const verifyForm = useForm<VerifyValues>({
@@ -183,13 +203,11 @@ export function SignupClient({
         return
       }
 
-      const destination = resolvePostSignupRedirect(plan, callbackUrl)
-
       const sign = await signIn("credentials", {
-        email: values.email.trim(),
+        email: values.email.trim().toLowerCase(),
         password: values.password,
         redirect: false,
-        callbackUrl: destination,
+        callbackUrl: callbackUrl,
       })
       if (sign?.error || !sign?.ok) {
         console.error("[signup] post-register sign-in failed:", sign)
@@ -199,10 +217,7 @@ export function SignupClient({
         return
       }
 
-      const signInUrl =
-        sign.url && !isAuthEntryPath(sign.url) ? sign.url : destination
-      // Full navigation so middleware reads the session cookie immediately.
-      window.location.assign(signInUrl)
+      window.location.assign(callbackUrl)
       return
     } finally {
       setIsVerifying(false)
@@ -213,6 +228,50 @@ export function SignupClient({
     plan
       ? `/login?plan=${encodeURIComponent(plan)}&callbackUrl=${encodeURIComponent(callbackUrl)}`
       : `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
+
+  function buildLoginHrefWithEmail(email: string): string {
+    const [path, query = ""] = loginHref.split("?")
+    const params = new URLSearchParams(query)
+    const trimmed = email.trim()
+    if (trimmed) params.set("email", trimmed)
+    const qs = params.toString()
+    return qs ? `${path}?${qs}` : path
+  }
+
+  function getSignupCredentials(): { email: string; password: string } {
+    if (step === "verify") {
+      return {
+        email: verifyForm.getValues("email"),
+        password: verifyForm.getValues("password"),
+      }
+    }
+    return {
+      email: detailsForm.getValues("email"),
+      password: detailsForm.getValues("password"),
+    }
+  }
+
+  function renderFormError() {
+    if (!formError) return null
+    if (formError !== ACCOUNT_EXISTS_ERROR) {
+      return <AuthFormError message={formError} />
+    }
+    const { email, password } = getSignupCredentials()
+    return (
+      <div className="space-y-2">
+        <AuthFormError message={formError} />
+        <p className="text-sm text-muted-foreground">
+          <Link
+            href={buildLoginHrefWithEmail(email)}
+            onClick={() => storeLoginPrefillPassword(password)}
+            className="font-medium text-primary underline underline-offset-4 hover:underline"
+          >
+            Log in with this email instead
+          </Link>
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -308,9 +367,8 @@ export function SignupClient({
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input
+                        <PasswordInput
                           autoComplete="new-password"
-                          type="password"
                           {...field}
                         />
                       </FormControl>
@@ -318,7 +376,23 @@ export function SignupClient({
                     </FormItem>
                   )}
                 />
-                {formError ? <AuthFormError message={formError} /> : null}
+                <FormField
+                  control={detailsForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm password</FormLabel>
+                      <FormControl>
+                        <PasswordInput
+                          autoComplete="new-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {renderFormError()}
                 <Button
                   type="submit"
                   className="w-full cursor-pointer"
@@ -364,7 +438,7 @@ export function SignupClient({
                 )}
               />
 
-              {formError ? <AuthFormError message={formError} /> : null}
+              {renderFormError()}
 
               <Button
                 type="submit"
@@ -372,7 +446,7 @@ export function SignupClient({
                 size="lg"
                 disabled={isVerifying}
               >
-                {isVerifying ? "Creating account..." : "Verify and create account"}
+                {isVerifying ? "Verifying..." : "Verify and continue"}
               </Button>
 
               <div className="flex flex-col gap-2 text-sm">

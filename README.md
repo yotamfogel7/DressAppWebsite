@@ -35,11 +35,11 @@ Use Shopify CLI for tunnel + install URL (`shopify app dev`) once `shopify.app.t
 
 ## Backend endpoints used
 
-- `POST /partner/v1/platforms/shopify/install` — Bearer secret key; body `{ shop_domain, access_token }`.
-- `GET /partner/v1/embed-config` — publishable key (used by storefront SDK).
+- `POST /partner/v1/platforms/shopify/install` - Bearer secret key; body `{ shop_domain, access_token }`.
+- `GET /partner/v1/embed-config` - publishable key (used by storefront SDK).
 
 ## Files
 
-- `server.mjs` — minimal OAuth + registration server (Node 18+).
-- `shopify.app.toml` — template for Shopify CLI / Partners.
-- `extensions/theme-app-extension/` — injects loader from `@dressapp/web-sdk` (see monorepo `packages/dressapp-web-sdk`).
+- `server.mjs` - minimal OAuth + registration server (Node 18+).
+- `shopify.app.toml` - template for Shopify CLI / Partners.
+- `extensions/theme-app-extension/` - injects loader from `@dressapp/web-sdk` (see monorepo `packages/dressapp-web-sdk`).

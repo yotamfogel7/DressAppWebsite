@@ -18,12 +18,12 @@ export function SdkGuide() {
       >
         <GuideBullets>
           <>
-            <GuideInlineCode>@dressapp/web-sdk</GuideInlineCode> — lightweight JS (
+            <GuideInlineCode>@dressapp/web-sdk</GuideInlineCode> - lightweight JS (
             <GuideInlineCode>DressApp.enable()</GuideInlineCode>, try-on buttons, model studio
             redirect).
           </>
           <>
-            <GuideInlineCode>@dressapp/react-widget</GuideInlineCode> — React components
+            <GuideInlineCode>@dressapp/react-widget</GuideInlineCode> - React components
             (floating studio dock, inline PDP widget). Built on the web SDK.
           </>
         </GuideBullets>

@@ -11,6 +11,7 @@ type MyKeysPayload = {
   ok?: boolean
   error?: string
   plan?: { slug: string } | null
+  signupTrial?: { allowance: number } | null
 }
 
 export function SettingsIntegrationsSection() {

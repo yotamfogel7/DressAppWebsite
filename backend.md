@@ -2,7 +2,7 @@
 
 This document describes what the DressApp **partner API** (or a dedicated analytics service behind the same auth) must expose so the marketing site **Usage** page can show aggregate counts and the frontend can compute **estimated spend** from public list prices.
 
-The **main site** calls this endpoint from the browser using the merchant **secret** key unless you add a same-origin proxy (recommended for production) — see [Security](#security).
+The **main site** calls this endpoint from the browser using the merchant **secret** key unless you add a same-origin proxy (recommended for production) - see [Security](#security).
 
 ---
 
@@ -21,7 +21,7 @@ The **main site** calls this endpoint from the browser using the merchant **secr
 | `from` | ISO-8601 instant; include usage on or after this time (inclusive). |
 | `to` | ISO-8601 instant; include usage on or before this time (inclusive). |
 
-If omitted, return **all-time** aggregates for the merchant (or your agreed default window, e.g. current billing month — document the default in API docs if not all-time).
+If omitted, return **all-time** aggregates for the merchant (or your agreed default window, e.g. current billing month - document the default in API docs if not all-time).
 
 ---
 
@@ -62,7 +62,7 @@ Example:
 
 ## Semantics
 
-- **User (distinct):** The same stable identity you use for partner sessions — e.g. `external_user_ref` from `POST /partner/v1/sessions`, or your internal shopper id keyed to that merchant. Two different `external_user_ref` values count as two users.
+- **User (distinct):** The same stable identity you use for partner sessions - e.g. `external_user_ref` from `POST /partner/v1/sessions`, or your internal shopper id keyed to that merchant. Two different `external_user_ref` values count as two users.
 - **Try-on (`try_on_count`):** Increment only when a try-on **succeeds** and would be counted toward usage-based billing (align with your invoice line item for “virtual try-on”).
 - **User model generation (`user_model_generation_count`):** Increment when a **user model / digital twin** job **succeeds** and would be billed as a model line item (including refresh if you bill refreshes).
 - **`users_with_model_count`:** Distinct users with ≥1 successful model generation (lifetime or within the requested window, consistently with the counts above).
@@ -72,7 +72,7 @@ Example:
 
 ## CORS
 
-If merchants load the Usage page on **this marketing domain** and the browser calls the API **directly**, the API must send appropriate **CORS** headers for `GET` with `Authorization` and **`X-Merchant-Password`** from that origin (preflight must allow both request headers — or use a wildcard policy only if acceptable for your threat model).
+If merchants load the Usage page on **this marketing domain** and the browser calls the API **directly**, the API must send appropriate **CORS** headers for `GET` with `Authorization` and **`X-Merchant-Password`** from that origin (preflight must allow both request headers - or use a wildcard policy only if acceptable for your threat model).
 
 If CORS is not desired for browser calls, merchants should deploy a **small BFF** (same origin as their storefront or ops tool) that holds the secret server-side and proxies `GET …/usage` with `Authorization: Bearer …`. The marketing-site UI can later be pointed at that proxy via configuration.
 

@@ -18,7 +18,8 @@ export default async function IntegrationsPage() {
   let apiAccessAllowed = true
   if (session?.user?.id) {
     const planRaw = await getUserSelectedPlan(session.user.id)
-    apiAccessAllowed = planApiAccessAllowed(normalizePlanSlug(planRaw))
+    const planSlug = normalizePlanSlug(planRaw)
+    apiAccessAllowed = planApiAccessAllowed(planSlug)
   }
 
   return (

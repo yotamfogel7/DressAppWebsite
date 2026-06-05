@@ -1,14 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import {
   Form,
   FormControl,
@@ -21,6 +22,8 @@ import { AuthFormError } from "@/components/auth/auth-form-error"
 import { Header } from "@/components/landing/header"
 import { OAuthProviderButtons } from "@/components/auth/oauth-provider-buttons"
 import { toSignInErrorMessage } from "@/lib/auth-user-messages"
+import { buildContinueRedirectPath } from "@/lib/onboarding-access"
+import { consumeLoginPrefillPassword } from "@/lib/login-prefill"
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -40,45 +43,70 @@ export function LoginClient({
   googleEnabled,
   githubEnabled,
 }: LoginClientProps) {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const plan = searchParams.get("plan") ?? ""
-  const callbackUrl =
+  const prefilledEmail = searchParams.get("email") ?? ""
+  const destinationAfterAuth =
     searchParams.get("callbackUrl") ??
     (plan
       ? `/plans/select?plan=${encodeURIComponent(plan)}`
-      : "/continue")
+      : "/settings/usage")
+  const postLoginPath = buildContinueRedirectPath(destinationAfterAuth)
 
   const urlAuthError = searchParams.get("error")
-  const [formError, setFormError] = useState<string | null>(() =>
-    urlAuthError ? toSignInErrorMessage(urlAuthError) : null,
+  const [formError, setFormError] = useState<{
+    message: string
+    code?: string
+  } | null>(() =>
+    urlAuthError
+      ? { message: toSignInErrorMessage(urlAuthError), code: urlAuthError }
+      : null,
   )
+
+  const signupHref = plan
+    ? `/signup?plan=${encodeURIComponent(plan)}&callbackUrl=${encodeURIComponent(destinationAfterAuth)}`
+    : `/signup?callbackUrl=${encodeURIComponent(destinationAfterAuth)}`
+
+  function forgotPasswordHref(email?: string): string {
+    const params = new URLSearchParams()
+    if (destinationAfterAuth) params.set("callbackUrl", destinationAfterAuth)
+    if (email?.trim()) params.set("email", email.trim())
+    const query = params.toString()
+    return query ? `/forgot-password?${query}` : "/forgot-password"
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: prefilledEmail, password: "" },
   })
+
+  useEffect(() => {
+    const password = consumeLoginPrefillPassword()
+    if (password) form.setValue("password", password)
+  }, [form])
 
   async function onSubmit(values: FormValues) {
     setFormError(null)
     const res = await signIn("credentials", {
-      email: values.email,
+      email: values.email.trim().toLowerCase(),
       password: values.password,
       redirect: false,
-      callbackUrl,
+      callbackUrl: postLoginPath,
     })
     if (res?.error) {
       console.error("[login] sign-in failed:", res.error)
-      setFormError(toSignInErrorMessage(res.error))
+      setFormError({
+        message: toSignInErrorMessage(res.error),
+        code: res.error,
+      })
       return
     }
-    if (res?.ok && res.url) {
-      router.push(res.url)
-      router.refresh()
+    if (res?.ok) {
+      // Full navigation so middleware reads the session cookie immediately.
+      window.location.assign(postLoginPath)
       return
     }
-    router.push(callbackUrl)
-    router.refresh()
+    window.location.assign(postLoginPath)
   }
 
   return (
@@ -87,20 +115,6 @@ export function LoginClient({
       <div className="mx-auto flex max-w-md flex-col gap-8 px-6 pb-16 pt-28 md:pt-32">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Log in</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            New here?{" "}
-            <Link
-              href={
-                plan
-                  ? `/signup?plan=${encodeURIComponent(plan)}&callbackUrl=${encodeURIComponent(callbackUrl)}`
-                  : `/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`
-              }
-              className="font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Create an account
-            </Link>
-            .
-          </p>
         </div>
 
         <OAuthProviderButtons
@@ -113,14 +127,14 @@ export function LoginClient({
               console.error("[login] Google OAuth is not configured")
               return
             }
-            void signIn("google", { callbackUrl })
+            void signIn("google", { callbackUrl: postLoginPath })
           }}
           onGitHubSignIn={() => {
             if (!githubEnabled) {
               console.error("[login] GitHub OAuth is not configured")
               return
             }
-            void signIn("github", { callbackUrl })
+            void signIn("github", { callbackUrl: postLoginPath })
           }}
         />
 
@@ -157,20 +171,36 @@ export function LoginClient({
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input
+                    <PasswordInput
                       autoComplete="current-password"
-                      type="password"
                       {...field}
                     />
                   </FormControl>
                   <FormMessage />
+                  <p className="pt-1 text-sm text-muted-foreground">
+                    New?{" "}
+                    <Link
+                      href={signupHref}
+                      className="font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      Create an account
+                    </Link>
+                  </p>
                 </FormItem>
               )}
             />
-            {formError ? <AuthFormError message={formError} /> : null}
+            {formError ? <AuthFormError message={formError.message} /> : null}
             <Button type="submit" className="w-full cursor-pointer" size="lg">
               Log in with email
             </Button>
+            <p className="text-center text-sm">
+              <Link
+                href={forgotPasswordHref(form.getValues("email"))}
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </p>
           </form>
         </Form>
       </div>

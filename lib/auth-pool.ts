@@ -2,8 +2,16 @@ import { Pool } from "pg"
 import { createEmbeddedAuthPool } from "@/lib/pglite-pool"
 import { normalizePostgresConnectionUrl } from "@/lib/postgres-connection-url"
 
-let pool: Pool | null = null
-let initPromise: Promise<Pool> | null = null
+type AuthPoolGlobal = typeof globalThis & {
+  __dressappAuthPool?: Pool
+  __dressappAuthPoolInit?: Promise<Pool>
+}
+
+const authPoolGlobal = globalThis as AuthPoolGlobal
+
+let pool: Pool | null = authPoolGlobal.__dressappAuthPool ?? null
+let initPromise: Promise<Pool> | null =
+  authPoolGlobal.__dressappAuthPoolInit ?? null
 
 function isLocalhostDatabaseUrl(url: string): boolean {
   try {
@@ -63,8 +71,16 @@ async function createAuthPool(): Promise<Pool> {
 
 export async function initAuthPool(): Promise<Pool> {
   if (pool) return pool
-  initPromise ??= createAuthPool()
+  if (!initPromise) {
+    initPromise = createAuthPool().catch((e) => {
+      initPromise = null
+      authPoolGlobal.__dressappAuthPoolInit = null
+      throw e
+    })
+    authPoolGlobal.__dressappAuthPoolInit = initPromise
+  }
   pool = await initPromise
+  authPoolGlobal.__dressappAuthPool = pool
   return pool
 }
 

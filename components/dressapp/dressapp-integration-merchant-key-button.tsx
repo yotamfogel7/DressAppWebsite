@@ -181,7 +181,7 @@ export function DressAppIntegrationMerchantKeyButton() {
             <div className="space-y-2">
               <Label className="text-base font-semibold text-foreground">Publishable key</Label>
               <p className="text-xs text-muted-foreground">
-                <code className="rounded bg-muted px-1">dress_pk_…</code> — for{" "}
+                <code className="rounded bg-muted px-1">dress_pk_…</code> - for{" "}
                 <code className="rounded bg-muted px-1">DRESSAPP_PUBLISHABLE_KEY</code> and embeds.
               </p>
               <p className="font-mono text-sm sm:text-base leading-relaxed break-all rounded-lg border bg-background px-4 py-3 text-foreground">

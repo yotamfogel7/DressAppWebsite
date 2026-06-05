@@ -5,6 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
+import { isFullyOnboarded } from "@/lib/onboarding-access"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -114,8 +115,9 @@ function UserAccountMenu({
 export function Header({ sticky = false }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { status } = useSession()
-  const authed = status === "authenticated"
+  const { data: session, status } = useSession()
+  const authed =
+    status === "authenticated" && isFullyOnboarded(session?.user)
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -226,7 +228,7 @@ export function Header({ sticky = false }: HeaderProps) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Try it out
+                Try DressApp in our demo store
               </a>
             </Button>
           </div>
@@ -289,13 +291,13 @@ export function Header({ sticky = false }: HeaderProps) {
                     </Button>
                   </>
                 ) : null}
-                <Button variant="secondary" className="text-base" asChild>
+                <Button variant="secondary" className="text-base w-fit" asChild>
                   <a
                     href="https://dressapp-demo.myshopify.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Try it out
+                    Try DressApp in our demo store
                   </a>
                 </Button>
               </div>

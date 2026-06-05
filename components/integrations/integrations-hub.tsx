@@ -18,7 +18,7 @@ type IntegrationOption = {
   icon?: LucideIcon
   imageSrc?: string
   imageAlt?: string
-  proOnly?: boolean
+  planBadge?: string
 }
 
 const integrationOptions: IntegrationOption[] = [
@@ -34,14 +34,13 @@ const integrationOptions: IntegrationOption[] = [
     title: "SDK",
     description: "One backend route plus a JS snippet. DressApp handles most of the UI and logic for the try-on experience.",
     icon: Package,
-    proOnly: true,
   },
   {
     href: API_INTEGRATION_HREF,
     title: "API",
     description: "Call REST endpoints yourself and own every screen in the experience.",
     icon: Code2,
-    proOnly: true,
+    planBadge: "Pro plan and above",
   },
 ]
 
@@ -67,18 +66,20 @@ function IntegrationIcon({ option }: { option: IntegrationOption }) {
 type IntegrationsHubProps = {
   /** When nested inside DressApp Settings, skip landing-page header offset. */
   embedded?: boolean
-  /** When false, SDK and API integration guides are locked behind Pro+. */
+  /** When false, the API integration guide is locked behind Pro+. */
   apiAccessAllowed?: boolean
 }
 
 function IntegrationCard({
   option,
   index,
-  apiLocked,
+  locked,
+  upgradeLabel,
 }: {
   option: IntegrationOption
   index: number
-  apiLocked: boolean
+  locked: boolean
+  upgradeLabel: string
 }) {
   const content = (
     <>
@@ -88,7 +89,7 @@ function IntegrationCard({
       <div className="flex flex-1 flex-col">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold tracking-tight">{option.title}</h2>
-          {apiLocked ? (
+          {locked ? (
             <Lock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           ) : (
             <ArrowRight
@@ -98,14 +99,14 @@ function IntegrationCard({
           )}
         </div>
         <p className="mt-2 flex-1 text-sm text-muted-foreground text-pretty">{option.description}</p>
-        {option.proOnly ? (
+        {option.planBadge ? (
           <span className="mt-4 inline-flex w-fit rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            Only available to Pro plans and above
+            {option.planBadge}
           </span>
         ) : null}
-        {apiLocked ? (
+        {locked ? (
           <Button asChild size="sm" variant="outline" className="mt-3 w-fit">
-            <Link href="/plans">Upgrade to Pro</Link>
+            <Link href="/plans">{upgradeLabel}</Link>
           </Button>
         ) : null}
       </div>
@@ -118,7 +119,7 @@ function IntegrationCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 + index * 0.08, ease: easeOutStrong }}
     >
-      {apiLocked ? (
+      {locked ? (
         <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-sm opacity-95">
           {content}
         </div>
@@ -134,7 +135,10 @@ function IntegrationCard({
   )
 }
 
-export function IntegrationsHub({ embedded = false, apiAccessAllowed = true }: IntegrationsHubProps) {
+export function IntegrationsHub({
+  embedded = false,
+  apiAccessAllowed = true,
+}: IntegrationsHubProps) {
   return (
     <div
       className={
@@ -160,17 +164,20 @@ export function IntegrationsHub({ embedded = false, apiAccessAllowed = true }: I
         </motion.div>
 
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {integrationOptions.map((option, index) => (
-            <IntegrationCard
-              key={option.href}
-              option={option}
-              index={index}
-              apiLocked={
-                (option.href === API_INTEGRATION_HREF || option.href === SDK_INTEGRATION_HREF) &&
-                !apiAccessAllowed
-              }
-            />
-          ))}
+          {integrationOptions.map((option, index) => {
+            const isApi = option.href === API_INTEGRATION_HREF
+            const locked = isApi && !apiAccessAllowed
+
+            return (
+              <IntegrationCard
+                key={option.href}
+                option={option}
+                index={index}
+                locked={locked}
+                upgradeLabel="Upgrade to Pro"
+              />
+            )
+          })}
         </div>
 
         <motion.div
@@ -188,26 +195,14 @@ export function IntegrationsHub({ embedded = false, apiAccessAllowed = true }: I
             </li>
             <li>
               <strong className="font-medium text-foreground">Custom website and you want the fastest integration?</strong>{" "}
-              {apiAccessAllowed ? (
-                <>
-                  →{" "}
-                  <Link
-                    href={SDK_INTEGRATION_HREF}
-                    className="text-foreground underline underline-offset-2 hover:text-primary"
-                  >
-                    SDK
-                  </Link>{" "}
-                  (Pro plan and above).
-                </>
-              ) : (
-                <>
-                  → SDK (Pro plan and above).{" "}
-                  <Link href="/plans" className="text-foreground underline underline-offset-2 hover:text-primary">
-                    Upgrade your plan
-                  </Link>
-                  .
-                </>
-              )}
+              →{" "}
+              <Link
+                href={SDK_INTEGRATION_HREF}
+                className="text-foreground underline underline-offset-2 hover:text-primary"
+              >
+                SDK
+              </Link>
+              .
             </li>
             <li>
               <strong className="font-medium text-foreground">Mobile app, or you need full control over every screen?</strong>{" "}

@@ -16,8 +16,8 @@ All three use the same try-on engine. The difference is how much DressApp handle
 
 Every shopper needs two things before try-on works:
 
-1. **Identity** — a short-lived token that ties them to their digital model.
-2. **Catalog** — each product you want to try on must exist in DressApp with a `product_id`.
+1. **Identity** - a short-lived token that ties them to their digital model.
+2. **Catalog** - each product you want to try on must exist in DressApp with a `product_id`.
 
 First-time shoppers also need a **digital model** (photos + measurements). After that, try-on is one click.
 
@@ -38,11 +38,11 @@ For stores on Shopify. Install from the App Store, turn on a theme block, done.
 ### Steps
 
 1. **Install the app** from the Shopify App Store (or use the dev install link while testing).
-2. **Approve permissions** when Shopify asks — the app needs product access and the app proxy.
+2. **Approve permissions** when Shopify asks - the app needs product access and the app proxy.
 3. **Open Online Store → Themes → Customize.**
 4. **On a product template**, add the **DressApp Try-On** block and save.
 5. **Optional:** under Theme settings → App embeds, turn on **Storefront components (Shopify)** if your theme shows console warnings about `shopify-account`.
-6. **Test on a live product page** — open the storefront (not Admin), click try-on, create a model if prompted, generate a try-on.
+6. **Test on a live product page** - open the storefront (not Admin), click try-on, create a model if prompted, generate a try-on.
 
 ### Quick sanity check
 
@@ -50,7 +50,7 @@ Visit this URL on your storefront (replace with your shop domain):
 
 `https://YOUR-STORE.myshopify.com/apps/dressapp/session`
 
-You should see JSON with an `access_token`. If you get a 404, the app proxy is not set up yet — reinstall or redeploy the app config.
+You should see JSON with an `access_token`. If you get a 404, the app proxy is not set up yet - reinstall or redeploy the app config.
 
 ### Merchant setup (DressApp team / self-host only)
 
@@ -71,8 +71,8 @@ For any website you control. DressApp ships a browser SDK that wraps sessions, m
 
 Packages:
 
-- **`@dressapp/web-sdk`** — lightweight JS (`DressApp.enable()`, try-on buttons, model studio redirect).
-- **`@dressapp/react-widget`** — React components (floating studio dock, inline PDP widget). Built on the web SDK.
+- **`@dressapp/web-sdk`** - lightweight JS (`DressApp.enable()`, try-on buttons, model studio redirect).
+- **`@dressapp/react-widget`** - React components (floating studio dock, inline PDP widget). Built on the web SDK.
 
 ### Steps
 
@@ -119,7 +119,7 @@ Packages:
    });
    ```
 
-7. **First visit — no model yet.** Check `await DressApp.hasModel()`. If false, show a "Create my model" button that opens:
+7. **First visit - no model yet.** Check `await DressApp.hasModel()`. If false, show a "Create my model" button that opens:
 
    `DressApp.openModelStudio({ returnUrl: window.location.href })`
 
@@ -141,13 +141,13 @@ More detail: [INTEGRATION_MANUAL.md](./INTEGRATION_MANUAL.md) · [packages/dress
 
 ## 3. API
 
-For teams building their own UI — mobile apps, server-rendered sites, or anything that does not want our JS bundle. You call the same REST endpoints the SDK uses under the hood.
+For teams building their own UI - mobile apps, server-rendered sites, or anything that does not want our JS bundle. You call the same REST endpoints the SDK uses under the hood.
 
 ### Steps
 
-1. **Get keys** — same as SDK step 1 (`POST /partner/v1/admin/merchants` → secret + publishable keys).
+1. **Get keys** - same as SDK step 1 (`POST /partner/v1/admin/merchants` → secret + publishable keys).
 
-2. **Allow your domain** — same as SDK step 2 (CORS / `allowed_origins`).
+2. **Allow your domain** - same as SDK step 2 (CORS / `allowed_origins`).
 
 3. **Create shopper sessions (server only).**
 
@@ -157,7 +157,7 @@ For teams building their own UI — mobile apps, server-rendered sites, or anyth
    { "external_user_ref": "customer-12345" }
    ```
 
-   Response: `{ "access_token": "…" }` — a JWT. Never send the secret key to the client; only pass this token.
+   Response: `{ "access_token": "…" }` - a JWT. Never send the secret key to the client; only pass this token.
 
 4. **Sync catalog (server only).**
 
@@ -220,7 +220,7 @@ For teams building their own UI — mobile apps, server-rendered sites, or anyth
    - Usage / quota: `GET /partner/v1/merchants/me/usage` (secret key)
    - Bill Gemini on your Google project: `PUT /partner/v1/integrations/google-api-key`
 
-10. **Verify before launch** — HTTPS everywhere, secret key never in client code, one full test run end to end.
+10. **Verify before launch** - HTTPS everywhere, secret key never in client code, one full test run end to end.
 
 More detail: [quickstart.md](./quickstart.md) · [certification.md](./certification.md)
 

@@ -11,7 +11,7 @@ next.user-config.*
 .env.local
 .env
 
-# TypeScript incremental (never commit — breaks Docker cache mounts that target this path)
+# TypeScript incremental (never commit - breaks Docker cache mounts that target this path)
 *.tsbuildinfo
 
 # Common ignores

@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
-import { DatabaseError } from "pg"
 import { z } from "zod"
 import { createCredentialUser, getUserWithPasswordByEmail } from "@/lib/auth-db"
-import { verifySignupCode } from "@/lib/auth-signup-verification"
-import { ensureMerchantForUser } from "@/lib/ensure-merchant-for-user"
+import { establishCredentialsSession } from "@/lib/establish-credentials-session"
+import { clearPendingSignupSessionCookie } from "@/lib/pending-signup-cookie"
+import {
+  deletePendingSignup,
+  verifySignupCodeForPendingOnboarding,
+} from "@/lib/pending-signup-db"
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -42,7 +45,7 @@ export async function POST(req: Request) {
       )
     }
 
-    const verified = await verifySignupCode({ email, code })
+    const verified = await verifySignupCodeForPendingOnboarding({ email, code })
     if (!verified.ok) {
       const messages = {
         missing: "No verification code found. Request a new code.",
@@ -67,27 +70,40 @@ export async function POST(req: Request) {
       )
     }
 
-    const { id } = await createCredentialUser({
-      email,
-      name: name?.trim() ? name.trim() : verified.name,
+    const normalizedEmail = email.trim().toLowerCase()
+    await createCredentialUser({
+      email: normalizedEmail,
+      name: verified.name,
       passwordHash: verified.passwordHash,
       emailVerified: new Date(),
     })
+    await deletePendingSignup(normalizedEmail)
 
-    await ensureMerchantForUser(id)
+    try {
+      await establishCredentialsSession(normalizedEmail, password)
+    } catch (e) {
+      console.error("[api/auth/register] post-create sign-in failed:", e)
+      return NextResponse.json(
+        {
+          error:
+            "Your account was created but sign-in failed. Please log in with your email and password.",
+        },
+        { status: 500 },
+      )
+    }
 
-    return NextResponse.json({ ok: true }, { status: 201 })
+    const secure = new URL(req.url).protocol === "https:"
+    const response = NextResponse.json(
+      { ok: true, accountCreated: true, redirect: "/onboarding" },
+      { status: 200 },
+    )
+    clearPendingSignupSessionCookie(response, secure)
+    return response
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     console.error("[api/auth/register]", e)
-    if (e instanceof DatabaseError && e.code === "23505") {
-      return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 },
-      )
-    }
     return NextResponse.json(
-      { error: msg || "Could not create account" },
+      { error: msg || "Could not verify your email" },
       { status: 500 },
     )
   }

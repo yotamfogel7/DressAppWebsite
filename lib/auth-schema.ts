@@ -42,6 +42,21 @@ async function runEnsureAuthSchema(pool: Pool): Promise<void> {
   await pool.query(
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS primary_category TEXT`,
   )
+  await pool.query(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR`,
+  )
+  await pool.query(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT`,
+  )
+  await pool.query(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ`,
+  )
+  await pool.query(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences_json JSON DEFAULT '{}'::json`,
+  )
+  await pool.query(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`,
+  )
   await pool.query(`
     CREATE TABLE IF NOT EXISTS accounts (
       id SERIAL PRIMARY KEY,
@@ -81,6 +96,27 @@ async function runEnsureAuthSchema(pool: Pool): Promise<void> {
       code_hash TEXT NOT NULL,
       name TEXT,
       password_hash TEXT NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      verified_at TIMESTAMPTZ,
+      business_name TEXT,
+      primary_category TEXT
+    )
+  `)
+  await pool.query(`
+    ALTER TABLE signup_verifications ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ
+  `)
+  await pool.query(`
+    ALTER TABLE signup_verifications ADD COLUMN IF NOT EXISTS business_name TEXT
+  `)
+  await pool.query(`
+    ALTER TABLE signup_verifications ADD COLUMN IF NOT EXISTS primary_category TEXT
+  `)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_verifications (
+      email TEXT PRIMARY KEY,
+      code_hash TEXT NOT NULL,
       expires_at TIMESTAMPTZ NOT NULL,
       attempts INTEGER NOT NULL DEFAULT 0,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

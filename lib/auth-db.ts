@@ -25,6 +25,45 @@ export async function withAuthDb<T>(fn: (pool: Pool) => Promise<T>): Promise<T> 
   return fn(pool)
 }
 
+/** Resolves users.id when JWT sub may be stale (e.g. embedded dev DB reset). */
+export async function resolveAuthUserId(
+  userId: string | number,
+  fallbackEmail?: string | null,
+): Promise<{ id: number; email: string; name: string | null } | null> {
+  const parsedId = typeof userId === "string" ? Number.parseInt(userId, 10) : userId
+
+  if (Number.isFinite(parsedId)) {
+    const byId = await withAuthDb(async (pool) => {
+      const res = await pool.query<{ id: number; email: string; name: string | null }>(
+        `SELECT id, email, COALESCE(name, display_name) AS name FROM users WHERE id = $1`,
+        [parsedId],
+      )
+      return res.rows[0] ?? null
+    })
+    if (byId) {
+      if (byId.email?.trim()) return byId
+      const email = fallbackEmail?.trim()
+      if (email) {
+        return { id: byId.id, email, name: byId.name }
+      }
+    }
+  }
+
+  const email = fallbackEmail?.trim()
+  if (email) {
+    const account = await getUserWithPasswordByEmail(email)
+    if (account?.email?.trim()) {
+      return {
+        id: account.id,
+        email: account.email,
+        name: account.name,
+      }
+    }
+  }
+
+  return null
+}
+
 export async function getUserWithPasswordByEmail(
   email: string,
 ): Promise<AuthUserRow | null> {
@@ -251,7 +290,9 @@ export async function updateUserPreferences(
   return withAuthDb(async (pool) => {
     const res = await pool.query<{ preferences_json: Record<string, unknown> }>(
       `UPDATE users
-       SET preferences_json = COALESCE(preferences_json, '{}'::json) || $2::json
+       SET preferences_json = (
+         COALESCE(preferences_json::jsonb, '{}'::jsonb) || $2::jsonb
+       )::json
        WHERE id = $1
        RETURNING preferences_json`,
       [id, JSON.stringify(patch)],

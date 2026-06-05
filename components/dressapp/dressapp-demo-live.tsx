@@ -345,7 +345,7 @@ export function DressAppDemoLive() {
       if (pid == null || (typeof pid !== "string" && typeof pid !== "number")) {
         console.error("[DressApp demo] product response", data)
         throw new Error(
-          "Product created but response had no product_id — check server logs and API schema.",
+          "Product created but response had no product_id - check server logs and API schema.",
         )
       }
       setProductId(String(pid))
@@ -393,7 +393,7 @@ export function DressAppDemoLive() {
   const pollJobOnce = async () => {
     const id = jobIdRef.current
     if (!id) {
-      setBootError("No job id yet — run try-on first.")
+      setBootError("No job id yet - run try-on first.")
       return
     }
     setBootError(null)
@@ -671,7 +671,7 @@ export function DressAppDemoLive() {
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Merchant secret key (server-only) and publishable key (<code className="rounded bg-muted px-1 text-xs">dress_pk_…</code>) for
-                browser / SDK. Copy now — treat the secret like a password (never commit).
+                browser / SDK. Copy now - treat the secret like a password (never commit).
               </p>
               <div className="mt-5 space-y-5">
                 {registeredMerchantSecret ? (
@@ -970,7 +970,7 @@ export function DressAppDemoLive() {
         {sessionJwt ? (
           <code className="break-all">{sessionJwt.slice(0, 24)}…</code>
         ) : (
-          "—"
+          "-"
         )}
       </p>
     </div>

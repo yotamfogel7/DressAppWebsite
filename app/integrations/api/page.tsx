@@ -50,7 +50,7 @@ export default async function ApiIntegrationPage() {
             <Alert>
               <AlertTitle>Pro plan and above</AlertTitle>
               <AlertDescription>
-                SDK and API access are included with Pro, Scale, and Enterprise+ plans.
+                Direct REST API access is included with Pro, Scale, and Enterprise+ plans.
               </AlertDescription>
             </Alert>
           ) : null}

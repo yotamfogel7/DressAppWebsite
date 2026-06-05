@@ -3,7 +3,15 @@ import path from "node:path"
 import type { Pool, QueryResult, QueryResultRow } from "pg"
 import { PGlite } from "@electric-sql/pglite"
 
-const DEFAULT_DATA_DIR = path.join(process.cwd(), ".data", "auth-pglite")
+function getDefaultDataDir(): string {
+  const cwd = process.cwd()
+  const base = typeof cwd === "string" ? cwd : String(cwd)
+  return path.resolve(base, ".data", "auth-pglite")
+}
+
+function resolveDataDir(dataDir: string): string {
+  return path.resolve(typeof dataDir === "string" ? dataDir : String(dataDir))
+}
 
 type PgliteQueryResult<R extends QueryResultRow> = {
   rows: R[]
@@ -26,8 +34,8 @@ function toPgQueryResult<R extends QueryResultRow>(
 class PglitePoolAdapter {
   private readonly db: PGlite
 
-  constructor(dataDir: string) {
-    this.db = new PGlite(dataDir)
+  constructor(dataDir?: string) {
+    this.db = dataDir ? new PGlite(dataDir) : new PGlite()
   }
 
   async query<R extends QueryResultRow = QueryResultRow>(
@@ -45,9 +53,26 @@ class PglitePoolAdapter {
   }
 }
 
+async function probeAdapter(adapter: PglitePoolAdapter): Promise<void> {
+  await adapter.query("SELECT 1")
+}
+
 export async function createEmbeddedAuthPool(
-  dataDir = DEFAULT_DATA_DIR,
+  dataDir = getDefaultDataDir(),
 ): Promise<Pool> {
-  await mkdir(dataDir, { recursive: true })
-  return new PglitePoolAdapter(dataDir) as unknown as Pool
+  const resolvedDir = resolveDataDir(dataDir)
+  try {
+    await mkdir(resolvedDir, { recursive: true })
+    const fileAdapter = new PglitePoolAdapter(resolvedDir)
+    await probeAdapter(fileAdapter)
+    return fileAdapter as unknown as Pool
+  } catch (e) {
+    console.warn(
+      "[pglite-pool] filesystem embedded db unavailable; using in-memory dev db:",
+      e instanceof Error ? e.message : e,
+    )
+    const memoryAdapter = new PglitePoolAdapter()
+    await probeAdapter(memoryAdapter)
+    return memoryAdapter as unknown as Pool
+  }
 }

@@ -7,11 +7,11 @@ import { fetchDressAppShopperAccessToken } from "@/lib/dressapp-shopper-session-
 export type DressAppStudioDockSectionProps = {
   publishableKey: string
   apiBase: string
-  /** Optional catalog `product_id` string from section 3 — coerced to number for the dock. */
+  /** Optional catalog `product_id` string from section 3 - coerced to number for the dock. */
   productId?: string
 }
 
-/** Published `@dressapp/react-widget` — studio + try-on dock; token from `/site-api/dressapp/session`. */
+/** Published `@dressapp/react-widget` - studio + try-on dock; token from `/site-api/dressapp/session`. */
 export function DressAppStudioDockSection({
   publishableKey,
   apiBase,

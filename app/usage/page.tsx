@@ -5,7 +5,7 @@ import { DressAppUsageDashboard } from "@/components/dressapp/dressapp-usage-das
 export const metadata: Metadata = {
   title: "Usage | DressApp",
   description:
-    "Merchant usage: try-on count, user model generations, distinct users, and estimated spend from list pricing.",
+    "Merchant usage: try-on allowance, try-on count, user model generations, and distinct users.",
 }
 
 export default function UsagePage() {

@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
+import { resolveSessionUser } from "@/lib/session-user"
 import { Header } from "@/components/landing/header"
 import { SettingsLayoutShell } from "@/components/settings/settings-layout-shell"
-import { userHasActivePlan } from "@/lib/user-active-plan"
+import { userCanAccessProduct } from "@/lib/user-active-plan"
 
 export const metadata: Metadata = {
   title: "DressApp Settings",
@@ -22,8 +23,14 @@ export default async function SettingsLayout({
   if (!session.user.onboardingComplete) {
     redirect("/onboarding?next=/settings")
   }
-  if (!(await userHasActivePlan(session.user.id))) {
-    redirect("/onboarding")
+
+  const resolvedUser = await resolveSessionUser(session)
+  if (!resolvedUser) {
+    redirect("/login?callbackUrl=/settings")
+  }
+
+  if (!(await userCanAccessProduct(String(resolvedUser.id)))) {
+    redirect("/onboarding?next=/settings")
   }
 
   return (
