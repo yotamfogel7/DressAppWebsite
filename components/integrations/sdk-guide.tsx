@@ -8,28 +8,11 @@ import {
   GuideStep,
   GuideStepList,
 } from "@/components/integrations/integration-guide-primitives"
-import {
-  DRESSAPP_PRODUCTION_API_BASE_URL,
-  DRESSAPP_PRODUCTION_FRONTEND_BASE_URL,
-} from "@/lib/dressapp-api-base"
+import { DRESSAPP_PRODUCTION_API_BASE_URL } from "@/lib/dressapp-api-base"
 
 export function SdkGuide() {
   return (
     <div className="space-y-14">
-      <GuideCallout variant="info" title="DressApp URLs">
-        <GuideBullets>
-          <>
-            <strong>API (backend):</strong>{" "}
-            <GuideInlineCode>{DRESSAPP_PRODUCTION_API_BASE_URL}</GuideInlineCode> - use for all
-            server-side calls and SDK <GuideInlineCode>apiBase</GuideInlineCode>.
-          </>
-          <>
-            <strong>Frontend app:</strong>{" "}
-            <GuideInlineCode>{DRESSAPP_PRODUCTION_FRONTEND_BASE_URL}</GuideInlineCode> - hosts the
-            partner widget script bundle and model studio UI.
-          </>
-        </GuideBullets>
-      </GuideCallout>
       <GuideSection
         title="Packages"
         description="DressApp ships a browser SDK that wraps sessions, model studio, and try-on calls."
