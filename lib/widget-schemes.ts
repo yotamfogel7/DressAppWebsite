@@ -168,6 +168,13 @@ export const WIDGET_DOCK_PREVIEW: Record<WidgetScheme, WidgetDockPreviewTheme> =
   },
 }
 
+/** Storefront FAB mark images (same assets as `@dressapp/react-widget` embed). */
+export const WIDGET_FAB_MARK_URL: Record<WidgetScheme, string> = {
+  default_dark: "/widget/fab/dressapp-fab-default.png",
+  soft_light: "/widget/fab/dressapp-fab-softday.png",
+  dawn_light: "/widget/fab/dressapp-fab-dawn.png",
+}
+
 export const SCHEME_PREVIEW: Record<
   WidgetScheme,
   { panel: string; chrome: string; accent: string }

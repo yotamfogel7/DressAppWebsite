@@ -8,8 +8,27 @@ import {
   WIDGET_SCHEMES,
   type WidgetScheme,
 } from "@/lib/widget-schemes"
+import { getUserMerchantCredentials } from "@/lib/user-merchant-credentials-db"
+import { getDressAppMerchantApiBase } from "@/lib/dressapp-api-base"
 
 const PREF_KEY = "dressapp_widget_scheme"
+
+async function syncSchemeToBackend(secretKey: string, scheme: WidgetScheme): Promise<void> {
+  const apiBase = getDressAppMerchantApiBase()
+  const res = await fetch(`${apiBase}/partner/v1/merchants/me/storefront-settings`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ widget_scheme: scheme }),
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => "")
+    console.error("[settings/widget-appearance] backend sync failed", res.status, text)
+    throw new Error(`DressApp backend sync failed (${res.status}): ${text}`)
+  }
+}
 
 export async function GET() {
   const session = await auth()
@@ -79,6 +98,15 @@ export async function PATCH(request: Request) {
     }
 
     await updateUserPreferences(session.user.id, { [PREF_KEY]: scheme })
+
+    const creds = await getUserMerchantCredentials(session.user.id)
+    if (creds?.secretKey) {
+      try {
+        await syncSchemeToBackend(creds.secretKey, scheme)
+      } catch (e) {
+        console.error("[settings/widget-appearance] backend sync error (non-fatal)", e)
+      }
+    }
 
     return NextResponse.json({
       ok: true,

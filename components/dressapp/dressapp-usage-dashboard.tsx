@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,9 +13,7 @@ import {
   Sparkles,
   Users,
   UserCircle2,
-  Wallet,
   LineChart as LineChartIcon,
-  PieChart as PieChartIcon,
 } from "lucide-react"
 import {
   UsageMyKeysSection,
@@ -28,19 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  DRESSAPP_TRY_ON_USD,
-  DRESSAPP_USER_MODEL_USD,
-  formatUsd,
-} from "@/lib/dressapp-usage-pricing"
-import {
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts"
 import {
   UsageSeriesChart,
   USAGE_RANGE_UNIT_OPTIONS,
@@ -57,13 +42,6 @@ import {
   UsageTryonToPurchaseMetric,
   type TopTryonProduct,
 } from "@/components/dressapp/usage-insights-sections"
-
-const CHART_FILLS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-] as const
 
 type UsageSummaryJson = {
   ok?: boolean
@@ -220,21 +198,6 @@ export function DressAppUsageDashboard() {
   const [quota, setQuota] = useState<UsageQuotaDisplay | null>(null)
 
   const rangeHint = usageRangeHint(unit, span)
-
-  const estimates = useMemo(() => {
-    if (!summary) return null
-    const tryOnCost = (summary.try_on_count ?? 0) * DRESSAPP_TRY_ON_USD
-    const modelCost = (summary.user_model_generation_count ?? 0) * DRESSAPP_USER_MODEL_USD
-    return { tryOnCost, modelCost, combined: tryOnCost + modelCost }
-  }, [summary])
-
-  const spendSlices = useMemo(() => {
-    if (!estimates || estimates.combined <= 0) return []
-    return [
-      { name: "Try-ons (list est.)", value: estimates.tryOnCost },
-      { name: "Models (list est.)", value: estimates.modelCost },
-    ]
-  }, [estimates])
 
   const applySpanDraft = useCallback(() => {
     if (unit === "all") return
@@ -402,7 +365,7 @@ export function DressAppUsageDashboard() {
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="text-lg font-semibold tracking-tight md:text-xl">Usage dashboard</h1>
             <span className="text-xs text-muted-foreground md:text-sm">
-              Partner usage, funnel metrics, and list-price estimates
+              Partner usage and funnel metrics
             </span>
           </div>
         </div>
@@ -501,7 +464,7 @@ export function DressAppUsageDashboard() {
 
               {quota ? <UsageQuotaSummary quota={quota} /> : null}
 
-              {summary && estimates ? (
+              {summary ? (
                 <>
                   <div className="space-y-2">
                     <h2 className="text-base font-semibold">Usage overview</h2>
@@ -524,12 +487,6 @@ export function DressAppUsageDashboard() {
                       label="Model jobs"
                       value={models}
                       hint={rangeHint}
-                      sub={
-                        <>
-                          {formatUsd(DRESSAPP_USER_MODEL_USD)} each →{" "}
-                          <span className="text-foreground">{formatUsd(estimates.modelCost)}</span> est.
-                        </>
-                      }
                       chart={2}
                     />
                     <MetricCard
@@ -543,12 +500,6 @@ export function DressAppUsageDashboard() {
                       label="Try-ons"
                       value={tryons}
                       hint={rangeHint}
-                      sub={
-                        <>
-                          {formatUsd(DRESSAPP_TRY_ON_USD)} each →{" "}
-                          <span className="text-foreground">{formatUsd(estimates.tryOnCost)}</span> est.
-                        </>
-                      }
                       chart={1}
                     />
                   </div>
@@ -653,54 +604,6 @@ export function DressAppUsageDashboard() {
                   </section>
 
                   <UsageTopTryonProducts loading={metricsLoading} products={topProducts} />
-
-                  <div className="rounded-xl border border-border bg-card/40 p-4 md:p-5">
-                    <div className="mb-4 flex flex-wrap items-center gap-2">
-                      <Wallet className="h-4 w-4 text-chart-3" aria-hidden />
-                      <span className="text-sm font-medium">Estimated total (list rates)</span>
-                      <span className="text-xs text-muted-foreground">
-                        Try-ons plus model jobs, not an invoice.
-                      </span>
-                    </div>
-                    <p className="font-mono text-3xl font-semibold tabular-nums tracking-tight md:text-4xl">
-                      {formatUsd(estimates.combined)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-border bg-card/30 p-4 md:p-5">
-                    <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-                      <PieChartIcon className="h-4 w-4 text-chart-2" aria-hidden />
-                      Spend mix (estimate)
-                    </div>
-                    {spendSlices.length ? (
-                      <div className="mx-auto h-64 max-w-md w-full min-w-0 md:h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Tooltip formatter={(v: number) => formatUsd(v)} />
-                            <Legend wrapperStyle={{ fontSize: 11 }} />
-                            <Pie
-                              data={spendSlices}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={52}
-                              outerRadius={80}
-                              paddingAngle={2}
-                            >
-                              {spendSlices.map((_, i) => (
-                                <Cell key={i} fill={CHART_FILLS[i % CHART_FILLS.length]} />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        At zero usage there is nothing to chart for spend mix.
-                      </p>
-                    )}
-                  </div>
 
                   <UsageImageRoulette
                     rouletteId="userModel"

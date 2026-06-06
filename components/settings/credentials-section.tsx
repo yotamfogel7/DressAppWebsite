@@ -4,8 +4,6 @@ import { useCallback, useEffect, useState } from "react"
 import { Copy, Eye, EyeOff, KeyRound, Loader2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 type CredentialsPayload = {
   ok?: boolean
@@ -13,7 +11,6 @@ type CredentialsPayload = {
   error?: string
   message?: string
   provisioningFailed?: boolean
-  storefrontUrl?: string | null
   keys?: {
     publishableKey: string
     secretKey: string
@@ -83,12 +80,8 @@ function KeyRow({
 
 export function CredentialsSection() {
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [savedOk, setSavedOk] = useState(false)
   const [data, setData] = useState<CredentialsPayload | null>(null)
-  const [storefrontUrl, setStorefrontUrl] = useState("")
-  const [savedStorefrontUrl, setSavedStorefrontUrl] = useState("")
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -100,9 +93,6 @@ export function CredentialsSection() {
         throw new Error(payload.error ?? `Could not load credentials (${res.status})`)
       }
       setData(payload)
-      const url = payload.storefrontUrl ?? ""
-      setStorefrontUrl(url)
-      setSavedStorefrontUrl(url)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       console.error("[Credentials] load failed", e)
@@ -115,33 +105,6 @@ export function CredentialsSection() {
   useEffect(() => {
     void load()
   }, [load])
-
-  async function onSaveStorefrontUrl() {
-    setSaving(true)
-    setError(null)
-    setSavedOk(false)
-    try {
-      const res = await fetch("/api/settings/credentials", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storefrontUrl }),
-      })
-      const payload = (await res.json().catch(() => ({}))) as CredentialsPayload
-      if (!res.ok) {
-        throw new Error(payload.error ?? `Could not save (${res.status})`)
-      }
-      const url = payload.storefrontUrl ?? storefrontUrl
-      setStorefrontUrl(url)
-      setSavedStorefrontUrl(url)
-      setSavedOk(true)
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      console.error("[Credentials] save failed", e)
-      setError(msg)
-    } finally {
-      setSaving(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -157,16 +120,9 @@ export function CredentialsSection() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Credentials</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Your DressApp merchant keys and storefront URL for SDK and API integrations.
+          Your DressApp merchant keys for SDK and API integrations.
         </p>
       </div>
-
-      {savedOk ? (
-        <Alert>
-          <AlertTitle>Saved</AlertTitle>
-          <AlertDescription>Your storefront URL has been updated.</AlertDescription>
-        </Alert>
-      ) : null}
 
       {error ? (
         <Alert variant="destructive">
@@ -205,44 +161,6 @@ export function CredentialsSection() {
             <KeyRow label="Secret key (sk)" value={data.keys.secretKey} maskedDefault />
           </div>
         )}
-      </div>
-
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <Label htmlFor="storefront-url" className="text-base font-semibold">
-          Storefront URL
-        </Label>
-        <p className="mt-1 text-sm text-muted-foreground">
-          The public URL where try-on runs (e.g. your Shopify storefront or custom site). Used for
-          integration setup and allowed-origin configuration.
-        </p>
-        <Input
-          id="storefront-url"
-          type="url"
-          inputMode="url"
-          autoComplete="url"
-          placeholder="https://your-store.com"
-          value={storefrontUrl}
-          onChange={(event) => {
-            setStorefrontUrl(event.target.value)
-            setSavedOk(false)
-          }}
-          className="mt-4"
-        />
-        <div className="mt-4">
-          <Button
-            onClick={() => void onSaveStorefrontUrl()}
-            disabled={saving || !storefrontUrl.trim() || storefrontUrl === savedStorefrontUrl}
-          >
-            {saving ? (
-              <>
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-                Saving…
-              </>
-            ) : (
-              "Save storefront URL"
-            )}
-          </Button>
-        </div>
       </div>
     </div>
   )

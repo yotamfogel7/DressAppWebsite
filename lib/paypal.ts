@@ -309,3 +309,95 @@ export async function capturePayPalOrder(orderId: string): Promise<CapturePayPal
 export function buildOnDemandTopUpReturnUrl(): string {
   return `${getPublicAppOrigin()}/settings/billing`
 }
+
+export type PayPalSubscriptionDetails = {
+  id: string
+  status: string
+  nextBillingTime: string | null
+  customId: string | null
+}
+
+export async function getPayPalSubscriptionDetails(
+  subscriptionId: string,
+): Promise<PayPalSubscriptionDetails> {
+  const id = subscriptionId.trim()
+  if (!id) throw new Error("Missing PayPal subscription id")
+
+  const token = await getAccessToken()
+  const res = await fetch(
+    `${getPayPalApiBase()}/v1/billing/subscriptions/${encodeURIComponent(id)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    },
+  )
+
+  const text = await res.text()
+  if (!res.ok) {
+    console.error("[paypal] Get subscription failed", res.status, text)
+    throw new Error(`PayPal could not load subscription (${res.status})`)
+  }
+
+  let json: {
+    id?: string
+    status?: string
+    custom_id?: string
+    billing_info?: { next_billing_time?: string }
+  }
+  try {
+    json = JSON.parse(text) as typeof json
+  } catch {
+    console.error("[paypal] Get subscription invalid JSON", text)
+    throw new Error("PayPal returned invalid JSON for subscription")
+  }
+
+  const resolvedId = json.id?.trim() || id
+  const status = json.status?.trim() || "UNKNOWN"
+  const nextBillingTime = json.billing_info?.next_billing_time?.trim() || null
+  const customId = json.custom_id?.trim() || null
+
+  return { id: resolvedId, status, nextBillingTime, customId }
+}
+
+export function payPalSubscriptionCustomIdForUser(userId: string | number): string {
+  return `user:${userId}`
+}
+
+export function payPalSubscriptionOwnedByUser(
+  customId: string | null,
+  userId: string | number,
+): boolean {
+  if (!customId) return false
+  return customId === payPalSubscriptionCustomIdForUser(userId)
+}
+
+export async function cancelPayPalSubscriptionRenewal(
+  subscriptionId: string,
+  reason: string,
+): Promise<void> {
+  const id = subscriptionId.trim()
+  if (!id) throw new Error("Missing PayPal subscription id")
+
+  const token = await getAccessToken()
+  const res = await fetch(
+    `${getPayPalApiBase()}/v1/billing/subscriptions/${encodeURIComponent(id)}/cancel`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "PayPal-Request-Id": crypto.randomUUID(),
+      },
+      body: JSON.stringify({ reason: reason.trim() || "Customer requested cancellation" }),
+    },
+  )
+
+  const text = await res.text()
+  if (!res.ok) {
+    console.error("[paypal] Cancel subscription failed", res.status, text)
+    throw new Error(`PayPal could not cancel renewal (${res.status})`)
+  }
+}

@@ -24,8 +24,7 @@ type PaymentSuccessCelebrationProps = {
   plan: PlanSlug | null
   planLabel: string | null
   subscriptionId: string
-  token: string
-  baToken: string
+  subscriptionSaveError?: string | null
 }
 
 function fadeUp(delay: number, reducedMotion: boolean) {
@@ -51,8 +50,7 @@ export function PaymentSuccessCelebration({
   plan,
   planLabel,
   subscriptionId,
-  token,
-  baToken,
+  subscriptionSaveError = null,
 }: PaymentSuccessCelebrationProps) {
   const reducedMotion = useReducedMotion()
   const freshPurchase = useFreshPlanPurchase()
@@ -181,6 +179,11 @@ export function PaymentSuccessCelebration({
               Receipt details
             </summary>
             <div className="mt-3 space-y-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
+              {subscriptionSaveError ? (
+                <p className="text-sm text-amber-900 dark:text-amber-100" role="alert">
+                  {subscriptionSaveError}
+                </p>
+              ) : null}
               {!subscriptionId ? (
                 <p
                   className="text-sm text-amber-900 dark:text-amber-100"
@@ -196,22 +199,6 @@ export function PaymentSuccessCelebration({
                     {subscriptionId}
                   </span>
                 </p>
-              )}
-              {(token || baToken) && (
-                <dl className="space-y-1 font-mono">
-                  {token ? (
-                    <>
-                      <dt>token</dt>
-                      <dd className="break-all">{token}</dd>
-                    </>
-                  ) : null}
-                  {baToken ? (
-                    <>
-                      <dt>ba_token</dt>
-                      <dd className="break-all">{baToken}</dd>
-                    </>
-                  ) : null}
-                </dl>
               )}
             </div>
           </motion.details>
