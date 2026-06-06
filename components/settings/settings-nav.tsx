@@ -45,9 +45,9 @@ export function SettingsNav() {
   return (
     <nav
       aria-label="DressApp Settings"
-      className="flex w-full shrink-0 flex-row gap-1 overflow-x-auto border-b border-border bg-card/40 p-2 md:w-56 md:flex-col md:border-b-0 md:border-r md:p-3"
+      className="flex w-full shrink-0 flex-row gap-1 overflow-x-auto border-b border-border bg-card/40 p-2 md:w-56 md:flex-col md:border-b-0 md:border-r md:px-3 md:pb-3 md:pt-0"
     >
-      <p className="hidden px-3 pb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground md:block">
+      <p className="hidden px-3 pb-2 pt-6 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground md:block">
         DressApp Settings
       </p>
       {settingsNavItems.map((item) => {
