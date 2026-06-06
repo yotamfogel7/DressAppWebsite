@@ -17,7 +17,7 @@ Ship a working end-to-end flow: server holds the secret key and syncs catalog, c
 - Secret key (dress_sk_...) used only on the server; never sent to clients.
 - Shopper access_token (JWT from POST /partner/v1/sessions) is the only credential on client devices.
 - Merchant origin is allowed (allowed_origins or PARTNER_CORS_ORIGINS on the API).
-- Products synced via POST /partner/v1/products; product_id stored per SKU.
+- Products synced via POST /partner/v1/products; product_id stored per SKU; sizes/colors backfilled via resolve-product or included in product upsert.
 - Model onboarding reachable via embed URL or onboarding flow.
 - Try-on started with POST /tryon/{product_id}?async=true; result retrieved via polling or webhooks.
 - Full manual test on HTTPS: session -> model -> try-on -> completed image URL.
@@ -26,7 +26,8 @@ Ship a working end-to-end flow: server holds the secret key and syncs catalog, c
 
 DO:
 - Create shopper sessions server-side with POST /partner/v1/sessions and Authorization: Bearer <secret_key>.
-- Sync catalog server-side with POST /partner/v1/products using the secret key.
+- Sync catalog server-side with POST /partner/v1/products using the secret key (include sizes and colors when known).
+- On PDP or before try-on UI, call GET /partner/v1/embed/resolve-product with external_id + fallback_sizes + fallback_colors (publishable key) to backfill the catalog - even when product_id is already known.
 - Pass only access_token to mobile apps, SPAs, or other clients.
 - Use GET /user-model/current with the shopper token to check if onboarding is required.
 - Poll GET /tryon/jobs/{job_id} or register webhooks for async completion.
@@ -37,6 +38,7 @@ DON'T:
 - Embed dress_sk_... in mobile apps, client code, or public repos.
 - Call POST /partner/v1/sessions or POST /partner/v1/products from untrusted clients.
 - Start try-on before confirming a model exists (unless you intentionally route to onboarding first).
+- Rely on product_id alone without passing sizes/colors via product upsert or resolve-product - try-on UI will lack size/color options.
 - Assume external_id equals product_id; always use the id returned by the products API.
 - Skip end-to-end verification before launch.
 
@@ -88,12 +90,27 @@ Authorization: Bearer dress_sk_live_...
   "title": "Blue dress",
   "url": "https://yoursite.com/p/blue-dress",
   "image_urls": ["https://yoursite.com/img/1.jpg"],
-  "gender": "women"
+  "gender": "women",
+  "sizes": ["XS", "S", "M", "L"],
+  "colors": [{"label": "Navy"}, {"label": "Black", "hex": "#000000"}]
 }
 
 Store the returned product_id with the SKU in your database.
 
 Verify: Try-on calls use DressApp product_id, not external_id.
+
+### Step 4b: Client or server - backfill sizes & colors (resolve-product)
+Action: Before showing size/color pickers or starting try-on on a PDP, call resolve-product with the publishable key. Do this even when you already have product_id from Step 4 - it backfills sizes/colors on stale or incomplete catalog rows.
+
+GET {apiBase}/partner/v1/embed/resolve-product?external_id=SKU-001&fallback_sizes=["XS","S","M","L"]&fallback_colors=[{"label":"Navy"},{"label":"Black"}]&fallback_title=Blue+dress&fallback_url=https://yoursite.com/p/blue-dress
+Authorization: Bearer dress_pk_live_...
+X-Publishable-Key: dress_pk_live_...
+
+fallback_sizes and fallback_colors are URL-encoded JSON array strings (same format as SDK fallbackSizesJson / fallbackColorsJson).
+
+Response: { "product_id": 12345 }
+
+Verify: Catalog row for that external_id has sizes and colors after the call; custom try-on UI shows both pickers.
 
 ### Step 5: Client - check if shopper has a model
 Action:
@@ -163,6 +180,7 @@ Verify: All success criteria at the top of this document are met.
 | Embed config | GET /partner/v1/embed-config | publishable key |
 | Session | POST /partner/v1/sessions | secret key |
 | Upsert product | POST /partner/v1/products | secret key |
+| Resolve / backfill product (PDP) | GET /partner/v1/embed/resolve-product | publishable key |
 | Current model | GET /user-model/current | shopper access_token |
 | Model studio embed | GET /embed/model-studio | access_token query param |
 | Try-on | POST /tryon/{product_id}?async=true | shopper access_token |
@@ -176,7 +194,8 @@ If the merchant storefront is a browser site they control and speed matters, rec
 ## Troubleshooting
 - 401 on partner routes: verify Bearer secret key header and key is live (dress_sk_live_...).
 - 401 on try-on routes: use shopper access_token, not secret key.
-- Unknown product_id: re-sync SKU via POST /partner/v1/products and use returned id.
+- Unknown product_id: re-sync SKU via POST /partner/v1/products and use returned id, or call resolve-product with fallback_title + fallback_url.
+- Missing size/color options in try-on UI: call resolve-product with external_id + fallback_sizes + fallback_colors even when product_id is known.
 - Job stuck: poll job endpoint; check webhook delivery if configured.
 - CORS failures in browser clients: update allowed_origins for the merchant.
 

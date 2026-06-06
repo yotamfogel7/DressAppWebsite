@@ -117,11 +117,35 @@ NEXT_PUBLIC_DRESSAPP_API_BASE_URL=${DRESSAPP_PRODUCTION_API_BASE_URL}`}
   "external_id": "SKU-001",
   "title": "Blue dress",
   "url": "https://yoursite.com/p/blue-dress",
-  "image_urls": ["https://yoursite.com/img/1.jpg"]
+  "image_urls": ["https://yoursite.com/img/1.jpg"],
+  "sizes": ["XS", "S", "M", "L"],
+  "colors": [{"label": "Navy"}, {"label": "Black"}]
 }`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={4} title="Frontend: install the SDK">
+          <GuideStep number={4} title="Frontend: PDP product context">
+            <p>
+              On every product page, always pass{" "}
+              <GuideInlineCode>externalProductId</GuideInlineCode>,{" "}
+              <GuideInlineCode>fallbackSizesJson</GuideInlineCode>, and{" "}
+              <GuideInlineCode>fallbackColorsJson</GuideInlineCode> to the dock - even when you
+              already have a DressApp <GuideInlineCode>productId</GuideInlineCode>. The SDK calls{" "}
+              <GuideInlineCode>GET /partner/v1/embed/resolve-product</GuideInlineCode> to map your
+              SKU to a catalog row and backfill sizes/colors.
+            </p>
+            <GuideCode label="PartnerStudioDock (React)">
+              {`<PartnerStudioDock
+  publishableKey="dress_pk_live_…"
+  apiBase="${DRESSAPP_PRODUCTION_API_BASE_URL}"
+  getAccessToken={…}
+  productId={dressAppProductId}
+  externalProductId="SKU-001"
+  fallbackSizesJson='["XS","S","M","L"]'
+  fallbackColorsJson='[{"label":"Navy"},{"label":"Black"}]'
+/>`}
+            </GuideCode>
+          </GuideStep>
+          <GuideStep number={5} title="Frontend: install the SDK">
             <GuideCode label="npm">
               {`npm install @dressapp/web-sdk
 
@@ -129,7 +153,7 @@ NEXT_PUBLIC_DRESSAPP_API_BASE_URL=${DRESSAPP_PRODUCTION_API_BASE_URL}`}
 npm install @dressapp/react-widget`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={5} title="Frontend: enable DressApp">
+          <GuideStep number={6} title="Frontend: enable DressApp">
             <p>After you fetch the shopper token from your backend:</p>
             <GuideCode label="Enable SDK">
               {`import { DressApp } from "@dressapp/web-sdk";
@@ -141,7 +165,7 @@ await DressApp.enable({
 });`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={6} title="First visit: create a model">
+          <GuideStep number={7} title="First visit: create a model">
             <p>
               Check <GuideInlineCode>await DressApp.hasModel()</GuideInlineCode>. If false, show a
               &quot;Create my model&quot; button:
@@ -154,7 +178,7 @@ await DressApp.enable({
               to come back.
             </p>
           </GuideStep>
-          <GuideStep number={7} title="Try-on">
+          <GuideStep number={8} title="Try-on">
             <p>When <GuideInlineCode>hasModel()</GuideInlineCode> is true:</p>
             <GuideCode label="Request try-on">
               {`await DressApp.requestTryOn(productId, { async: true })
@@ -166,17 +190,17 @@ DressApp.getTryOnJob(jobId)`}
               Or register webhooks on your server (optional) instead of polling.
             </p>
           </GuideStep>
-          <GuideStep number={8} title="Ship it">
+          <GuideStep number={9} title="Ship it">
             Test the full path on HTTPS: session → model → return → try-on on a real product.
           </GuideStep>
         </GuideStepList>
       </GuideSection>
 
       <GuideCallout variant="tip" title="React shortcut">
-        Drop <GuideInlineCode>&lt;DressAppStudioDock /&gt;</GuideInlineCode> or{" "}
-        <GuideInlineCode>{"<DressAppWidget productId={…} />"}</GuideInlineCode> from{" "}
-        <GuideInlineCode>@dressapp/react-widget</GuideInlineCode> instead of wiring every button
-        yourself. Same backend requirements.
+        Drop <GuideInlineCode>&lt;PartnerStudioDock /&gt;</GuideInlineCode> from{" "}
+        <GuideInlineCode>@dressapp/react-widget</GuideInlineCode> on product pages with{" "}
+        <GuideInlineCode>externalProductId</GuideInlineCode> + size/color fallbacks. Same backend
+        requirements.
       </GuideCallout>
     </div>
   )

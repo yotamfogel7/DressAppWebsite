@@ -20,7 +20,7 @@ Ship a working end-to-end flow on HTTPS: server creates shopper sessions and syn
 - Products are upserted via POST /partner/v1/products; dressApp product_id is stored next to each SKU.
 - Frontend mounts the full dock (PartnerStudioDock or script bundle) - NOT the deprecated inline cream-card widget.
 - Model creation runs inside the dock panel (no redirect to dressapp.me required).
-- On product pages, productId is passed so the Try on tab shows sizes, colors, and fit info.
+- On product pages, externalProductId + fallbackSizesJson + fallbackColorsJson are always passed (even when productId is known) so resolve-product backfills the catalog and the Try on tab shows size/color pickers.
 - Full manual test passes: session -> open dock -> create model in panel -> try-on on a real product_id.
 - UI matches Shopify widget: branded FAB bottom-right, dark themed panel, three tabs (Try on / My Model / My Try-ons).
 
@@ -33,7 +33,7 @@ DO:
 - Pass only the access_token JWT to the frontend.
 - Register the merchant storefront URL in DressApp settings so the domain is allowed for SDK calls.
 - Use PartnerStudioDock from @dressapp/react-widget (React) OR dressapp-partner-widget.js script bundle (no React).
-- Pass productId on product detail pages.
+- On product detail pages, always pass externalProductId + fallbackSizesJson + fallbackColorsJson (JSON strings from the live PDP). Pass productId too when you have it - resolve-product will backfill sizes/colors on the catalog row.
 - Restart the server after changing environment variables.
 - Use HTTPS in production.
 - Surface API errors in logs; do not fail silently.
@@ -44,6 +44,7 @@ DON'T:
 - Use DressAppWidget as the primary integration (deprecated; renders full dock but prefer PartnerStudioDock).
 - Use openModelStudio redirect as the default first-time model flow when the dock is mounted.
 - Hardcode product_id without syncing from POST /partner/v1/products.
+- Pass only productId on PDP without externalProductId and fallback sizes/colors - the dock will not show size/color pickers if the catalog row is missing that data.
 - Ship a simplified inline card UI instead of the full floating dock.
 - Ship without testing try-on on a real synced product_id.
 
@@ -100,10 +101,12 @@ Action: When products are created or updated in the merchant catalog, POST to {a
   "external_id": "SKU-001",
   "title": "Blue dress",
   "url": "https://yoursite.com/p/blue-dress",
-  "image_urls": ["https://yoursite.com/img/1.jpg"]
+  "image_urls": ["https://yoursite.com/img/1.jpg"],
+  "sizes": ["XS", "S", "M", "L"],
+  "colors": [{"label": "Navy"}, {"label": "Black", "hex": "#000000"}]
 }
 
-Persist the returned product_id alongside the merchant SKU for try-on calls.
+Persist the returned product_id alongside the merchant SKU for try-on calls. Even when product_id is stored, the frontend must still pass externalProductId + fallbackSizesJson + fallbackColorsJson on PDP so GET /partner/v1/embed/resolve-product can backfill sizes/colors if the catalog row is stale or incomplete.
 
 Verify: At least one test SKU has a stored DressApp product_id.
 
@@ -128,9 +131,13 @@ import { PartnerStudioDock } from "@dressapp/react-widget";
     return j.access_token as string;
   }}
   productId={dressAppProductIdOnPdp}
+  externalProductId={merchantSkuOrExternalId}
+  storeProductUrl={window.location.href}
+  fallbackSizesJson={JSON.stringify(["XS", "S", "M", "L"])}
+  fallbackColorsJson={JSON.stringify([{ label: "Navy" }, { label: "Black" }])}
 />
 
-productId is optional globally but REQUIRED on product detail pages for size/color try-on UI.
+On PDP: always pass externalProductId + fallbackSizesJson + fallbackColorsJson, even when productId is known. PartnerStudioDock calls GET /partner/v1/embed/resolve-product to map external_id → product_id and backfill sizes/colors on the catalog row. productId alone is not enough for size/color pickers.
 
 #### Path B - Script tag (no React)
 Action: Add mount node and load the partner bundle from the DressApp app host:
@@ -141,8 +148,14 @@ Action: Add mount node and load the partner bundle from the DressApp app host:
   data-api-base="${DRESSAPP_PRODUCTION_API_BASE_URL}"
   data-session-url="/api/dressapp-session"
   data-dressapp-product-id="12345"
+  data-external-product-id="SKU-001"
+  data-store-product-url="https://yoursite.com/p/blue-dress"
+  data-fallback-sizes='["XS","S","M","L"]'
+  data-fallback-colors='[{"label":"Navy"},{"label":"Black"}]'
 ></div>
 <script type="module" src="${DRESSAPP_PRODUCTION_FRONTEND_BASE_URL}/partner/dressapp-partner-widget.js"></script>
+
+Always include data-external-product-id + data-fallback-sizes + data-fallback-colors on PDP, even when data-dressapp-product-id is set.
 
 #### Path C - web-sdk mount helper
 Action:
@@ -157,6 +170,9 @@ await DressApp.enable({
 DressApp.mountStudioDock({
   sessionUrl: "/api/dressapp-session",
   productId: dressAppProductId,
+  externalProductId: merchantSkuOrExternalId,
+  fallbackSizesJson: JSON.stringify(["XS", "S", "M", "L"]),
+  fallbackColorsJson: JSON.stringify([{ label: "Navy" }, { label: "Black" }]),
 });
 
 Verify: Floating FAB appears bottom-right; opening panel shows three tabs; model create runs inside panel.
@@ -171,8 +187,20 @@ Legacy alternative (headless/custom UI only): DressApp.openModelStudio({ returnU
 
 Verify: hasModel() returns true after completing inline model flow; no redirect to dressapp.me required.
 
+### Step 5b: Frontend - PDP product context (sizes & colors)
+Action: On every product detail page, pass all of the following to the dock (React props or data-* attrs):
+- externalProductId - your SKU or platform product id (same value as external_id in POST /partner/v1/products)
+- fallbackSizesJson - JSON array string, e.g. \`["XS","S","M","L"]\`
+- fallbackColorsJson - JSON array string, e.g. \`[{"label":"Navy"},{"label":"Black","hex":"#000000"}]\`
+- storeProductUrl - canonical PDP URL (for optional storefront enrichment)
+- productId - optional; pass when you already have the DressApp catalog id
+
+The dock calls GET /partner/v1/embed/resolve-product?external_id=...&fallback_sizes=...&fallback_colors=... (publishable key). This maps external_id → product_id and backfills sizes/colors on existing catalog rows.
+
+Verify: DevTools Network shows resolve-product with fallback_sizes and fallback_colors; Try on tab shows size and color chips (not "auto size" only).
+
 ### Step 6: Frontend - try-on
-Action: With the dock mounted and productId set on PDP:
+Action: With the dock mounted and PDP product context set (Step 5b):
 1. Open Try on tab.
 2. Pick size/color/facing as shown.
 3. Tap Generate try-on; results appear in panel and My Try-ons tab.
@@ -210,6 +238,7 @@ No extra proxy setup required for non-Shopify SDK merchants.
 | Embed config (+ storefront settings) | GET /partner/v1/embed-config | publishable key |
 | Session | POST /partner/v1/sessions | secret key |
 | Upsert product | POST /partner/v1/products | secret key |
+| Resolve / backfill product (PDP) | GET /partner/v1/embed/resolve-product | publishable key |
 | Current model | GET /user-model/current | shopper access_token |
 | Try-on | POST /tryon/{product_id}?async=true | shopper access_token |
 | Job status | GET /tryon/jobs/{job_id} | shopper access_token |
@@ -217,7 +246,8 @@ No extra proxy setup required for non-Shopify SDK merchants.
 ## Troubleshooting
 - CORS or domain errors: confirm storefront URL is saved in DressApp Credentials and matches browser origin.
 - 401 on session route: check secret key and Authorization header format (Bearer dress_sk_...).
-- Try-on fails with unknown product: confirm product_id came from POST /partner/v1/products, not external_id alone.
+- Try-on fails with unknown product: confirm product_id came from POST /partner/v1/products or resolve-product, not external_id alone.
+- Try on tab shows no size/color pickers (auto size only): pass externalProductId + fallbackSizesJson + fallbackColorsJson on PDP even when productId is set; confirm resolve-product request includes fallback_sizes and fallback_colors.
 - Simplified cream card UI instead of full dock: you mounted DressAppWidget or bare DressAppStudioDock without PartnerStudioDock - switch to PartnerStudioDock or script bundle.
 - Tabs stacked / broken layout: ensure mount uses data-dressapp-widget on body with script bundle, or PartnerStudioDock at app root with fixed positioning.
 - Env changes ignored: restart the server after updating .env.
