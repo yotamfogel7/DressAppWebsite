@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, X } from "lucide-react"
+import { ArrowRight, Menu, X } from "lucide-react"
 
 const navLinks = [
   { href: "/#how-it-works", label: "Get Started" },
@@ -231,13 +231,14 @@ export function Header({ sticky = false }: HeaderProps) {
                 </Button>
               </>
             )}
-            <Button variant="secondary" className="text-base" asChild>
+            <Button className="group text-base" asChild>
               <a
                 href="https://dressapp-demo.myshopify.com/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 Try DressApp in our demo store
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </a>
             </Button>
           </div>
@@ -300,13 +301,14 @@ export function Header({ sticky = false }: HeaderProps) {
                     </Button>
                   </>
                 ) : null}
-                <Button variant="secondary" className="text-base w-fit" asChild>
+                <Button className="group text-base w-fit" asChild>
                   <a
                     href="https://dressapp-demo.myshopify.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     Try DressApp in our demo store
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </a>
                 </Button>
               </div>

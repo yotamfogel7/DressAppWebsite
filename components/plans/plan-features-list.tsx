@@ -20,19 +20,27 @@ export function PlanFeaturesList({
 }: PlanFeaturesListProps) {
   return (
     <ul className={className}>
-      {features.map((feature) => (
-        <li key={feature} className={itemClassName ?? "flex items-start gap-2.5 text-sm"}>
-          <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
-          <span>
-            {feature}
-            {isTryOnAllowanceFeature(feature) && plan.comfortableMonthlyUsers ? (
-              <span className="ml-1 text-xs text-muted-foreground">
-                (~{plan.comfortableMonthlyUsers.toLocaleString()} monthly users)
-              </span>
-            ) : null}
-          </span>
-        </li>
-      ))}
+      {features.map((feature) => {
+        const monthlyUsersNote =
+          isTryOnAllowanceFeature(feature) && plan.comfortableMonthlyUsers
+            ? ` (~${plan.comfortableMonthlyUsers.toLocaleString()} monthly users)`
+            : ""
+
+        return (
+          <li
+            key={feature}
+            className={itemClassName ?? "flex items-start gap-2.5 text-sm text-foreground"}
+          >
+            <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden="true" />
+            <span className="min-w-0 flex-1">
+              {feature}
+              {monthlyUsersNote ? (
+                <span className="text-xs text-muted-foreground">{monthlyUsersNote}</span>
+              ) : null}
+            </span>
+          </li>
+        )
+      })}
     </ul>
   )
 }

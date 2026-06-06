@@ -37,6 +37,7 @@ type Feature = {
   iconClassName: string
   iconBgClassName: string
   title: string
+  description: string
 }
 
 const features: Feature[] = [
@@ -45,36 +46,42 @@ const features: Feature[] = [
     iconClassName: "text-blue-500",
     iconBgClassName: "bg-blue-500/10 group-hover:bg-blue-500/20",
     title: "Size and fit-accurate visualizations based on user measurements",
+    description: "Show clothing on each shopper's body with measurements-driven fit accuracy.",
   },
   {
     icon: Rotate3D,
     iconClassName: "text-orange-500",
     iconBgClassName: "bg-orange-500/10 group-hover:bg-orange-500/20",
     title: "Front and back realistic virtual try-ons",
+    description: "Let customers preview items from multiple angles before they buy.",
   },
   {
     icon: Ruler,
     iconClassName: "text-amber-500",
     iconBgClassName: "bg-amber-500/10 group-hover:bg-amber-500/20",
     title: "Size recommendation based on measurements and user preferences",
+    description: "Suggest the best size using body data and how each shopper likes clothes to fit.",
   },
   {
     icon: MessageCircle,
     iconClassName: "text-green-500",
     iconBgClassName: "bg-green-500/10 group-hover:bg-green-500/20",
-    title: "Fit description – how will each size feel on the user",
+    title: "Fit description - how will each size feel on the user",
+    description: "Explain whether a size will feel tight, relaxed, or true-to-size in plain language.",
   },
   {
     icon: LayoutDashboard,
     iconClassName: "text-purple-500",
     iconBgClassName: "bg-purple-500/10 group-hover:bg-purple-500/20",
     title: "Usage dashboard for monitoring metrics",
+    description: "Track try-on volume, engagement, and performance from one place.",
   },
   {
     icon: GenderSupportIcon,
     iconClassName: "text-sky-400",
     iconBgClassName: "bg-sky-400/10 group-hover:bg-sky-400/20",
     title: "Both gender support",
+    description: "Serve men's and women's catalogs with models tailored to each shopper.",
   },
 ]
 
@@ -83,9 +90,9 @@ export function Features() {
     <section id="features" className="pt-10 pb-10 lg:pt-12 lg:pb-12 bg-card">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          initial={{ y: 24 }}
+          whileInView={{ y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
@@ -109,9 +116,9 @@ export function Features() {
             return (
               <motion.div
                 key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                initial={{ y: 16 }}
+                whileInView={{ y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="group relative p-8 rounded-2xl border border-border bg-background hover:border-accent/50 transition-colors"
               >
@@ -122,6 +129,9 @@ export function Features() {
                 </div>
 
                 <h3 className="text-lg font-semibold leading-snug">{feature.title}</h3>
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
               </motion.div>
             )
           })}

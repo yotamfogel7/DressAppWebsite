@@ -1,6 +1,6 @@
 "use client"
 
-import { motion, useInView } from "framer-motion"
+import { motion } from "framer-motion"
 import Image from "next/image"
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
 import { Scan, Shirt, Eye } from "lucide-react"
@@ -312,21 +312,18 @@ function TryOnRoulette() {
 }
 
 export function SolutionSection() {
-  const sectionRef = useRef(null)
-  const isInView = useInView(sectionRef, { once: true, margin: "-100px" })
-
   return (
     <section
       id="solution"
       className="relative -mt-10 overflow-hidden pt-10 pb-10 md:-mt-14 md:pt-14 md:pb-12"
-      ref={sectionRef}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/20 to-background" />
 
       <div className="container relative mx-auto px-4 md:px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          initial={{ y: 20 }}
+          whileInView={{ y: 0 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.6 }}
           className="mb-0"
         >
@@ -345,8 +342,9 @@ export function SolutionSection() {
             {solutionSteps.map((step, index) => (
               <motion.div
                 key={step.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                initial={{ y: 16 }}
+                whileInView={{ y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
                 transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
                 className="relative"
               >
@@ -388,7 +386,7 @@ export function SolutionSection() {
             </div>
           </div>
 
-          {isInView ? <TryOnRoulette /> : null}
+          <TryOnRoulette />
 
           <UserModelDemo />
         </motion.div>

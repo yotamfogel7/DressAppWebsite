@@ -4,6 +4,7 @@ import { SolutionSection } from "@/components/landing/solution-section"
 import { HowItWorks } from "@/components/landing/how-it-works"
 import { Features } from "@/components/landing/features"
 import { Pricing } from "@/components/landing/pricing"
+import { CtaSection } from "@/components/landing/cta-section"
 import { ContactSection } from "@/components/landing/contact-section"
 import { Footer } from "@/components/landing/footer"
 
@@ -16,6 +17,7 @@ export default function Home() {
       <HowItWorks />
       <Features />
       <Pricing />
+      <CtaSection />
       <ContactSection />
       <Footer />
     </main>

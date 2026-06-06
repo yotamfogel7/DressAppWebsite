@@ -6,15 +6,15 @@ import { ArrowRight } from "lucide-react"
 
 export function CtaSection() {
   return (
-    <section id="contact" className="py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)] relative overflow-hidden">
+    <section id="cta" className="py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)] relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-accent/20 rounded-full blur-[120px] pointer-events-none" />
       
       <div className="relative mx-auto max-w-4xl px-6 lg:px-8 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          initial={{ y: 24 }}
+          whileInView={{ y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-balance">

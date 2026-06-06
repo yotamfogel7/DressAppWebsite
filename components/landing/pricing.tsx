@@ -19,9 +19,9 @@ function PricingCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      initial={{ y: 20 }}
+      whileInView={{ y: 0 }}
+      viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
       className={cn(
         "relative flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm",
@@ -70,9 +70,9 @@ export function Pricing() {
     <section id="pricing" className="pt-10 pb-10 lg:pt-12 lg:pb-12">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          initial={{ y: 24 }}
+          whileInView={{ y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >

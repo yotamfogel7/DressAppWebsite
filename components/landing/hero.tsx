@@ -19,7 +19,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="relative w-full min-w-0 pl-[40px] pt-8 text-left lg:pt-[70px] lg:col-start-1 lg:row-start-1 lg:-mt-[54px]"
+            className="relative w-full min-w-0 pl-0 sm:pl-2 pt-8 text-left lg:pt-[70px] lg:col-start-1 lg:row-start-1 lg:-mt-[54px]"
           >
             <Image
               src="/DressApp%20logo%20without%20sub.webp"
@@ -28,10 +28,9 @@ export function Hero() {
               height={1453}
               className="relative max-lg:-top-[24px] lg:-top-[40px] mb-3 h-[116px] w-auto sm:h-[124px] md:h-[140px]"
             />
-            <h1 className="relative max-lg:-top-[24px] lg:-top-[40px] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance">
-              Premium Virtual Try-ons
-              <br />
-              <span className="text-muted-foreground">for your store</span>
+            <h1 className="relative max-lg:-top-[24px] lg:-top-[40px] text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] xl:text-6xl font-bold tracking-tight text-pretty leading-[1.1]">
+              <span className="block">Premium Virtual Try-ons</span>
+              <span className="block text-muted-foreground">for your store</span>
             </h1>
           </motion.div>
 
@@ -39,7 +38,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.15 }}
-            className="relative -top-[40px] w-full min-w-0 pl-[40px] text-left lg:col-start-1 lg:row-start-2 mt-4 text-xl sm:text-2xl md:text-3xl font-medium text-foreground text-pretty"
+            className="relative -top-[40px] w-full min-w-0 pl-0 sm:pl-2 text-left lg:col-start-1 lg:row-start-2 mt-4 text-xl sm:text-2xl md:text-3xl font-medium text-foreground text-pretty"
           >
             Give your customers the confidence to check out!
           </motion.p>
@@ -48,7 +47,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative -top-[40px] w-full min-w-0 pl-[40px] text-left lg:col-start-1 lg:row-start-3 mt-4 text-lg md:text-xl text-muted-foreground text-pretty"
+            className="relative -top-[40px] w-full min-w-0 pl-0 sm:pl-2 text-left lg:col-start-1 lg:row-start-3 mt-4 text-lg md:text-xl text-muted-foreground text-pretty"
           >
             Reduce returns, increase conversions and customer satisfaction with AI-powered virtual fitting technology.
           </motion.p>
@@ -57,7 +56,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="relative -top-[40px] w-full min-w-0 pl-[40px] text-left lg:col-start-1 lg:row-start-4 mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4"
+            className="relative -top-[40px] w-full min-w-0 pl-0 sm:pl-2 text-left lg:col-start-1 lg:row-start-4 mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4"
           >
             <Button size="lg" className="group w-fit" asChild>
               <a

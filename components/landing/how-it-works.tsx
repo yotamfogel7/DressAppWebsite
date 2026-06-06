@@ -32,9 +32,9 @@ export function HowItWorks() {
     <section id="how-it-works" className="py-10 lg:py-12">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          initial={{ y: 24 }}
+          whileInView={{ y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
@@ -46,6 +46,10 @@ export function HowItWorks() {
             <br />
             <span className="text-muted-foreground">simple steps</span>
           </h2>
+          <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
+            From signup to live try-ons on your storefront - three straightforward steps to get
+            DressApp running.
+          </p>
         </motion.div>
 
         <div className="relative">
@@ -55,9 +59,9 @@ export function HowItWorks() {
             {steps.map((step, index) => (
               <motion.div
                 key={step.step}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                initial={{ y: 20 }}
+                whileInView={{ y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="relative"
               >

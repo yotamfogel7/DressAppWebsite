@@ -24,9 +24,9 @@ export function ContactSection() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-3xl rounded-3xl border-2 border-primary/30 bg-card px-8 py-12 shadow-[0_8px_40px_-12px_color-mix(in_oklch,var(--primary)_18%,transparent)] lg:px-12 lg:py-14">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            initial={{ y: 24 }}
+            whileInView={{ y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6 }}
             className="mb-10 text-center"
           >
@@ -49,9 +49,9 @@ export function ContactSection() {
                 href={link.href}
                 target={link.href.startsWith("http") ? "_blank" : undefined}
                 rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                initial={{ y: 16 }}
+                whileInView={{ y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="group flex flex-1 items-center gap-4 rounded-2xl border border-border bg-background p-6 transition-colors hover:border-primary/40"
               >
