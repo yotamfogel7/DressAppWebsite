@@ -114,7 +114,7 @@ Packages:
 
    await DressApp.enable({
      publishableKey: "dress_pk_live_…",
-     apiBase: "https://YOUR_DRESSAPP_API",
+     apiBase: "https://api.dressapp.me",
      accessToken: shopperJwt,
    });
    ```

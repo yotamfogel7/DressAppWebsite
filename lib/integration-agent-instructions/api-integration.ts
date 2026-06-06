@@ -1,3 +1,8 @@
+import {
+  DRESSAPP_PRODUCTION_API_BASE_URL,
+  DRESSAPP_PRODUCTION_FRONTEND_BASE_URL,
+} from "@/lib/dressapp-api-base"
+
 export const API_AGENT_INSTRUCTIONS_FILENAME = "api integration.md"
 
 export const API_AGENT_INSTRUCTIONS = `# DressApp API Integration - AI Agent Instructions
@@ -39,7 +44,8 @@ DON'T:
 - Merchant has DressApp Pro plan or above (API access).
 - Merchant secret key: dress_sk_live_...
 - Merchant publishable key: dress_pk_live_... (for embed-config / public URLs if needed).
-- DressApp API base URL (example production: https://dress-appbackend.com).
+- DressApp API base URL (production: ${DRESSAPP_PRODUCTION_API_BASE_URL}).
+- DressApp frontend app URL (production: ${DRESSAPP_PRODUCTION_FRONTEND_BASE_URL}) for model studio onboarding via embed-config public_app_url.
 - Storefront or app origin registered in allowed_origins.
 
 ## Integration workflow

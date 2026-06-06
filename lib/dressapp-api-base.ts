@@ -1,5 +1,8 @@
-/** Production DressApp partner API used for merchant key provisioning. */
-export const DRESSAPP_PRODUCTION_API_BASE_URL = "https://dress-appbackend.com"
+/** Production DressApp partner API used for merchant key provisioning and integrations. */
+export const DRESSAPP_PRODUCTION_API_BASE_URL = "https://api.dressapp.me"
+
+/** Production DressApp frontend app (widget bundle, model studio UI). */
+export const DRESSAPP_PRODUCTION_FRONTEND_BASE_URL = "https://frontend.dressapp.me"
 
 export function normalizeDressAppApiBaseUrl(raw: string | undefined): string {
   return raw?.trim().replace(/\/$/, "") ?? ""

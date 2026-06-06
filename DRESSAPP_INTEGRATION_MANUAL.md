@@ -8,7 +8,7 @@ Use this when you want virtual **model creation** + **try-on** on a site you con
 
 | Item | Purpose |
 |------|---------|
-| DressApp **API** reachable over HTTPS | Partner endpoints live on the same API as the main app |
+| DressApp **API** reachable over HTTPS | Partner endpoints at `https://api.dressapp.me` |
 | **Merchant** provisioned | You get `dress_sk_live_…` (secret) + `dress_pk_live_…` (publishable) |
 | Your storefront URL allowed | CORS - see step 1 |
 
@@ -37,7 +37,7 @@ Implement **one server-side flow** that holds the **secret** key.
 
 ### 2a - Shopper session (every visitor or logged-in user)
 
-`POST https://<API>/partner/v1/sessions`  
+`POST https://api.dressapp.me/partner/v1/sessions`  
 
 Headers: `Authorization: Bearer <secret_key>`  
 Body: `{ "external_user_ref": "<stable id>" }` (e.g. your customer id or anonymous cookie id)
@@ -48,7 +48,7 @@ Response: **`access_token`** → send this to your frontend (short-lived JWT).
 
 For each sellable SKU you want to try on:
 
-`POST https://<API>/partner/v1/products`  
+`POST https://api.dressapp.me/partner/v1/products`  
 
 Same `Authorization: Bearer <secret_key>`  
 Body includes `external_id` (your SKU), `title`, `url`, `image_urls`, etc.
@@ -68,7 +68,7 @@ import { DressApp } from "@dressapp/web-sdk";
 
 await DressApp.enable({
   publishableKey: "dress_pk_live_…",
-  apiBase: "https://YOUR_DRESSAPP_API_ORIGIN",
+  apiBase: "https://api.dressapp.me",
   accessToken: shopperJwtFromYourBackend,
 });
 ```

@@ -1,3 +1,8 @@
+import {
+  DRESSAPP_PRODUCTION_API_BASE_URL,
+  DRESSAPP_PRODUCTION_FRONTEND_BASE_URL,
+} from "@/lib/dressapp-api-base"
+
 export const SDK_AGENT_INSTRUCTIONS_FILENAME = "sdk integration.md"
 
 export const SDK_AGENT_INSTRUCTIONS = `# DressApp SDK Integration - AI Agent Instructions
@@ -46,18 +51,19 @@ DON'T:
 - Merchant has an active DressApp plan with SDK access (all plans).
 - Merchant publishable key: dress_pk_live_...
 - Merchant secret key: dress_sk_live_...
-- DressApp API base URL (example production: https://dress-appbackend.com).
+- DressApp API base URL (production: ${DRESSAPP_PRODUCTION_API_BASE_URL}).
+- DressApp frontend app URL (production: ${DRESSAPP_PRODUCTION_FRONTEND_BASE_URL}) for the partner widget script bundle.
 - Storefront URL saved in DressApp Credentials settings (public site where try-on runs).
 - Node/npm project (React path) OR plain HTML (script-tag path).
 
 ## Environment variables (server)
-DRESSAPP_API_BASE_URL=https://YOUR_DRESSAPP_API
+DRESSAPP_API_BASE_URL=${DRESSAPP_PRODUCTION_API_BASE_URL}
 DRESSAPP_MERCHANT_SECRET=dress_sk_live_...
 
 Optional (expose to browser via your framework's public env prefix):
 DRESSAPP_PUBLISHABLE_KEY=dress_pk_live_...
 NEXT_PUBLIC_DRESSAPP_PUBLISHABLE_KEY=dress_pk_live_...
-NEXT_PUBLIC_DRESSAPP_API_BASE_URL=https://YOUR_DRESSAPP_API
+NEXT_PUBLIC_DRESSAPP_API_BASE_URL=${DRESSAPP_PRODUCTION_API_BASE_URL}
 
 ## Integration workflow
 
@@ -115,7 +121,7 @@ import { PartnerStudioDock } from "@dressapp/react-widget";
 
 <PartnerStudioDock
   publishableKey="dress_pk_live_..."
-  apiBase="https://YOUR_DRESSAPP_API"
+  apiBase="${DRESSAPP_PRODUCTION_API_BASE_URL}"
   getAccessToken={async () => {
     const r = await fetch("/api/dressapp-session", { credentials: "include" });
     const j = await r.json();
@@ -132,11 +138,11 @@ Action: Add mount node and load the partner bundle from the DressApp app host:
 <div
   data-dressapp-widget
   data-publishable-key="dress_pk_live_..."
-  data-api-base="https://YOUR_DRESSAPP_API"
+  data-api-base="${DRESSAPP_PRODUCTION_API_BASE_URL}"
   data-session-url="/api/dressapp-session"
   data-dressapp-product-id="12345"
 ></div>
-<script type="module" src="https://YOUR_DRESSAPP_APP_HOST/partner/dressapp-partner-widget.js"></script>
+<script type="module" src="${DRESSAPP_PRODUCTION_FRONTEND_BASE_URL}/partner/dressapp-partner-widget.js"></script>
 
 #### Path C - web-sdk mount helper
 Action:
@@ -144,7 +150,7 @@ npm install @dressapp/web-sdk
 
 await DressApp.enable({
   publishableKey: "dress_pk_live_...",
-  apiBase: "https://YOUR_DRESSAPP_API",
+  apiBase: "${DRESSAPP_PRODUCTION_API_BASE_URL}",
   accessToken: shopperJwt,
 });
 

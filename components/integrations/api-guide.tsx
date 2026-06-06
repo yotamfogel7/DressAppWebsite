@@ -1,16 +1,36 @@
 import Link from "next/link"
 import {
   GuideBullets,
+  GuideCallout,
   GuideCode,
   GuideInlineCode,
   GuideSection,
   GuideStep,
   GuideStepList,
 } from "@/components/integrations/integration-guide-primitives"
+import {
+  DRESSAPP_PRODUCTION_API_BASE_URL,
+  DRESSAPP_PRODUCTION_FRONTEND_BASE_URL,
+} from "@/lib/dressapp-api-base"
 
 export function ApiGuide() {
   return (
     <div className="space-y-14">
+      <GuideCallout variant="info" title="DressApp URLs">
+        <GuideBullets>
+          <>
+            <strong>API (backend):</strong>{" "}
+            <GuideInlineCode>{DRESSAPP_PRODUCTION_API_BASE_URL}</GuideInlineCode> - base for all
+            REST endpoints below.
+          </>
+          <>
+            <strong>Frontend app:</strong>{" "}
+            <GuideInlineCode>{DRESSAPP_PRODUCTION_FRONTEND_BASE_URL}</GuideInlineCode> - model
+            studio onboarding UI (via <GuideInlineCode>public_app_url</GuideInlineCode> from embed
+            config).
+          </>
+        </GuideBullets>
+      </GuideCallout>
       <GuideSection
         title="When to use the API"
         description="For teams building their own UI: mobile apps, server-rendered sites, or anything that does not want our JS bundle. You call the same REST endpoints the SDK uses under the hood."
@@ -80,7 +100,7 @@ export function ApiGuide() {
           <GuideStep number={5} title="Model creation">
             <p>Send the shopper to DressApp&apos;s model studio:</p>
             <GuideCode label="Embed model studio">
-              {`GET /embed/model-studio?access_token=<token>&partner_return=https://yoursite.com/return`}
+              {`GET ${DRESSAPP_PRODUCTION_API_BASE_URL}/embed/model-studio?access_token=<token>&partner_return=https://yoursite.com/return`}
             </GuideCode>
             <p>
               Or build the URL from <GuideInlineCode>GET /partner/v1/embed-config</GuideInlineCode>{" "}
