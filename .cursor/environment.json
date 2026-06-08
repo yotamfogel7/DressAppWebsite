@@ -1,0 +1,18 @@
+{
+  "name": "DressAppWebsite (dressapp.me)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "install": "bash .cursor/cloud-install.sh",
+  "ports": [
+    { "name": "web", "port": 3000 }
+  ],
+  "terminals": [
+    {
+      "name": "Web",
+      "command": "npm run dev -- --hostname 0.0.0.0 --port 3000",
+      "description": "Next.js marketing + partner hub on :3000 (uses embedded auth DB in development when AUTH_DATABASE_URL is unset)"
+    }
+  ]
+}
