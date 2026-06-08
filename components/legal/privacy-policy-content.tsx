@@ -19,7 +19,8 @@ export function PrivacyPolicyContent() {
           DressApp provides AI-powered virtual try-on for Shopify: shoppers can build a digital body
           model and preview how products may look on them. By installing our app, using the merchant
           admin, or using try-on on a participating storefront, you agree to this policy. If you do
-          not agree, please do not install the app or use try-on features.
+          not agree, please do not install the app or use try-on features. See also our{" "}
+          <Link href="/terms">Terms & Conditions</Link>.
         </p>
       </section>
 
@@ -65,8 +66,8 @@ export function PrivacyPolicyContent() {
 
         <p className="text-sm">
           <strong>Service provider:</strong> DressApp ·{" "}
-          <Link href="https://dressapp-preview.com" target="_blank" rel="noopener noreferrer">
-            dressapp-preview.com
+          <Link href="https://dressapp.me" target="_blank" rel="noopener noreferrer">
+            dressapp.me
           </Link>
         </p>
       </section>

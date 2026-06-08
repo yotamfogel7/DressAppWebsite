@@ -21,8 +21,8 @@ const footerLinks = {
     { label: "Partners", href: "#" },
   ],
   legal: [
-    { label: "Privacy", href: "/privacy" },
-    { label: "Terms", href: "#" },
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms & Conditions", href: "/terms" },
     { label: "Security", href: "#" },
     { label: "GDPR", href: "#" },
   ],
@@ -108,9 +108,22 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} DressApp. All rights reserved.
-          </p>
+          <div className="flex flex-col items-center gap-2 md:items-start">
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} DressApp. All rights reserved.
+            </p>
+            <div className="flex items-center gap-4 text-sm">
+              <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+                Privacy Policy
+              </Link>
+              <span className="text-border" aria-hidden>
+                |
+              </span>
+              <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
+                Terms & Conditions
+              </Link>
+            </div>
+          </div>
           <div className="flex items-center gap-6">
             <Link href="#" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">

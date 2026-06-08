@@ -50,7 +50,7 @@ DON'T:
 - Use openModelStudio redirect as the default first-time model flow when the dock is mounted.
 - Hardcode product_id without syncing from POST /partner/v1/products.
 - Pass only productId on PDP without externalProductId and fallback sizes/colors - the dock will not show size/color pickers if the catalog row is missing that data.
-- Skip the PDP try-on button slot (\`data-dressapp-pdp-tryon-block\`) or set \`mountPdpTryonButton={false}\` unless the merchant disabled the inline button in embed-config (\`pdp_tryon_button_enabled\`) - otherwise shoppers only get the floating FAB.
+- Skip the PDP try-on button slot (\`data-dressapp-pdp-tryon-block\`) or set \`mountPdpTryonButton={false}\` when the merchant disabled the inline button - otherwise shoppers only get the floating FAB.
 - Ship a simplified inline card UI instead of the full floating dock.
 - Ship without testing try-on on a real synced product_id.
 - Mount PartnerStudioDock on Vite without Path A.1 - it will fail on import or React hooks.
@@ -281,17 +281,6 @@ Action: Add mount node and load the partner bundle from the DressApp app host:
 
 Always include data-external-product-id + data-fallback-sizes + data-fallback-colors on PDP, even when data-dressapp-product-id is set.
 
-On PDP HTML, add the try-on button slot above Add to cart (same as Path A):
-
-\`\`\`html
-<div class="product-form__buttons">
-  <div data-dressapp-pdp-tryon-block></div>
-  <button type="submit" name="add">Add to cart</button>
-</div>
-\`\`\`
-
-The script bundle hydrates \`[data-dressapp-pdp-tryon-block]\` when embed-config \`pdp_tryon_button_enabled\` is true (default). No extra data attributes on the slot.
-
 #### Path C - web-sdk mount helper
 Action:
 npm install @dressapp/web-sdk
@@ -335,60 +324,14 @@ The dock calls GET /partner/v1/embed/resolve-product?external_id=...&fallback_si
 Verify: DevTools Network shows resolve-product with fallback_sizes and fallback_colors; Try on tab shows size and color chips (not "auto size" only).
 
 ### Step 5c: Frontend - PDP inline Try it on button
+Action: On every product detail page:
+1. Add \`<div data-dressapp-pdp-tryon-block></div>\` immediately **above** the first button or link that is not a size or color variant control (size/color chips, swatches, and variant pickers come first; then the try-on slot; then Add to cart / Buy now).
+2. On \`PartnerStudioDock\`, set \`mountPdpTryonButton\` (or omit it to follow merchant embed-config \`pdp_tryon_button_enabled\`; set \`mountPdpTryonButton={false}\` only when the merchant disabled the inline button).
+3. Prefer PDP URLs containing \`/products/\` so the SDK recognizes the page (Shopify convention). Custom paths like \`/product/:id\` require \`bindProductIdFromProp\` + explicit product props and the theme block slot - auto-inject above Add to cart will not run.
 
-Ship the same inline **Try it on** button Shopify merchants get: full-width, merchant-themed, above Add to cart. Hebrew stores show **מדוד**. Colors and label come from embed-config (\`widget_scheme\`, \`widget_language\`) - do not hand-style the button.
+Script-tag path: place the mount node in PDP HTML before the primary CTA; the bundle reads \`data-dressapp-pdp-tryon-block\` the same way.
 
-**Requires both:**
-1. A PDP markup slot: \`<div data-dressapp-pdp-tryon-block></div>\`
-2. Dock mount enabled: \`mountPdpTryonButton\` on \`PartnerStudioDock\` (React), or omit the prop to follow embed-config \`pdp_tryon_button_enabled\` (default on). Set \`mountPdpTryonButton={false}\` only when the merchant disabled the button in DressApp Settings > General.
-
-**PDP layout order (top to bottom):**
-- Title, price, gallery
-- Size / color variant pickers (chips, swatches, dropdowns)
-- \`<div data-dressapp-pdp-tryon-block></div>\` - SDK injects the button here
-- Add to cart, Buy now, or other primary checkout CTAs
-
-Variant picker controls are not primary CTAs. The slot goes immediately above the first button or link that is **not** a size or color control.
-
-**Path A - React (\`PartnerStudioDock\`):**
-
-\`\`\`tsx
-<PartnerStudioDock
-  publishableKey="dress_pk_live_..."
-  apiBase="${DRESSAPP_PRODUCTION_API_BASE_URL}"
-  getAccessToken={getShopperToken}
-  productId={dressAppProductId}
-  externalProductId={merchantSku}
-  fallbackSizesJson={JSON.stringify(sizes)}
-  fallbackColorsJson={JSON.stringify(colors)}
-  bindProductIdFromProp
-  mountPdpTryonButton
-/>
-\`\`\`
-
-PDP template (after variant pickers, before Add to cart):
-
-\`\`\`tsx
-<div className="product-detail__actions">
-  <div data-dressapp-pdp-tryon-block className="product-detail__tryon-slot" />
-  <button type="button" className="btn btn--primary">Add to cart</button>
-</div>
-\`\`\`
-
-Click behavior: opens the floating dock on the Try on tab (\`requestOpenStudioDock({ tab: "product" })\`) with Step 5b product context (size/color pickers).
-
-**Path B - Script tag:** Place \`data-dressapp-pdp-tryon-block\` in server-rendered PDP HTML before the primary CTA. The partner bundle (\`dressapp-partner-widget.js\`) hydrates the slot when \`pdp_tryon_button_enabled\` is true. Keep the \`data-dressapp-widget\` mount node at app root (Step 4 Path B).
-
-**Path C - web-sdk only:** Prefer \`PartnerStudioDock\` or the script bundle for the PDP button. If you use \`DressApp.mountStudioDock\` alone, you still need the \`data-dressapp-pdp-tryon-block\` slot on the PDP; wire a custom button with \`DressApp.requestOpenStudioDock({ tab: "product" })\` only when the merchant disabled the built-in button or you need fully custom markup.
-
-**URL paths and SPAs:**
-- Prefer PDP URLs containing \`/products/\` (Shopify convention) so the SDK can recognize product pages.
-- Custom paths (e.g. \`/product/:id\`) require \`bindProductIdFromProp\`, explicit product props (Step 5b), and the theme block slot - auto-inject above Add to cart will **not** run without \`/products/\`.
-- On SPAs, re-render or keep the slot in the PDP template when navigating between products; the SDK re-hydrates when product props change.
-
-**When the merchant disables the button:** Settings > General > "Show Try it on button on product pages" sets \`pdp_tryon_button_enabled\` in embed-config. Omit the slot or set \`mountPdpTryonButton={false}\`. Shoppers still reach try-on via the floating FAB (bottom-right).
-
-Verify: PDP shows a full-width themed **Try it on** (or **מדוד**) above Add to cart; click opens the dock on the Try on tab with size/color pickers. With the merchant toggle off, the inline button is absent and the FAB still works.
+Verify: PDP shows a full-width themed **Try it on** (or **מדוד** for Hebrew) button above Add to cart; click opens the floating dock on the Try on tab with size/color pickers for the current product.
 
 ### Step 6: Frontend - try-on
 Action: With the dock mounted and PDP product context set (Step 5b):
@@ -405,19 +348,17 @@ Verify: Try-on image URL(s) appear in the dock history; same UX as Shopify store
 ### Step 7: Ship and regression test
 Action: On HTTPS staging or production, run full path: session -> open dock -> create model in panel -> try-on on real product.
 
-Also verify the PDP inline button (Step 5c): button visible above Add to cart, themed correctly, opens dock on Try on tab; with \`pdp_tryon_button_enabled\` off, inline button hidden and FAB still opens try-on.
-
 Verify: All success criteria at the top of this document are met; UI is not a simplified inline card.
 
 ## Merchant settings (automatic)
 PartnerStudioDock loads widget settings from GET /partner/v1/embed-config:
-- widget_scheme (color preset) - also styles the PDP **Try it on** button
-- widget_language (en/he) - button label: **Try it on** or **מדוד**
+- widget_scheme (color preset)
+- widget_language (en/he)
 - allow_out_of_stock_tryon
 - tryon_size_filter settings
-- pdp_tryon_button_enabled - when false, skip the PDP slot and set \`mountPdpTryonButton={false}\`; FAB remains available
+- pdp_tryon_button_enabled
 
-Merchants change these in DressApp Settings > General. No extra proxy setup required for non-Shopify SDK merchants.
+No extra proxy setup required for non-Shopify SDK merchants.
 
 ## Deprecated / advanced
 - DressAppWidget - deprecated; use PartnerStudioDock instead.
@@ -441,7 +382,7 @@ Merchants change these in DressApp Settings > General. No extra proxy setup requ
 - 401 on session route: check secret key and Authorization header format (Bearer dress_sk_...).
 - Try-on fails with unknown product: confirm product_id came from POST /partner/v1/products or resolve-product, not external_id alone.
 - Try on tab shows no size/color pickers (auto size only): pass externalProductId + fallbackSizesJson + fallbackColorsJson on PDP even when productId is set; confirm resolve-product request includes fallback_sizes and fallback_colors.
-- No inline Try it on button on PDP: confirm \`data-dressapp-pdp-tryon-block\` exists above the first non-variant CTA, \`mountPdpTryonButton\` is not \`false\` (unless \`pdp_tryon_button_enabled\` is off in merchant settings), and the URL path includes \`/products/\` (or the theme block is present for SPA hydration). Check console for \`[dressapp-pdp-tryon-button]\` warnings.
+- No inline Try it on button on PDP: confirm \`data-dressapp-pdp-tryon-block\` exists above the first non-variant CTA, \`mountPdpTryonButton\` is not \`false\`, and the URL path includes \`/products/\` (or the theme block is present for SPA hydration). Check console for \`[dressapp-pdp-tryon-button]\` warnings.
 - Simplified cream card UI instead of full dock: you mounted DressAppWidget or bare DressAppStudioDock without PartnerStudioDock - switch to PartnerStudioDock or script bundle.
 - Tabs stacked / broken layout: ensure mount uses data-dressapp-widget on body with script bundle, or PartnerStudioDock at app root with fixed positioning.
 - Env changes ignored: restart the server after updating .env.
