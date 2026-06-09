@@ -138,7 +138,7 @@ function SketchArrowToPhoto({ className }: { className?: string }) {
 
 export function SeeItInActionDemo() {
   const garment = demoGarments[0]!
-  const [sizeId, setSizeId] = useState("m")
+  const [sizeId, setSizeId] = useState("l")
   const [slideDirection, setSlideDirection] = useState(0)
   const [showUserPhoto, setShowUserPhoto] = useState(false)
   const [autoScrollPaused, setAutoScrollPaused] = useState(false)
@@ -146,7 +146,10 @@ export function SeeItInActionDemo() {
     null,
   )
 
-  const activeSize = garment.sizes.find((s) => s.id === sizeId) ?? garment.sizes[2]!
+  const activeSize =
+    garment.sizes.find((s) => s.id === sizeId) ??
+    garment.sizes.find((s) => s.label === garment.recommendedSize) ??
+    garment.sizes[0]!
 
   const advanceToNextSize = useCallback(() => {
     setSizeId((current) => {
@@ -213,9 +216,8 @@ export function SeeItInActionDemo() {
   return (
     <div id="product" className="relative mt-0 w-full min-w-0 lg:-mt-[54px]">
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={false}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.65, delay: 0.05, ease: easeOutStrong }}
         className="relative w-full overflow-visible"
       >
         <div className={DEMO_CARD}>

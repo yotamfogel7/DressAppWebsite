@@ -1,4 +1,4 @@
-const SUPPORT_EMAIL = "dressappsupport@gmail.com"
+import { SUPPORT_EMAIL } from "@/lib/site-contact"
 
 type SendPasswordChangedResult =
   | { ok: true }

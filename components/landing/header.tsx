@@ -231,7 +231,7 @@ export function Header({ sticky = false }: HeaderProps) {
                 </Button>
               </>
             )}
-            <Button className="group text-base" asChild>
+            <Button variant="secondary" className="group text-base" asChild>
               <a
                 href="https://dressapp-demo.myshopify.com/"
                 target="_blank"
@@ -301,7 +301,7 @@ export function Header({ sticky = false }: HeaderProps) {
                     </Button>
                   </>
                 ) : null}
-                <Button className="group text-base w-fit" asChild>
+                <Button variant="secondary" className="group text-base w-fit" asChild>
                   <a
                     href="https://dressapp-demo.myshopify.com/"
                     target="_blank"

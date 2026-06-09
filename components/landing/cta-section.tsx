@@ -3,8 +3,12 @@
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
+import { getScheduleDemoHref } from "@/lib/site-contact"
 
 export function CtaSection() {
+  const scheduleDemoHref = getScheduleDemoHref()
+  const isCalendly = scheduleDemoHref.startsWith("http")
+
   return (
     <section id="cta" className="py-[calc(6rem-10px)] lg:py-[calc(8rem-10px)] relative overflow-hidden">
       {/* Background glow */}
@@ -23,8 +27,8 @@ export function CtaSection() {
             e-commerce experience?
           </h2>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Join hundreds of fashion brands already using DressApp to reduce returns, 
-            boost conversions, and delight customers. Start your free trial today.
+            Now onboarding design partners. Founding merchants get locked-in launch pricing and
+            white-glove onboarding.
           </p>
           
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -38,8 +42,15 @@ export function CtaSection() {
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </a>
             </Button>
-            <Button size="lg" variant="outline">
-              Schedule a demo
+            <Button size="lg" variant="outline" asChild>
+              <a
+                href={scheduleDemoHref}
+                {...(isCalendly
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
+              >
+                Schedule a demo
+              </a>
             </Button>
           </div>
 

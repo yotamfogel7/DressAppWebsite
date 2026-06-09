@@ -1,4 +1,16 @@
-1. Hero try-on demo: click each size pill (XS–XL) and confirm the fit label under the try-on image matches the new bands (e.g. "VERY SMALL - EXTREMELY TIGHT" for XS, "GOOD FIT - JUST YOUR SIZE" for M) and colors look right (red for XS/XL, amber for S, green for M/L).
+## Partner outreach credibility (landing page)
+1. CTA copy says "Now onboarding design partners" - no "hundreds of brands" language anywhere on the page.
+2. Footer has only working links (Features, Pricing, Integrations, Privacy, Terms) - no dead `#` links or social icons.
+3. Contact section shows `support@dressapp.me` (not Gmail) and Instagram displays `dressapp.me`.
+4. Click **Schedule a demo** - opens mailto to support@dressapp.me (or Calendly after URL is set in `.env`).
+5. Hero loads with content visible immediately (no multi-second blank gradient).
+6. Hero try-on demo loads on size **L** with "GOOD FIT - A BIT OVERSIZED" matching "Recommended size: L".
+7. **Generate user model** works on first click (no blank panel flash).
+8. `dressapp.ai` redirects to `dressapp.me` after deploy (requires DNS on same Vercel project).
+9. Vercel Web Analytics enabled in project settings - no console error on load.
+
+## Hero try-on demo
+1. Click each size pill (XS–XL) and confirm the fit label under the try-on image matches the new bands (e.g. "VERY SMALL - EXTREMELY TIGHT" for XS, "GOOD FIT - JUST YOUR SIZE" for M) and colors look right (red for XS/XL, amber for S, green for M/L).
 
 ## Storefront widget colors
 1. Go to Settings > General > Storefront widget colors and confirm the live preview shows the real DressApp FAB icon (not a generic person icon).

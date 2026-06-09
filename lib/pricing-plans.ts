@@ -1,4 +1,5 @@
 import type { PlanSlug } from "@/lib/plan-slugs"
+import { SUPPORT_EMAIL } from "@/lib/site-contact"
 
 export type PricingPlan = {
   slug: PlanSlug
@@ -97,8 +98,7 @@ export const PRICING_PLANS: PricingPlan[] = [
       "Contact sales for custom plans - limits, terms, and scope tailored to you.",
     features: ["Custom plans available through sales", "API access"],
     cta: "Contact sales",
-    ctaHref:
-      "mailto:dressappsupport@gmail.com?subject=Enterprise%2B%20plan%20-%20DressApp",
+    ctaHref: `mailto:${SUPPORT_EMAIL}?subject=Enterprise%2B%20plan%20-%20DressApp`,
     buttonClassName:
       "bg-gradient-to-r from-orange-600 to-amber-500 text-white hover:from-orange-700 hover:to-amber-600 border-0",
   },

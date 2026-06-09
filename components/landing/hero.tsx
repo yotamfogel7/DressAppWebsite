@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import { SeeItInActionDemo } from "@/components/landing/demo-section"
 
-const easeOutStrong = [0.22, 1, 0.36, 1] as const
-
 export function Hero() {
   return (
     <section className="relative flex items-start overflow-x-clip pt-20 pb-6 lg:pb-8">
@@ -16,9 +14,8 @@ export function Hero() {
       <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-0 pb-4 lg:pt-[calc(5rem-10px)] lg:pb-6">
         <div className="grid w-full grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.55fr)] lg:gap-x-12 xl:gap-x-16 lg:gap-y-0 items-start">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
             className="relative w-full min-w-0 pl-0 sm:pl-2 pt-8 text-left lg:pt-[70px] lg:col-start-1 lg:row-start-1 lg:-mt-[54px]"
           >
             <Image
@@ -35,27 +32,24 @@ export function Hero() {
           </motion.div>
 
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15 }}
             className="relative -top-[40px] w-full min-w-0 pl-0 sm:pl-2 text-left lg:col-start-1 lg:row-start-2 mt-4 text-xl sm:text-2xl md:text-3xl font-medium text-foreground text-pretty"
           >
             Give your customers the confidence to check out!
           </motion.p>
 
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
             className="relative -top-[40px] w-full min-w-0 pl-0 sm:pl-2 text-left lg:col-start-1 lg:row-start-3 mt-4 text-lg md:text-xl text-muted-foreground text-pretty"
           >
             Reduce returns, increase conversions and customer satisfaction with AI-powered virtual fitting technology.
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
             className="relative -top-[40px] w-full min-w-0 pl-0 sm:pl-2 text-left lg:col-start-1 lg:row-start-4 mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4"
           >
             <Button size="lg" className="group w-fit" asChild>
@@ -71,9 +65,8 @@ export function Hero() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2, ease: easeOutStrong }}
             className="relative w-full min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-4 lg:justify-self-stretch"
           >
             <SeeItInActionDemo />

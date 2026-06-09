@@ -1,8 +1,7 @@
 import type { ReactNode } from "react"
 import Link from "next/link"
 import { Mail } from "lucide-react"
-
-const SUPPORT_EMAIL = "dressappsupport@gmail.com"
+import { SUPPORT_EMAIL } from "@/lib/site-contact"
 
 export function PrivacyPolicyContent() {
   return (
@@ -336,7 +335,7 @@ export function PrivacyPolicyContent() {
               </p>
             </div>
             <Link
-              href={`mailto:${SUPPORT_EMAIL}?subject=Privacy%20%E2%80%94%20DressApp`}
+              href={`mailto:${SUPPORT_EMAIL}?subject=Privacy%20-%20DressApp`}
               className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-3 text-sm font-medium text-accent-foreground no-underline transition-opacity hover:opacity-90"
             >
               <Mail className="h-4 w-4" aria-hidden />

@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { Mail } from "lucide-react"
-
-const SUPPORT_EMAIL = "dressappsupport@gmail.com"
+import { SUPPORT_EMAIL } from "@/lib/site-contact"
 
 export function TermsAndConditionsContent() {
   return (

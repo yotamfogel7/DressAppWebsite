@@ -102,7 +102,8 @@ export function UserModelDemo() {
   const handleGenerate = () => {
     if (!selectedPhoto || phase === "generating") return
 
-    resetGeneration()
+    clearGenerationTimeout()
+    setModelView("front")
     setPhase("generating")
 
     timeoutRef.current = setTimeout(() => {

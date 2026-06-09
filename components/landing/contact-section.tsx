@@ -2,19 +2,24 @@
 
 import { motion } from "framer-motion"
 import { Instagram, Mail } from "lucide-react"
+import {
+  INSTAGRAM_DISPLAY,
+  INSTAGRAM_URL,
+  SUPPORT_EMAIL,
+} from "@/lib/site-contact"
 
 const contactLinks = [
   {
     icon: Mail,
     label: "Email",
-    value: "dressappsupport@gmail.com",
-    href: "mailto:dressappsupport@gmail.com",
+    value: SUPPORT_EMAIL,
+    href: `mailto:${SUPPORT_EMAIL}`,
   },
   {
     icon: Instagram,
     label: "Instagram",
-    value: "dressapp.ai",
-    href: "https://instagram.com/dressapp.ai",
+    value: INSTAGRAM_DISPLAY,
+    href: INSTAGRAM_URL,
   },
 ]
 

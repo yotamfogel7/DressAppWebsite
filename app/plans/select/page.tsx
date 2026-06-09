@@ -11,6 +11,7 @@ import {
   type PlanCheckoutConfig,
 } from "@/lib/paypal-public"
 import { normalizePlanSlug } from "@/lib/plan-slugs"
+import { SUPPORT_EMAIL } from "@/lib/site-contact"
 
 export const metadata: Metadata = {
   title: "Checkout | DressApp",
@@ -40,7 +41,7 @@ export default async function PlanSelectPage({
   if (!paypalPlanId) {
     if (slug === "enterprise-plus") {
       redirect(
-        "mailto:dressappsupport@gmail.com?subject=Enterprise%2B%20plan%20-%20DressApp",
+        `mailto:${SUPPORT_EMAIL}?subject=Enterprise%2B%20plan%20-%20DressApp`,
       )
     }
     console.error("[plans/select] Missing PayPal plan id env for slug:", slug)
