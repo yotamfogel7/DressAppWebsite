@@ -1,3 +1,7 @@
+## Health endpoint
+1. Open `https://dressapp.me/health` (or local `/health`) - should return JSON `{ "status": "ok", "timestamp": "..." }` with HTTP 200.
+2. Confirm no login redirect and response is fast (endpoint bypasses auth middleware).
+
 ## Partner outreach credibility (landing page)
 1. CTA copy says "Now onboarding design partners" - no "hundreds of brands" language anywhere on the page.
 2. Footer has only working links (Features, Pricing, Integrations, Privacy, Terms) - no dead `#` links or social icons.
