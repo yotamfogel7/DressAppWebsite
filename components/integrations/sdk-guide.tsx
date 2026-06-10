@@ -28,6 +28,12 @@ export function SdkGuide() {
             (floating studio dock, inline PDP widget). Built on the web SDK.
           </>
         </GuideBullets>
+        <GuideCallout variant="tip" title="Product-page first">
+          The primary try-on experience now lives on your product page: an inline{" "}
+          <strong>Try it on</strong> button with size pills, Front/Back picker, inline progress,
+          and a result modal - no need to open the floating widget. The floating dock is optional
+          and can be turned off per merchant.
+        </GuideCallout>
       </GuideSection>
 
       <GuideSection title="Setup steps">
@@ -114,7 +120,8 @@ NEXT_PUBLIC_DRESSAPP_API_BASE_URL=${DRESSAPP_PRODUCTION_API_BASE_URL}`}
               <GuideInlineCode>fallbackColorsJson</GuideInlineCode> to the dock - even when you
               already have a DressApp <GuideInlineCode>productId</GuideInlineCode>. The SDK calls{" "}
               <GuideInlineCode>GET /partner/v1/embed/resolve-product</GuideInlineCode> to map your
-              SKU to a catalog row and backfill sizes/colors.
+              SKU to a catalog row and backfill sizes/colors. Any PDP URL structure works -
+              passing the product explicitly is what marks the page as a product page.
             </p>
             <GuideCode label="PartnerStudioDock (React)">
               {`<PartnerStudioDock
@@ -123,12 +130,47 @@ NEXT_PUBLIC_DRESSAPP_API_BASE_URL=${DRESSAPP_PRODUCTION_API_BASE_URL}`}
   getAccessToken={…}
   productId={dressAppProductId}
   externalProductId="SKU-001"
+  storeProductUrl={window.location.href}
   fallbackSizesJson='["XS","S","M","L"]'
   fallbackColorsJson='[{"label":"Navy"},{"label":"Black"}]'
+  mountPdpTryonButton
 />`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={5} title="Frontend: install the SDK">
+          <GuideStep number={5} title="Frontend: PDP Try it on button">
+            <p>
+              Give the inline button a mount point on your product template - one of three
+              options:
+            </p>
+            <GuideBullets>
+              <>
+                A placeholder slot right above your Add to cart button:{" "}
+                <GuideInlineCode>&lt;div data-dressapp-pdp-tryon-block&gt;&lt;/div&gt;</GuideInlineCode>{" "}
+                (most reliable).
+              </>
+              <>
+                Mark your buy button with{" "}
+                <GuideInlineCode>data-dressapp-pdp-anchor</GuideInlineCode> - the button injects
+                above it.
+              </>
+              <>
+                Pass <GuideInlineCode>pdpAnchorSelector=&quot;#add-to-cart&quot;</GuideInlineCode>{" "}
+                (React prop, mount option, or{" "}
+                <GuideInlineCode>data-pdp-anchor-selector</GuideInlineCode> attr).
+              </>
+            </GuideBullets>
+            <GuideCode label="Product template">
+              {`<div class="product-actions">
+  <div data-dressapp-pdp-tryon-block></div>
+  <button id="add-to-cart">Add to cart</button>
+</div>`}
+            </GuideCode>
+            <p>
+              The button runs the full flow on-page: size pills, Front/Back picker, model
+              creation modal for first-time shoppers, inline progress cards, and a result modal.
+            </p>
+          </GuideStep>
+          <GuideStep number={6} title="Frontend: install the SDK">
             <GuideCode label="npm">
               {`npm install @dressapp/web-sdk
 
@@ -136,7 +178,7 @@ NEXT_PUBLIC_DRESSAPP_API_BASE_URL=${DRESSAPP_PRODUCTION_API_BASE_URL}`}
 npm install @dressapp/react-widget`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={6} title="Frontend: enable DressApp">
+          <GuideStep number={7} title="Frontend: enable DressApp">
             <p>After you fetch the shopper token from your backend:</p>
             <GuideCode label="Enable SDK">
               {`import { DressApp } from "@dressapp/web-sdk";
@@ -148,33 +190,55 @@ await DressApp.enable({
 });`}
             </GuideCode>
           </GuideStep>
-          <GuideStep number={7} title="First visit: create a model">
+          <GuideStep number={8} title="Cart hookup & SPA navigation">
             <p>
-              Check <GuideInlineCode>await DressApp.hasModel()</GuideInlineCode>. If false, show a
-              &quot;Create my model&quot; button:
+              Register your cart once so the try-on result modal shows{" "}
+              <strong>Add tried size to cart</strong>. Throw an error containing &quot;out of
+              stock&quot; to surface the out-of-stock state.
             </p>
-            <GuideCode label="Open model studio">
-              {`DressApp.openModelStudio({ returnUrl: window.location.href })`}
+            <GuideCode label="Add to cart handler">
+              {`DressApp.setAddToCartHandler(async ({ productPageUrl, sizeLabel, colorLabel }) => {
+  await myCart.add({ url: productPageUrl, size: sizeLabel, color: colorLabel });
+}, { cartUrl: "/cart" });`}
             </GuideCode>
             <p>
-              The shopper finishes photos on DressApp, then clicks <strong>Continue to store</strong>{" "}
-              to come back.
+              On single-page apps, rebind the product on route changes instead of reloading:
+            </p>
+            <GuideCode label="SPA navigation">
+              {`DressApp.setProduct({
+  externalProductId: "SKU-002",
+  storeProductUrl: location.href,
+  fallbackSizesJson: '["S","M","L"]',
+  fallbackColorsJson: '[{"label":"White"}]',
+});
+
+DressApp.setProduct({}); // clear when leaving product pages`}
+            </GuideCode>
+          </GuideStep>
+          <GuideStep number={9} title="First visit: create a model">
+            <p>
+              No redirect needed. When a shopper without a body model presses{" "}
+              <strong>Try it on</strong> on the PDP, a theme-matched modal opens on the page
+              (photos → details → model ready). The floating dock&apos;s My Model tab offers the
+              same wizard when enabled.
             </p>
           </GuideStep>
-          <GuideStep number={8} title="Try-on">
-            <p>When <GuideInlineCode>hasModel()</GuideInlineCode> is true:</p>
-            <GuideCode label="Request try-on">
+          <GuideStep number={10} title="Try-on">
+            <p>
+              On the PDP: press <strong>Try it on</strong>, pick a size and Front/Back angle, and
+              the try-on runs inline with a progress card and a result modal. Headless alternative
+              for custom UIs:
+            </p>
+            <GuideCode label="Request try-on (headless)">
               {`await DressApp.requestTryOn(productId, { async: true })
 
 // Poll until complete:
 DressApp.getTryOnJob(jobId)`}
             </GuideCode>
-            <p>
-              Or register webhooks on your server (optional) instead of polling.
-            </p>
           </GuideStep>
-          <GuideStep number={9} title="Ship it">
-            Test the full path on HTTPS: session → model → return → try-on on a real product.
+          <GuideStep number={11} title="Ship it">
+            Test the full path on HTTPS: session → PDP Try it on → model modal → inline try-on →
+            result modal (+ add-to-cart when wired) on a real product.
           </GuideStep>
         </GuideStepList>
       </GuideSection>

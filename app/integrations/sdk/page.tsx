@@ -18,7 +18,7 @@ export default function SdkIntegrationPage() {
   return (
     <IntegrationDetailShell
       title="SDK"
-      description="For any website you control. DressApp ships a browser SDK that wraps sessions, model studio, and try-on calls."
+      description="For any website you control. DressApp ships a browser SDK that puts an inline Try it on button on your product pages - model creation, try-on, and add-to-cart all run on the page."
       icon={Package}
       titleAction={
         <DownloadAgentInstructionsButton
