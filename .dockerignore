@@ -8,3 +8,8 @@ README.md
 .env
 .env.*
 !.env.example
+DressAppWebsite
+pnpm-lock.yaml
+.cursor
+.agents
+.data

@@ -19,3 +19,6 @@ node_modules
 .next/
 .data/
 .DS_Store
+
+# Stale duplicate checkout (real app is repo root; not a submodule)
+DressAppWebsite/
