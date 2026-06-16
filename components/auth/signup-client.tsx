@@ -30,7 +30,10 @@ import {
   ACCOUNT_EXISTS_ERROR,
   parseApiErrorResponse,
 } from "@/lib/auth-user-messages"
-import { storeLoginPrefillPassword } from "@/lib/login-prefill"
+import {
+  buildFreeTrialOnboardingPath,
+  isFreeTrialPlanSlug,
+} from "@/lib/plan-slugs"
 
 const sharedSignupFields = z.object({
   name: z.string().trim().max(120).optional(),
@@ -68,6 +71,9 @@ type Step = "details" | "verify"
 const RESEND_COOLDOWN_SECONDS = 60
 
 function resolvePostSignupRedirect(plan: string, callbackUrl: string): string {
+  if (isFreeTrialPlanSlug(plan)) {
+    return buildFreeTrialOnboardingPath()
+  }
   if (plan) {
     const next = `/plans/select?plan=${encodeURIComponent(plan)}`
     return `/onboarding?next=${encodeURIComponent(next)}`

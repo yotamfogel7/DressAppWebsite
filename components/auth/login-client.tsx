@@ -23,6 +23,10 @@ import { Header } from "@/components/landing/header"
 import { OAuthProviderButtons } from "@/components/auth/oauth-provider-buttons"
 import { toSignInErrorMessage } from "@/lib/auth-user-messages"
 import { buildContinueRedirectPath } from "@/lib/onboarding-access"
+import {
+  buildFreeTrialOnboardingPath,
+  isFreeTrialPlanSlug,
+} from "@/lib/plan-slugs"
 import { consumeLoginPrefillPassword } from "@/lib/login-prefill"
 
 const schema = z.object({
@@ -49,7 +53,9 @@ export function LoginClient({
   const destinationAfterAuth =
     searchParams.get("callbackUrl") ??
     (plan
-      ? `/plans/select?plan=${encodeURIComponent(plan)}`
+      ? isFreeTrialPlanSlug(plan)
+        ? buildFreeTrialOnboardingPath()
+        : `/plans/select?plan=${encodeURIComponent(plan)}`
       : "/settings/usage")
   const postLoginPath = buildContinueRedirectPath(destinationAfterAuth)
 

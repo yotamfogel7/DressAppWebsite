@@ -8,6 +8,7 @@ import {
 } from "@/lib/onboarding-access"
 import { parsePendingPlanCheckoutPath } from "@/lib/onboarding-pending-checkout"
 import { resolveOnboardingActor } from "@/lib/onboarding-actor"
+import { isFreeTrialPlanSlug } from "@/lib/plan-slugs"
 import { userCanAccessProduct } from "@/lib/user-active-plan"
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 export default async function OnboardingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>
+  searchParams: Promise<{ next?: string; intent?: string }>
 }) {
   const sp = await searchParams
   const session = await auth()
@@ -41,6 +42,7 @@ export default async function OnboardingPage({
     )
   }
   const pendingCheckoutPath = parsePendingPlanCheckoutPath(sp.next)
+  const pendingFreeTrialIntent = isFreeTrialPlanSlug(sp.intent)
 
   if (actor.kind === "user") {
     if (
@@ -66,6 +68,12 @@ export default async function OnboardingPage({
     <OnboardingFlow
       initialStep={actor.profileComplete ? 3 : 1}
       pendingCheckoutPath={pendingCheckoutPath}
+      pendingFreeTrialIntent={pendingFreeTrialIntent}
+      autoStartFreeTrial={
+        pendingFreeTrialIntent &&
+        actor.profileComplete &&
+        actor.kind === "user"
+      }
       isPendingSignup={actor.kind === "pending"}
     />
   )

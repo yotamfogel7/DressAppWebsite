@@ -14,6 +14,7 @@
 9. Vercel Web Analytics enabled in project settings - no console error on load.
 
 ## Hero try-on demo
+0. Under **Try DressApp in our demo store**, confirm **Free trial available!** tip pill is visible (not a link) and reads clearly on mobile/desktop.
 1. Click each size pill (XS–XL) and confirm the fit label under the try-on image matches the new bands (e.g. "VERY SMALL - EXTREMELY TIGHT" for XS, "GOOD FIT - JUST YOUR SIZE" for M) and colors look right (red for XS/XL, amber for S, green for M/L).
 
 ## Storefront widget colors
@@ -26,6 +27,12 @@
 7. Confirm tab order is **My model**, **My try-ons**, **Try on** (left to right) and each tab is clickable with its own preview content.
 8. Switch color scheme while on **My try-ons** or **Try on** - preview should reset to **My model**.
 9. Save a scheme and confirm it persists after reload.
+
+## Free Trial plan (landing pricing)
+1. On the homepage **Pricing** section, confirm **Free Trial** is the first card: $0, 14-day trial, 20 try-ons, **Start Free Trial** button.
+2. Click **Start Free Trial** while logged out - should go to sign up (not PayPal checkout).
+3. Complete sign up and onboarding (business name + categories) - should land on Settings > Usage with **Free trial** active (20 try-ons allowance).
+4. Logged-in user with no plan clicking **Start Free Trial** should still reach onboarding/signup flow correctly.
 
 ## On-demand try-ons billing
 0. Go to Settings > Billing and confirm the top card always shows your plan state: paid plan, **Free trial**, or **No plan selected** with a **Choose a plan** / **Change plan** button.

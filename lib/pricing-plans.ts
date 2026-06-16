@@ -1,8 +1,15 @@
-import type { PlanSlug } from "@/lib/plan-slugs"
+import {
+  FREE_TRIAL_PLAN_SLUG,
+  type PricingPlanSlug,
+} from "@/lib/plan-slugs"
+import {
+  SIGNUP_TRIAL_DURATION_DAYS,
+  SIGNUP_TRIAL_TRYON_ALLOWANCE,
+} from "@/lib/signup-trial-constants"
 import { SUPPORT_EMAIL } from "@/lib/site-contact"
 
 export type PricingPlan = {
-  slug: PlanSlug
+  slug: PricingPlanSlug
   name: string
   price: string
   priceSuffix?: string
@@ -18,6 +25,23 @@ export type PricingPlan = {
 }
 
 export const PRICING_PLANS: PricingPlan[] = [
+  {
+    slug: FREE_TRIAL_PLAN_SLUG,
+    name: "Free Trial",
+    price: "$0",
+    description:
+      "Try DressApp on your store with no credit card. Full dashboard and SDK access.",
+    features: [
+      `${SIGNUP_TRIAL_DURATION_DAYS}-day free trial`,
+      `${SIGNUP_TRIAL_TRYON_ALLOWANCE} try-ons (all time)`,
+      "Usage dashboard",
+      "Shopify app & JavaScript SDK",
+    ],
+    cta: "Start Free Trial",
+    ctaHref: `/signup?plan=${FREE_TRIAL_PLAN_SLUG}`,
+    buttonClassName:
+      "bg-gradient-to-r from-teal-600 to-cyan-500 text-white hover:from-teal-700 hover:to-cyan-600 border-0",
+  },
   {
     slug: "starter",
     name: "Starter",

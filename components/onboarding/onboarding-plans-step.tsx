@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button"
 import { AuthFormError } from "@/components/auth/auth-form-error"
 import { PlanFeaturesList } from "@/components/plans/plan-features-list"
 import { parseApiErrorResponse } from "@/lib/auth-user-messages"
+import { isFreeTrialPlanSlug } from "@/lib/plan-slugs"
 import { PRICING_PLANS } from "@/lib/pricing-plans"
+import { SIGNUP_TRIAL_TRYON_ALLOWANCE } from "@/lib/signup-trial-constants"
 import { cn } from "@/lib/utils"
 
 type OnboardingPlansStepProps = {
@@ -25,6 +27,10 @@ export function OnboardingPlansStep({
   const [skipError, setSkipError] = useState<string | null>(null)
 
   async function choosePlan(plan: (typeof PRICING_PLANS)[number]) {
+    if (isFreeTrialPlanSlug(plan.slug)) {
+      await skipToFreeTrial()
+      return
+    }
     if (plan.ctaHref) {
       window.location.assign(plan.ctaHref)
       return
@@ -127,7 +133,7 @@ export function OnboardingPlansStep({
         ))}
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 lg:max-w-4xl">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {bottomPlans.map((plan, index) => (
           <PlanCard
             key={plan.slug}
@@ -163,7 +169,7 @@ export function OnboardingPlansStep({
         >
           {skippingTrial
             ? "Starting your free trial…"
-            : "Skip for now, use my 10 free trial try-ons"}
+            : `Skip for now, use my ${SIGNUP_TRIAL_TRYON_ALLOWANCE} free trial try-ons`}
         </Button>
       </div>
     </motion.div>

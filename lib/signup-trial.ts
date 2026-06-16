@@ -12,7 +12,7 @@ export type SignupTrialUserContext = {
   name?: string | null
 }
 
-export const SIGNUP_TRIAL_TRYON_ALLOWANCE = 10
+export { SIGNUP_TRIAL_DURATION_DAYS, SIGNUP_TRIAL_TRYON_ALLOWANCE } from "@/lib/signup-trial-constants"
 
 const SIGNUP_TRIAL_STARTED_AT_KEY = "signupTrialStartedAt"
 

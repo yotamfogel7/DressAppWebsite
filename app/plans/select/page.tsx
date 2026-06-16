@@ -10,7 +10,7 @@ import {
   getPayPalSdkEnvironment,
   type PlanCheckoutConfig,
 } from "@/lib/paypal-public"
-import { normalizePlanSlug } from "@/lib/plan-slugs"
+import { normalizePlanSlug, isFreeTrialPlanSlug } from "@/lib/plan-slugs"
 import { SUPPORT_EMAIL } from "@/lib/site-contact"
 
 export const metadata: Metadata = {
@@ -32,6 +32,9 @@ export default async function PlanSelectPage({
   }
 
   const params = await searchParams
+  if (isFreeTrialPlanSlug(params.plan)) {
+    redirect("/onboarding?intent=free-trial")
+  }
   const slug = normalizePlanSlug(params.plan)
   if (!slug) {
     redirect("/plans")

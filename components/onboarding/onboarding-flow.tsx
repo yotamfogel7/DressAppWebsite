@@ -84,6 +84,10 @@ type OnboardingFlowProps = {
   initialStep?: OnboardingStep
   /** After profile save, go straight to PayPal plan checkout (from landing plan click). */
   pendingCheckoutPath?: string | null
+  /** After profile save, start the free trial (from landing free trial click). */
+  pendingFreeTrialIntent?: boolean
+  /** Profile already complete - start free trial on mount. */
+  autoStartFreeTrial?: boolean
   /** Email verified but account not created until plan/skip. */
   isPendingSignup?: boolean
 }
@@ -91,12 +95,57 @@ type OnboardingFlowProps = {
 export function OnboardingFlow({
   initialStep = 1,
   pendingCheckoutPath = null,
+  pendingFreeTrialIntent = false,
+  autoStartFreeTrial = false,
   isPendingSignup = false,
 }: OnboardingFlowProps) {
   const { update } = useSession()
   const [step, setStep] = useState<OnboardingStep>(initialStep)
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isStartingTrial, setIsStartingTrial] = useState(false)
+
+  async function startFreeTrialAfterProfile() {
+    setFormError(null)
+    setIsStartingTrial(true)
+    try {
+      const res = await fetch("/api/auth/onboarding/skip-plan", {
+        method: "POST",
+        credentials: "same-origin",
+      })
+      const data: unknown = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const errMsg = parseApiErrorResponse(
+          data,
+          "Could not start your free trial. Please try again.",
+        )
+        console.error("[onboarding] skip-plan:", errMsg, data)
+        setFormError(errMsg)
+        return
+      }
+      const accountCreated =
+        typeof data === "object" &&
+        data !== null &&
+        "accountCreated" in data &&
+        (data as { accountCreated?: boolean }).accountCreated === true
+
+      if (accountCreated) {
+        await update()
+        window.location.assign("/settings/usage")
+        return
+      }
+
+      await update()
+      window.location.assign("/continue?next=/settings/usage")
+    } finally {
+      setIsStartingTrial(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!autoStartFreeTrial || isStartingTrial) return
+    void startFreeTrialAfterProfile()
+  }, [autoStartFreeTrial])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -147,6 +196,10 @@ export function OnboardingFlow({
         window.location.assign(pendingCheckoutPath)
         return
       }
+      if (pendingFreeTrialIntent) {
+        await startFreeTrialAfterProfile()
+        return
+      }
       setStep(3)
     } finally {
       setIsSaving(false)
@@ -154,7 +207,13 @@ export function OnboardingFlow({
   }
 
   const shellCopy =
-    step === 1
+    autoStartFreeTrial || isStartingTrial
+      ? {
+          eyebrow: "Account setup",
+          title: "Starting your free trial",
+          description: "Setting up your workspace. This only takes a moment.",
+        }
+      : step === 1
       ? {
           eyebrow: "Account setup",
           title: "What is your business called?",
@@ -170,9 +229,9 @@ export function OnboardingFlow({
           }
         : {
             eyebrow: "Your plan",
-            title: "You are on the free trial",
+            title: "Choose a plan",
             description:
-              "You already have 10 all-time try-ons and full usage access. Upgrade anytime, or continue with your free trial.",
+              "Pick a monthly plan or continue with your free trial.",
           }
 
   return (
@@ -185,7 +244,22 @@ export function OnboardingFlow({
       description={shellCopy.description}
     >
       <AnimatePresence mode="wait">
-        {step === 1 ? (
+        {autoStartFreeTrial || isStartingTrial ? (
+          <motion.div
+            key="step-trial-loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-8 text-center text-sm text-muted-foreground"
+          >
+            {formError ? (
+              <div className="mx-auto max-w-md text-left">
+                <AuthFormError message={formError} />
+              </div>
+            ) : (
+              "Preparing your free trial..."
+            )}
+          </motion.div>
+        ) : step === 1 ? (
           <motion.div
             ref={stepRegionRef}
             key="step-business"
@@ -343,9 +417,19 @@ export function OnboardingFlow({
                     type="submit"
                     size="lg"
                     className="gap-2 sm:min-w-44"
-                    disabled={selectedCategories.length === 0 || isSaving}
+                    disabled={
+                      selectedCategories.length === 0 ||
+                      isSaving ||
+                      isStartingTrial
+                    }
                   >
-                    {isSaving ? "Saving..." : "Continue to plans"}
+                    {isSaving || isStartingTrial
+                      ? pendingFreeTrialIntent
+                        ? "Starting your free trial..."
+                        : "Saving..."
+                      : pendingFreeTrialIntent
+                        ? "Start free trial"
+                        : "Continue to plans"}
                     {!isSaving ? (
                       <ArrowRight className="size-4" aria-hidden />
                     ) : null}

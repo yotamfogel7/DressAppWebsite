@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Sparkles } from "lucide-react"
 import { SeeItInActionDemo } from "@/components/landing/demo-section"
 
 export function Hero() {
@@ -50,7 +50,7 @@ export function Hero() {
           <motion.div
             initial={false}
             animate={{ opacity: 1, y: 0 }}
-            className="relative -top-[40px] w-full min-w-0 pl-0 sm:pl-2 text-left lg:col-start-1 lg:row-start-4 mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4"
+            className="relative -top-[40px] w-full min-w-0 pl-0 sm:pl-2 text-left lg:col-start-1 lg:row-start-4 mt-10 flex flex-col items-start gap-2"
           >
             <Button size="lg" className="group w-fit" asChild>
               <a
@@ -62,6 +62,18 @@ export function Hero() {
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </a>
             </Button>
+            <p
+              role="note"
+              className="inline-flex items-center gap-2 rounded-full border border-teal-500/25 bg-teal-500/[0.07] py-1.5 pl-2 pr-3.5 text-[13px] font-medium text-teal-900 dark:text-teal-100"
+            >
+              <span
+                className="flex size-6 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400"
+                aria-hidden
+              >
+                <Sparkles className="size-3.5" />
+              </span>
+              Free trial available!
+            </p>
           </motion.div>
 
           <motion.div
