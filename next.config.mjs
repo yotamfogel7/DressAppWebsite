@@ -12,6 +12,18 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/partner/:path*",
+        has: [{ type: "host", value: "dressapp-preview.com" }],
+        destination: "https://frontend.dressapp-preview.com/partner/:path*",
+        permanent: false,
+      },
+      {
+        source: "/partner/:path*",
+        has: [{ type: "host", value: "dressapp.me" }],
+        destination: "https://frontend.dressapp.me/partner/:path*",
+        permanent: false,
+      },
+      {
         source: "/:path*",
         has: [{ type: "host", value: "dressapp.ai" }],
         destination: "https://dressapp.me/:path*",
