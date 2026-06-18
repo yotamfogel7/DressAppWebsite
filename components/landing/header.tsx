@@ -24,7 +24,7 @@ const navLinks = [
   { href: "/#features", label: "Features" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/integrations", label: "Integrations" },
-  { href: "/#contact-us", label: "Contact us" },
+  { href: "/#book-a-demo", label: "Book a demo" },
 ]
 
 const navLinkClass =

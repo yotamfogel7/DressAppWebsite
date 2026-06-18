@@ -105,7 +105,7 @@ export function AccountPlansSection({
             </Button>
           ) : null}
           <Button variant="outline" asChild>
-            <Link href="/#contact-us">Contact us</Link>
+            <Link href="/#book-a-demo">Book a demo</Link>
           </Button>
         </div>
       </div>

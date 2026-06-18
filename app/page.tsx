@@ -5,7 +5,7 @@ import { HowItWorks } from "@/components/landing/how-it-works"
 import { Features } from "@/components/landing/features"
 import { Pricing } from "@/components/landing/pricing"
 import { CtaSection } from "@/components/landing/cta-section"
-import { ContactSection } from "@/components/landing/contact-section"
+import { BookDemoSection } from "@/components/landing/book-demo-section"
 import { Footer } from "@/components/landing/footer"
 
 export default function Home() {
@@ -18,7 +18,7 @@ export default function Home() {
       <Features />
       <Pricing />
       <CtaSection />
-      <ContactSection />
+      <BookDemoSection />
       <Footer />
     </main>
   )

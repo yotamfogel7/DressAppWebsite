@@ -5,8 +5,8 @@
 ## Partner outreach credibility (landing page)
 1. CTA copy says "Now onboarding design partners" - no "hundreds of brands" language anywhere on the page.
 2. Footer has only working links (Features, Pricing, Integrations, Privacy, Terms) - no dead `#` links or social icons.
-3. Contact section shows `support@dressapp.me` (not Gmail) and Instagram displays `dressapp.me`.
-4. Click **Schedule a demo** - opens mailto to support@dressapp.me (or Calendly after URL is set in `.env`).
+3. **Book a demo** nav link scrolls to the demo section; section CTA opens mailto to support@dressapp.me (or Calendly when `NEXT_PUBLIC_CALENDLY_DEMO_URL` is set in `.env`).
+4. Click **Book a demo** in the section or **Schedule a demo** in the CTA block - same booking flow as above.
 5. Hero loads with content visible immediately (no multi-second blank gradient).
 6. Hero try-on demo loads on size **L** with "GOOD FIT - A BIT OVERSIZED" matching "Recommended size: L".
 7. **Generate user model** works on first click (no blank panel flash).
