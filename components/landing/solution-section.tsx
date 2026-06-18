@@ -307,6 +307,10 @@ function TryOnRoulette() {
           </div>
         </div>
       )}
+
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        Real generated try-ons on user models
+      </p>
     </div>
   )
 }
