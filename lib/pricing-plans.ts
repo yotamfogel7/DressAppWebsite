@@ -33,14 +33,14 @@ export const PRICING_PLANS: PricingPlan[] = [
       "Try DressApp on your store with no credit card. Full dashboard and SDK access.",
     features: [
       `${SIGNUP_TRIAL_DURATION_DAYS}-day free trial`,
-      `${SIGNUP_TRIAL_TRYON_ALLOWANCE} try-ons (all time)`,
+      `${SIGNUP_TRIAL_TRYON_ALLOWANCE} try-ons`,
       "Usage dashboard",
       "Shopify app & JavaScript SDK",
     ],
     cta: "Start Free Trial",
     ctaHref: `/signup?plan=${FREE_TRIAL_PLAN_SLUG}`,
     buttonClassName:
-      "bg-gradient-to-r from-teal-600 to-cyan-500 text-white hover:from-teal-700 hover:to-cyan-600 border-0",
+      "bg-gradient-to-r from-gray-600 to-gray-500 text-white hover:from-gray-700 hover:to-gray-600 border-0",
   },
   {
     slug: "starter",
