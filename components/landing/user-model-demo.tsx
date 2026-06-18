@@ -67,7 +67,7 @@ const demoUserPhotos: DemoUserPhoto[] = [
 ]
 
 const easeOutStrong = [0.22, 1, 0.36, 1] as const
-const GENERATION_MS = 40_000
+const GENERATION_MS = 2000
 
 type GenerationPhase = "idle" | "generating" | "complete"
 
